@@ -11,14 +11,14 @@ def ed_trans_prob(*args):
     #      is implemented : subtract 10 from "begin transition after X years"
     tau = 10
     # AS : age range during which succession can take place
-    for label, PS, SL, SY in args:
+    for label, PS, SY, SL in args:
         AS = np.arange(0, SL + 3*tau, tau)
         if PS < 1:
            transition_prob = (1 - PS) ** ((AS - SY) / tau)
         elif PS == 1:
             transition_prob = np.zeros_like(AS)
         transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
+        transition_prob[AS >= SL] = 0
         plt.plot(AS, transition_prob, label=label)
     plt.title("Transition Probability for RFR, Early Development")
     plt.xlabel("Years in Stage")
@@ -34,14 +34,14 @@ def mdc_trans_prob(*args):
     #      is implemented : subtract 10 from "begin transition after X years"
     tau = 10
     # AS : age range during which succession can take place
-    for label, PS, SL, SY in args:
+    for label, PS, SY, SL in args:
         AS = np.arange(0, SL + 3*tau, tau)
         if PS < 1:
            transition_prob = (1 - PS) ** ((AS - SY) / tau)
         elif PS == 1:
             transition_prob = np.zeros_like(AS)
         transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
+        transition_prob[AS >= SL] = 0
         plt.plot(AS, transition_prob, label=label)
     plt.title("Transition Probability for RFR, Mid Development Closed")
     plt.xlabel("Years in Stage")
@@ -58,14 +58,14 @@ def mdo_trans_prob(*args):
     #      is implemented : subtract 10 from "begin transition after X years"
     tau = 10
     # AS : age range during which succession can take place
-    for label, PS, SL, SY in args:
+    for label, PS, SY, SL in args:
         AS = np.arange(0, SL + 3*tau, tau)
         if PS < 1:
            transition_prob = (1 - PS) ** ((AS - SY) / tau)
         elif PS == 1:
             transition_prob = np.zeros_like(AS)
         transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
+        transition_prob[AS >= SL] = 0
         plt.plot(AS, transition_prob, label=label)
     plt.title("Transition Probability for RFR, Mid Development Open")
     plt.xlabel("Years in Stage")
@@ -82,14 +82,14 @@ def ldo_trans_prob(*args):
     #      is implemented : subtract 10 from "begin transition after X years"
     tau = 10
     # AS : age range during which succession can take place
-    for label, PS, SL, SY in args:
+    for label, PS, SY, SL in args:
         AS = np.arange(0, SL + 3*tau, tau)
         if PS < 1:
            transition_prob = (1 - PS) ** ((AS - SY) / tau)
         elif PS == 1:
             transition_prob = np.zeros_like(AS)
         transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
+        transition_prob[AS >= SL] = 0
         plt.plot(AS, transition_prob, label=label)
     plt.title("Transition Probability for RFR, Late Development Open")
     plt.xlabel("Years in Stage")
@@ -106,64 +106,16 @@ def ldc_trans_prob(*args):
     #      is implemented : subtract 10 from "begin transition after X years"
     tau = 10
     # AS : age range during which succession can take place
-    for label, PS, SL, SY in args:
+    for label, PS, SY, SL in args:
         AS = np.arange(0, SL + 3*tau, tau)
         if PS < 1:
            transition_prob = (1 - PS) ** ((AS - SY) / tau)
         elif PS == 1:
             transition_prob = np.zeros_like(AS)
         transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
+        transition_prob[AS >= SL] = 0
         plt.plot(AS, transition_prob, label=label)
     plt.title("Transition Probability for RFR, Late Development Closed")
     plt.xlabel("Years in Stage")
     plt.ylabel("Probability of patch remaining in Late Development Closed")
-    plt.legend()
-
-def mdo2mdc_trans_prob(*args):
-    tau = 10
-    for label, PS, SL, SY in args:
-        AS = np.arange(0, SL + 3*tau, tau)
-        if PS < 1:
-           transition_prob = (1 - PS) ** ((AS - SY) / tau)
-        elif PS == 1:
-            transition_prob = np.zeros_like(AS)
-        transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
-        plt.plot(AS, transition_prob, label=label)
-    plt.title("Transition Probability for RFR, MDO to MDC")
-    plt.xlabel("Years in Stage")
-    plt.ylabel("Probability of patch remaining in MDO")
-    plt.legend()
-
-def mdo_trans_prob_all(*args):
-    tau = 10
-    for label, PS, SL, SY in args:
-        AS = np.arange(0, SL + 3*tau, tau)
-        if PS < 1:
-           transition_prob = (1 - PS) ** ((AS - SY) / tau)
-        elif PS == 1:
-            transition_prob = np.zeros_like(AS)
-        transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
-        plt.plot(AS, transition_prob, label=label)
-    plt.title("Transition Probabilities for RFR, Mid Development Open")
-    plt.xlabel("Years in Stage")
-    plt.ylabel("Probability of patch remaining in MDO")
-    plt.legend()
-
-def ldo_trans_prob_all(*args):
-    tau = 10
-    for label, PS, SL, SY in args:
-        AS = np.arange(0, SL + 3*tau, tau)
-        if PS < 1:
-           transition_prob = (1 - PS) ** ((AS - SY) / tau)
-        elif PS == 1:
-            transition_prob = np.zeros_like(AS)
-        transition_prob[AS <= SY] = 1
-        transition_prob[AS > SL] = 0
-        plt.plot(AS, transition_prob, label=label)
-    plt.title("Transition Probabilities for RFR, Late Development Open")
-    plt.xlabel("Years in Stage")
-    plt.ylabel("Probability of patch remaining in LDO")
     plt.legend()
