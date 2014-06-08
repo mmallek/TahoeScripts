@@ -3,7 +3,6 @@ def calcCanopy(EVeg):
 	
 	yhrs = "'LPN', 'MRIP', 'RFR', 'SCN', 'SMC', 'WWP','YPN'"
 	rule1 = " \"AYHR10\" In(" + yhrs + ")"
-	
 	rule2 = " \"TOTAL_TREE_CFA\" In ('00','05','15','25','35') "
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
@@ -17,7 +16,7 @@ def calcCanopy(EVeg):
 	rule2 = "\"TOTAL_TREE_CFA\" In ('45','55','65')"
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 
 	print "common mixed complete"
 	
@@ -38,9 +37,9 @@ def calcCanopy(EVeg):
 	rule2 = "\"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" In ('45','55','65')"
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 
-	print "TT Null & CON Mixed complete"
+	print "TT Null & CON Moderate complete"
 	
 	rule2 = "\"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" In ('75','85','95')"
 	rules = rule1 + " And " + rule2
@@ -64,7 +63,7 @@ def calcCanopy(EVeg):
 	rule2 = "\"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" = 'X' And \"TREE_CFA_CLASS_1\" In('40','45','55','65')"
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 
 	rule2 = "\"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" = 'X' And \"TREE_CFA_CLASS_1\" In('75','80','85','95')"
 	rules = rule1 + " And " + rule2
@@ -95,21 +94,21 @@ def calcCanopy(EVeg):
 	yhrs = "'CMM', 'LSG', 'SAGE'"
 	rule1 = "\"AYHR10\" In(" + yhrs + ")"
 	
-	rule2 = " \"SHB_CFA\" In ('',' ','00','05','15','25','35') "
+	rule2 = " \"Develop\" = 'Early' "
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Open'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'All'", "PYTHON", "")
 
 	print "shrub open complete"
 	
-	rule2 = "\"SHB_CFA\" In ('45','55','65')"
+	rule2 = " \"Develop\" = 'Mid' "
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 
 	print "shrub mixed complete"
 	
-	rule2 = "\"SHB_CFA\" In ('75','85','95')"
+	rule2 = " \"Develop\" = 'Late' "
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
 	arcpy.CalculateField_management(EVeg, "Canopy", "'Closed'", "PYTHON", "")
@@ -118,7 +117,7 @@ def calcCanopy(EVeg):
 	
 
 
-	print "early complete"
+
 
 	# types where hardwood cover is relevant
 	yhrs = "'OAK', 'OCFW', 'MEG'"
@@ -133,7 +132,7 @@ def calcCanopy(EVeg):
 	rule2 = "\"TOTAL_TREE_CFA\" In ('45','55','65')"
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 	
 	rule2 = "\"TOTAL_TREE_CFA\" In ('75','85','95')"
 	rules = rule1 + " And " + rule2
@@ -152,7 +151,7 @@ def calcCanopy(EVeg):
 	rule2 = " \"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" In ('45','55','65')"
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 	
 	rule2 = " \"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" In ('75','85','95')"
 	rules = rule1 + " And " + rule2
@@ -172,7 +171,7 @@ def calcCanopy(EVeg):
 	rule2 = " \"TOTAL_TREE_CFA\" Is Null And \"CON_CFA\" Is Null And \"HDW_CFA\" In ('45','55','65')"
 	rules = rule1 + " And " + rule2
 	arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rules )
-	arcpy.CalculateField_management(EVeg, "Canopy", "'Mixed'", "PYTHON", "")
+	arcpy.CalculateField_management(EVeg, "Canopy", "'Moderate'", "PYTHON", "")
 	
 	rule2 = " \"TOTAL_TREE_CFA\" Is Null And \"HDW_CFA\" In ('75','85','95')"
 	rules = rule1 + " And " + rule2
@@ -201,3 +200,19 @@ def calcCanopy(EVeg):
 	arcpy.SelectLayerByAttribute_management(EVeg, "ADD_TO_SELECTION", "\"Develop\" = 'Early'")
 	arcpy.CalculateField_management(EVeg, "Canopy", "'All'", "PYTHON", "")	
 
+	print "early complete"
+
+def makecondition(EVeg):
+	rows = arcpy.UpdateCursor(EVeg)
+	for row in rows:
+		if row.getValue("Develop") == "Static":
+			row.ConditionClass2 = "Static"
+		else:
+			row.ConditionClass2 = " ".join([row.Develop, row.Canopy]) 
+		rows.updateRow(row)
+
+    # Regardless of whether the script succeeds or not, delete the row and cursor
+    if row:
+        del row
+    if rows:
+        del rows

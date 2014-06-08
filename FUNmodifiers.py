@@ -157,7 +157,7 @@ def parsemodcombine2(inlayer, cover, mod, outlayer):
         if row.getValue(cover) == 17:
             row.Landcover1 = "WWP"
         if row.getValue(cover) == 18:
-            row.Landcover1 = "SCN"
+            row.Landcover1 = "YPN"
         if row.getValue(cover) == 19:
             row.Landcover1 = "SAGE"
         if row.getValue(cover) == 20:

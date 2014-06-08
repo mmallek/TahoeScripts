@@ -2,14 +2,15 @@ import arcpy
 def calcDevelop(EVeg):
     # nulls
     #EVeg = "EVeg_070813_1545"
-    arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", "\"OS_TREE_DIAMETER_CLASS_1\" Is Null")
+    arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", """ "OS_TREE_DIAMETER_CLASS_1" Is Null""")
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
+    print "finished some early"
     
-    common = "'MEG','SCN','SMC','WWP','YPN','RFR'"
-    static = "'AGR','BAR','GRASS','MED','ROAD','URB','WAT'"
+    common = """ 'MEG','SCN','SMC','WWP','YPN','RFR' """
+    static = """ 'AGR','BAR','GRASS','MED','ROAD','URB','WAT' """
     
     # static
-    rule = "\"AYHR10\" In(" + static + ")"
+    rule =  "\"AYHR10\" In(" + static + ") "
     
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Static'", "PYTHON", "")
@@ -17,25 +18,25 @@ def calcDevelop(EVeg):
     print "finished static types"
     
     # type is early
-    rule = "\"AYHR10\" = 'EARLY'"
+    rule = "\"AYHR10\" = 'EARLY' "
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
 
     # common
     # early
-    rule = "\"AYHR10\" In(" + common + ") And \"OS_TREE_DIAMETER_CLASS_1\" In ('N','00','02','N')"
+    rule = "\"AYHR10\" In(" + common + ") And \"OS_TREE_DIAMETER_CLASS_1\" In ('N','00','02','X') "
     
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
     
     # mid
-    rule = "\"AYHR10\" In(" + common + ") And \"OS_TREE_DIAMETER_CLASS_1\" In ('07','15')"
+    rule = """ "AYHR10" In(""" + common + """) And "OS_TREE_DIAMETER_CLASS_1" In ('07','15') """
     
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Mid'", "PYTHON", "")
     
     # late
-    rule = "\"AYHR10\" In(" + common + ") And \"OS_TREE_DIAMETER_CLASS_1\" In ('25','40')"
+    rule = """ "AYHR10" In(""" + common + """) And "OS_TREE_DIAMETER_CLASS_1" In ('25','40') """
     
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Late'", "PYTHON", "")
@@ -44,17 +45,24 @@ def calcDevelop(EVeg):
     
     # LPN, OAK
     # early
-    rule = "\"AYHR10\" In('LPN','OAK') And \"OS_TREE_DIAMETER_CLASS_1\" In ('00','02')"
+    # arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", 
+        #"\"AYHR10\" In ( 'LPN' , 'OAK' ) AND \"OS_TREE_DIAMETER_CLASS_1\" In ( '00' , '02' )")
+
+    rule = """ "AYHR10" In('LPN','OAK') And "OS_TREE_DIAMETER_CLASS_1" In ('00','02') """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
+
+    print "lpn early done"
     
     # mid
-    rule = "\"AYHR10\" In('LPN','OAK') And \"OS_TREE_DIAMETER_CLASS_1\" In ('07')"
+    rule = """ "AYHR10" In('LPN','OAK') And "OS_TREE_DIAMETER_CLASS_1" ='07' """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Mid'", "PYTHON", "")
     
+    print "lpn mid done"
+
     # late
-    rule = "\"AYHR10\" In('LPN','OAK') And \"OS_TREE_DIAMETER_CLASS_1\" In ('15','25','40')"
+    rule = """ "AYHR10" In('LPN','OAK') And "OS_TREE_DIAMETER_CLASS_1" In ('15','25','40') """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Late'", "PYTHON", "")
 
@@ -62,17 +70,21 @@ def calcDevelop(EVeg):
     
     # MRIP
     # early
-    rule = "\"AYHR10\" = 'MRIP' And \"OS_TREE_DIAMETER_CLASS_1\" In ('00','02','07')"
+    rule = """ "AYHR10" = 'MRIP' And "OS_TREE_DIAMETER_CLASS_1" In ('00','02','07') """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
+
+    print "mrip early done"
     
     # mid
-    rule = "\"AYHR10\" = 'MRIP' And \"OS_TREE_DIAMETER_CLASS_1\" In ('15')"
+    rule = """ "AYHR10" = 'MRIP' And "OS_TREE_DIAMETER_CLASS_1" = '15' """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Mid'", "PYTHON", "")
     
+    print "mrip mid done"
+
     # late
-    rule = "\"AYHR10\" = 'MRIP' And \"OS_TREE_DIAMETER_CLASS_1\" In ('25','40')"
+    rule = """ "AYHR10" = 'MRIP' And "OS_TREE_DIAMETER_CLASS_1" In ('25','40') """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Late'", "PYTHON", "")
 
@@ -80,49 +92,64 @@ def calcDevelop(EVeg):
     
     # OCFW
     # early
-    rule = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_1\" In ('00','02') And \"OS_TREE_DIAMETER_CLASS_2\" In ('00','02')"
-    rule2 = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_1\" In ('00','02','N') And \"OS_TREE_DIAMETER_CLASS_2\" Is Null"
+    rule = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_1" In ('00','02') And "OS_TREE_DIAMETER_CLASS_2" In ('00','02') """
+    rule2 = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_1" In ('00','02','N') And "OS_TREE_DIAMETER_CLASS_2" Is Null """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.SelectLayerByAttribute_management(EVeg, "ADD_TO_SELECTION", rule2)
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
+
+    print "ocfw early done"
     
     # mid
-    rule = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_1\" In ('00','02') And \"OS_TREE_DIAMETER_CLASS_2\" In ('07','15','25')"
-    rule2 = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_1\" In ('07','15','25') And \"OS_TREE_DIAMETER_CLASS_2\" Is Null"
-    rule3 = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_1\" In ('07','15','25') And \"OS_TREE_DIAMETER_CLASS_2\" In ('00','02','07','15','25')"
+    rule = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_1" In ('00','02') And "OS_TREE_DIAMETER_CLASS_2" In ('07','15','25') """
+    rule2 = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_1" In ('07','15','25') And "OS_TREE_DIAMETER_CLASS_2" Is Null """
+    rule3 = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_1" In ('07','15','25') And "OS_TREE_DIAMETER_CLASS_2" In ('00','02','07','15','25') """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.SelectLayerByAttribute_management(EVeg, "ADD_TO_SELECTION", rule2)
     arcpy.SelectLayerByAttribute_management(EVeg, "ADD_TO_SELECTION", rule3)
     arcpy.CalculateField_management(EVeg, "Develop", "'Mid'", "PYTHON", "")
+
+    print "ocfw mid done"
     
     # late
-    rule = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_1\" In ('40')"
-    rule2 = "\"AYHR10\" = 'OCFW' And \"OS_TREE_DIAMETER_CLASS_2\" In ('40')"
+    rule = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_1" = '40' """
+    rule2 = """ "AYHR10" = 'OCFW' And "OS_TREE_DIAMETER_CLASS_2" = '40' """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.SelectLayerByAttribute_management(EVeg, "ADD_TO_SELECTION", rule2)
     arcpy.CalculateField_management(EVeg, "Develop", "'Late'", "PYTHON", "")
+
 
     # or tdc-2 in 40?
 
     print "OCFW finished"
     
     # SAGE
-    rule = "\"AYHR10\" = 'SAGE' And \"OS_TREE_DIAMETER_CLASS_1\" Is Null"
+    rule =""" "AYHR10" = 'SAGE' And "OS_TREE_DIAMETER_CLASS_1" Is Null """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
 
-    rule = "\"AYHR10\" = 'SAGE' And \"OS_TREE_DIAMETER_CLASS_1\" Is Not Null"
+    print "sage early done"
+
+    rule = """ "AYHR10" = 'SAGE' And "OS_TREE_DIAMETER_CLASS_1" Is Not Null """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Mid'", "PYTHON", "")
 
     print "Sage finished"
     
     # LSG
-    rule = "\"AYHR10\" = 'LSG' And \"SHB_CFA\" In(' ', '', '00','05','15','25','35','45') "
+    rule = """ "AYHR10" = 'LSG' And "SHB_CFA" In(' ', '', '00','05','15')  """
+    arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
+    arcpy.CalculateField_management(EVeg, "Develop", "'Early'", "PYTHON", "")
+
+    print "lsg early done"
+
+    rule = """ "AYHR10" = 'LSG' And "SHB_CFA" In('25','35','45')  """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Mid'", "PYTHON", "")
+
+    print "lsg mid done"
     
-    rule = "\"AYHR10\" = 'LSG' And \"SHB_CFA\" In('55','65','75','85','95')"
+    rule = """ "AYHR10" = 'LSG' And "SHB_CFA" In('55','65','75','85','95') """
     arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", rule)
     arcpy.CalculateField_management(EVeg, "Develop", "'Late'", "PYTHON", "")
 
@@ -134,8 +161,8 @@ def calcDevelop(EVeg):
     # for early/mid/late development (based on an analysis of past fire in the project area). Random numbers between 0 and 1 were 
     # generated using numpy for Python and used to assign each CMM polygon to a condition.
     
-    arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", "\"AYHR10\" = 'CMM'")
-    expression = "random.choice(['Early']*2 + ['Mid']*1 + ['Late']*7)"
+    arcpy.SelectLayerByAttribute_management(EVeg, "NEW_SELECTION", """ "AYHR10" = 'CMM' """)
+    expression = """random.choice(['Early']*2 + ['Mid']*1 + ['Late']*7) """
     codeblock = "import random"
     arcpy.CalculateField_management(EVeg, "Develop", expression, "PYTHON", codeblock)
 
