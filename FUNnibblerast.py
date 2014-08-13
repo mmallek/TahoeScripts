@@ -390,9 +390,17 @@ def parse_covcond(inlayer, covfield, condfield):
         # if early and a type that can be early, code as early
         elif row.getValue(condfield) == 10 and row.getValue(covfield) in (3,5,7,9,10,11,12,13,14,15,17,18,19,20,21,24,25,26,29,30):
             row.Condition = 10 # early all
-        # if an aspen type and condition, use condition value
-        elif row.getValue(covfield) in (6,16,22,23,31) and row.getValue(condfield) in (30,40,41,42,43):
+        # if LPN, RFR, or SMC Aspen type and condition allowed for those types, use current condition value
+        elif row.getValue(covfield) in (6,16,23) and row.getValue(condfield) in (30,40,41,42,43):
             row.Condition = row.getValue(condfield)
+        # if SCN or YPN Aspen, and early aspen (40), mid aspen (41) or late ca (43), use current condition value
+        elif row.getValue(covfield) in (22,31) and row.getValue(condfield) in (40,41,43):
+            row.Condition = row.getValue(condfield)
+        # but if SCN or YPN Aspen and a not-permitted aspen condition, revert to same stage condition
+        elif row.getValue(covfield) in (22,31) and row.getValue(condfield) == 30:
+            row.Condition = 43
+        elif row.getValue(covfield) in (22,31) and row.getValue(condfield) == 42:
+            row.Condition = 41
         # if a type that fills the full range of mid and late, use condition value
         elif row.getValue(covfield) in (5,9,10,11,13,14,15,17,18,19,21,24,25,26,29,30) and row.getValue(condfield) in (20,21,22,30,31,32):
             row.Condition = row.getValue(condfield)
@@ -423,5 +431,6 @@ def parse_covcond(inlayer, covfield, condfield):
         del row
     if rows:
         del rows
+
 
 

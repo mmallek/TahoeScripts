@@ -12,6 +12,7 @@ from arcpy.sa import *
 
 def ageprocess(inlayer, agefield, corebuffer, outlayer):
 # agefield if starting from preprocessed layer is "Age_2010_Merge"
+# corebuffer is probably 
 
     # set environment settings
     arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
@@ -44,7 +45,7 @@ def ageprocess(inlayer, agefield, corebuffer, outlayer):
     # for 10-year timestep: Int(Int(outIdw + 0.5) / 10) * 10)
     print "raster calculations complete"
 
-    arcpy.gp.Con_sa(corebuffer, outRaster, outlayer, "", "\"Value\" =1")
+    arcpy.gp.Con_sa(corebuffer, outRaster, outlayer, "", "\"Value\" >0")
     print "clip to project area"
     
     #outCon.save(outlayer)
@@ -92,6 +93,55 @@ def roundto5(inlayer, outlayer):
     outRaster = Int(Int(Raster(inlayer) + 2.5) / 5 ) * 5
     outRaster.save(outlayer)
 
+def addjoindata(inlayer, joinfield):
+    """
+    Be sure to join your raster layer to the appropriate csv table before executing this function.
+    This function has a lot of hardwired variables; review before using!
+        coverfield = 'CoverRaster8_052'
+    """
+    # set environment settings
+    arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    arcpy.env.extent = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    arcpy.env.workspace = "Y:/Tahoe/GISdata/WorkGDBCreated051214.gdb/"
+    
+    # Check out the ArcGIS Spatial Analyst extension license
+    arcpy.CheckOutExtension("Spatial")
+
+    # add new fields to store info from joined table
+    arcpy.AddField_management(inlayer, "J_CoverCode", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(inlayer, "J_ConditionCode", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    arcpy.AddField_management(inlayer, "J_MaxAge", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+
+    arcpy.AddField_management(inlayer, "Early", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
+    
+    print "fields added"
+
+    #arcpy.AddJoin_management(inlayer, "".join(['"VAT_', inlayer, '.', joinfield, '"']), "Y:/Tahoe/Age/earlyagelookuptable20140605.csv", "CoverCode", "KEEP_ALL")
+    arcpy.AddJoin_management(inlayer, joinfield, "Y:/Tahoe/Age/earlyagelookuptable20140605.csv", "CoverCode", "KEEP_ALL")
+    print "joined tables"
+
+    #cover = "".join(['"!VAT_', inlayer, ' .J_CoverCode!"'])
+    #cover = u"".join(['"VAT_', inlayer, '.J_CoverCode"'])
+    #cond = u"".join(['"VAT_', inlayer, '.J_ConditionCode"' ])
+    #maxage = u"".join(['"VAT_', inlayer, '.J_MaxAge"'])
+    cover = "".join(['VAT_', inlayer, '.J_CoverCode'])
+    cond = "".join(['VAT_', inlayer, '.J_ConditionCode' ])
+    maxage = "".join(['VAT_', inlayer, '.J_MaxAge'])
+
+    #cond = "".join([' "! ', condfield, ' !" '])
+    #maxage = "".join([' "! ', coverfield, ' !" '])
+
+    arcpy.CalculateField_management(inlayer, cover, "!CoverCode!", "PYTHON_9.3", "")
+    arcpy.CalculateField_management(inlayer, cond, "!ConditionCode!", "PYTHON_9.3", "")
+    arcpy.CalculateField_management(inlayer, maxage, "!MaxAge!", "PYTHON_9.3", "")
+    print "fields calculated"
+
+    arcpy.RemoveJoin_management(inlayer, "earlyagelookuptable20140605.csv")
+
+    
+    # Check in the ArcGIS Spatial Analyst extension license
+    arcpy.CheckInExtension("Spatial")
+
 def parsecombage(inlayer, agefield, condfield, coverfield):
     """
     For first run:
@@ -107,26 +157,23 @@ def parsecombage(inlayer, agefield, condfield, coverfield):
     
     # Check out the ArcGIS Spatial Analyst extension license
     arcpy.CheckOutExtension("Spatial")
-
-    # add new field to store results (may need to comment out if redoing code below)
-    #print "making feature layer"
-    #arcpy.MakeFeatureLayer_management(inlayer, "featurelayer")
-    print "adding field"
-    arcpy.AddField_management(inlayer, "Early", "LONG", "", "", "", "", "NULLABLE", "NON_REQUIRED", "")
     
     print "making cursor"
     # create update cursor for feature class
     rows = arcpy.UpdateCursor(inlayer)
-    # rule is that if the age is less than the max age for that cover type in early, revise the condition raster to be early
+    # rule is that if the age is less than the max age for that cover type in early, 
+    # revise the condition raster to be early
     for row in rows:
         # pull out aspen types first:
         if row.getValue(coverfield) in (6,16,22,23,31):
             if row.getValue(condfield) != 40:
-                if row.getValue(agefield) < row.getValue("MaxAge"):
+                if row.getValue(agefield) < row.getValue("J_MaxAge"):
                     row.Early = 2
+                else:
+                    row.Early = 0
         else:
             if row.getValue(condfield) > 10:
-                if row.getValue(agefield) < row.getValue("MaxAge"):
+                if row.getValue(agefield) < row.getValue("J_MaxAge"):
                     row.Early = 1
                 else:
                     row.Early = 0
@@ -161,7 +208,8 @@ def burnage(origagelayer, newagelayer, outlayer):
     # Check in the ArcGIS Spatial Analyst extension license
     arcpy.CheckInExtension("Spatial")
 
-def burnearly(origcondlayer, joinlayer, field, outlayer):
+
+def burnearly(origcondlayer, earlylayer, outlayer):
 
     # set environment settings
     arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
@@ -174,15 +222,47 @@ def burnearly(origcondlayer, joinlayer, field, outlayer):
     aspen = 40
     early = 10
 
-    out = Lookup(joinlayer, lookup_field=field)
-    
-    outCon = Con(out == 2, aspen, Con(out == 1, early, origcondlayer))
+    outCon = Con(Raster(earlylayer) == 2, aspen, Con(Raster(earlylayer) == 1, early, origcondlayer))
     outCon.save(outlayer)
 
     # Check in the ArcGIS Spatial Analyst extension license
     arcpy.CheckInExtension("Spatial")
 
+def midages(inlayer):
+    
+    # set environment settings
+    arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    arcpy.env.extent = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    arcpy.env.workspace = "Y:/Tahoe/GISdata/WorkGDBCreated051214.gdb/"
+    
+    # Check out the ArcGIS Spatial Analyst extension license
+    arcpy.CheckOutExtension("Spatial")
 
+    cov = 'CoverRaster8_052'
+
+    rows = arcpy.UpdateCursor(inlayer)
+    for row in rows:
+        if row.getValue(cov) in (3,7):
+            row.Age = 10
+        elif row.getValue(cov) in (5,9,11,24):
+            row.Age = 20
+        elif row.getValue(cov) in (6,12,16,22,23,31):
+            row.Age = 5
+        elif row.getValue(cov) in (10,21,26,30):
+            row.Age = 40
+        elif row.getValue(cov) in (13,20):
+            row.Age = 30
+        elif row.getValue(cov) in (14,):
+            row.Age = 25
+        elif row.getValue(cov) in (15,):
+            row.Age = 50
+        elif row.getValue(cov) in (17,29):
+            row.Age = 35
+        elif row.getValue(cov) in (18,19,25):
+            row.Age = 75
+        else:
+            row.Age = 99998
+        rows.updateRow(row)
 
 
 

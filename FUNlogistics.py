@@ -13,9 +13,6 @@ def log4param(inlayer, type, outlayer):
     arcpy.CheckOutExtension("spatial")
 
     x = inlayer
-    #treatment suitability - slope
-    #curve(logistic4p(x,1,.2,.2,30),0,100,ylim=c(0,1),
-    #xlab='slope (%)',ylab='probability')
 
     if type=="slope":
         left = 1
@@ -25,6 +22,30 @@ def log4param(inlayer, type, outlayer):
         
         #rule = "".join([   str(left), "+((", str(right), "-", str(left), ")/(1+Exp(", str(slope), "*(", str(inflexion), "-", x, "))))"])
         #arcpy.RasterCalculator(rule,outlayer)
+
+    if type=="suscTPI":
+        left = 0.8
+        right = 1.2
+        slope = 1
+        inflexion = 0
+
+    if type=="suitTPI":
+        left = 0.4
+        right = 1
+        slope = 1
+        inflexion = 0
+
+    if type=="roadmech":
+        left = 1
+        right = 0
+        slope = 0.015
+        inflexion = 300
+
+    if type=="roadburn":
+        left = 1
+        right = 0.1
+        slope = 0.001
+        inflexion = 5000
         
     outRas = left + ((right-left)/(1+ Exp(slope*(inflexion-Raster(x)))))
     outRas.save(outlayer)
@@ -45,4 +66,14 @@ def log4param(inlayer, type, outlayer):
 ##  #treatment suitability - slope
 ##  curve(logistic4p(x,1,.2,.2,30),0,100,ylim=c(0,1),
 ##      xlab='slope (%)',ylab='probability')
+##
+##  #treatment suitability - road proximity - all mechanical treatments
+##  curve(logistic4p(x,1,0,.015,300),0,1000,ylim=c(0,1),
+##        xlab='road proximity (m)',ylab='probability')
 ##  
+##  #treatment suitability - road proximity - prescribe fire
+##  curve(logistic4p(x,1,.1,.001,5000),0,20000,ylim=c(0,1),
+##        xlab='road proximity (m)',ylab='probability')
+##  
+
+

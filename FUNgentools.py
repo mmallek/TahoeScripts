@@ -27,7 +27,7 @@ def myslope(inlayer, outlayer):
     #outSlope.save(outlayer)
 
 def clippolys(inlayer, outlayer):
-        # set environment settings
+    # set environment settings
     arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
     arcpy.env.extent = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
     arcpy.env.workspace = "Y:/Tahoe/GISdata/WorkGDBCreated051214.gdb/"
@@ -35,3 +35,14 @@ def clippolys(inlayer, outlayer):
     # Execute Clip 
     arcpy.Clip_analysis(inlayer, "Y:/Tahoe/GISdata/TNF_RMLands_1.gdb/ProjectBoundary_10kbuff", outlayer)
 
+def killbuffer(inlayer, outlayer):
+    # set environment settings
+    arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    arcpy.env.extent = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    arcpy.env.workspace = "Y:/Tahoe/GISdata/WorkGDBCreated051214.gdb/"
+    arcpy.env.mask = mask_source
+
+    out = inlayer
+    out.save(outlayer)
+
+    

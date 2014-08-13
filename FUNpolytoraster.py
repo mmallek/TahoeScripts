@@ -48,14 +48,19 @@ def EVegpolytoraster(EVeg, field, out):
 # WWP = 17
 # YPN = 18
 
-def genpolytoraster(inlayer, field, outlayer, stream=False, um=False):
+def genpolytoraster(inlayer, field, outlayer, stream=False, um=False, chap=False, fire=False, 
+    flowlinePA=False, flowlineIE=False, flowlineI=False, road=False):
     """ 
     inlayer and outlayer need to be in quotes
+    EVeg full path is: Y:\Tahoe\GISdata\Scratch3.gdb\EVeg_070813_1545
     Field for streams should be StrOrder_Grp
-    Field for Aspen (to get one type) is NRCS_PLANT_CODE 
+    Field for Aspen as cover (to get one type) is NRCS_PLANT_CODE 
     Field for Meadow (to get one type) is STATE
     Geology layer should be preprocessed to match extent of project area
     Field for Geology100k ["Y:/Tahoe/GISdata/WorkGDBCreated051214.gdb/Geology_0523_1817"] is ORIG_LABEL
+    Field for Condition is ConditionClass2
+    Field for Aspen as condition is "CondClass"
+    Field for Chaparral is "AYHR10"
     """
     # set environment settings
     arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
@@ -85,6 +90,51 @@ def genpolytoraster(inlayer, field, outlayer, stream=False, um=False):
         print "conversion complete"
         arcpy.Delete_management("featurelayer")
         print "deleted featurelayer"
+
+    if chap:
+        arcpy.MakeFeatureLayer_management(inlayer, "featurelayer")
+        rule = """ "REGIONAL_DOMINANCE_TYPE_1" In ('BX','CL','CQ','CS','CW','KP','MN','CH','CI','CG','CM','CP','CV','CX','CY') """ 
+        arcpy.SelectLayerByAttribute_management("featurelayer", "NEW_SELECTION", rule)
+        arcpy.PolygonToRaster_conversion(in_features="featurelayer", value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)    
+        arcpy.Delete_management("featurelayer")
+
+    if fire:
+        arcpy.MakeFeatureLayer_management(inlayer, "featurelayer")        
+        rule = """ "BURNSEV" = 4 AND "BEST_ASSESS" = 'YES' """
+        arcpy.SelectLayerByAttribute_management("featurelayer", "NEW_SELECTION", rule)
+        arcpy.PolygonToRaster_conversion(in_features="featurelayer", value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)    
+        arcpy.Delete_management("featurelayer")
+
+    if flowlinePA:
+        assignmentType = "MAXIMUM_LENGTH"
+        arcpy.MakeFeatureLayer_management(inlayer, "featurelayer")
+        rule1 = """ "FCode" In (46006, 55800) """
+        arcpy.SelectLayerByAttribute_management("featurelayer", "NEW_SELECTION", rule1)
+        arcpy.PolylineToRaster_conversion(in_features="featurelayer", value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)    
+        arcpy.Delete_management("featurelayer")
+
+    if flowlineIE:
+        assignmentType = "MAXIMUM_LENGTH"
+        arcpy.MakeFeatureLayer_management(inlayer, "featurelayer")
+        rule1 = """ "FCode" In (46003,46007) """
+        arcpy.SelectLayerByAttribute_management("featurelayer", "NEW_SELECTION", rule1)
+        arcpy.PolylineToRaster_conversion(in_features="featurelayer", value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)    
+        arcpy.Delete_management("featurelayer")
+
+    if flowlineI:
+        assignmentType = "MAXIMUM_LENGTH"
+        arcpy.MakeFeatureLayer_management(inlayer, "featurelayer")
+        rule1 = """ "FCode" = 46003 """
+        arcpy.SelectLayerByAttribute_management("featurelayer", "NEW_SELECTION", rule1)
+        arcpy.PolylineToRaster_conversion(in_features="featurelayer", value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)    
+        arcpy.Delete_management("featurelayer")
+
+    if road:
+        # use field 'CREATED_BY'
+        assignmentType = "MAXIMUM_LENGTH"
+        arcpy.PolylineToRaster_conversion(in_features=inlayer, value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)    
+        #arcpy.Delete_management("featurelayer")
+
     else:
         arcpy.PolygonToRaster_conversion(in_features=inlayer, value_field=valField, out_rasterdataset=outRaster, cell_assignment=assignmentType, cellsize=cellSize)
 
