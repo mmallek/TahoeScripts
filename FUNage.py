@@ -265,7 +265,23 @@ def midages(inlayer):
         rows.updateRow(row)
 
 
+def setnonseral(inlayer, covlayer):
+    
+    # set environment settings
+    #arcpy.env.snapRaster = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    #arcpy.env.extent = "Y:/Tahoe/GISdata/Lattice_Clip30m.gdb/Lattice_Clip30m_ProjBound"
+    #arcpy.env.workspace = "Y:/Tahoe/GISdata/WorkGDBCreated051214.gdb/"
+    
+    # Check out the ArcGIS Spatial Analyst extension license
+    arcpy.CheckOutExtension("Spatial")
 
+    cov = 'covlayer
+
+    rows = arcpy.UpdateCursor(inlayer)
+    for row in rows:
+        if row.getValue(cov) in (1,2,4,8,27,28):
+            row.Value = 99998
+        rows.updateRow(row)
 
 
 
