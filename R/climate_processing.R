@@ -17,7 +17,6 @@ ccsm4 = join(ccsm4, ccsm4_r5, by=c('degree_east','degree_north','months.since.19
 ccsm4 = join(ccsm4, ccsm4_r6, by=c('degree_east','degree_north','months.since.1900.01.01'))
 
 # be sure to identify columns correctly
-ccsm4 = rename(ccsm4, replace=c('unitless' = 'pdsi1'))
 names(ccsm4)
 # define all names to be shorter and easier to understand
 colnames(ccsm4) <- c("degree_east","degree_north", "months.since.1900.01.01", "pdsi1", "pdsi2","pdsi3","pdsi4","pdsi5","pdsi6")
@@ -25,45 +24,45 @@ colnames(ccsm4) <- c("degree_east","degree_north", "months.since.1900.01.01", "p
 # keep only those records from 2010 and later, in accordance with assumptions made earlier in the project
 ccsm4 = ccsm4[ccsm4$months.since.1900.01.01 >= 1325.5,]
 # convert months to years, but round down so that 2010.6 just becomes 2010
-# so each year now has 3 entries with the same year
+# so each year is now represented by a new column that has 3 entries with the same year
 ccsm4$year = floor((ccsm4$months.since.1900.01.01 / 12) + 1900)
 
 # since we relabeled each June-July-Aug to, e.g., 2015,2015,2015
 # we can aggregate by the year and take the average value
-temp = aggregate(ccsm4[,4:9], by=list(ccsm4$degree_east,ccsm4$degree_north,ccsm4$year),mean, na.rm=TRUE)
+ccsm4 = aggregate(ccsm4[,4:9], by=list(ccsm4$degree_east,ccsm4$degree_north,ccsm4$year),mean, na.rm=TRUE)
 # aggregate messes up the column names so fix it by redefining them
-names(temp)[1:3] = c('Long','Lat','year')
+names(ccsm4)[1:3] = c('Long','Lat','year')
 # this command is just sorting the data so it's by location instead of year
-temp = temp[order(temp$Long,temp$Lat),]
+ccsm4 = ccsm4[order(ccsm4$Long,ccsm4$Lat),]
 
 # now we're preparing to aggregate into the five-year timesteps
 # we sorted the data into sequentially increasing order by location
 # so now we just add a timestep field. (2099-2010)/5 = 18   we have 21 data points.
 # this produces 1 1 1 1 1 2 2 2 2 2 etc. So each year is getting assigned to a timestep.
-temp$timestep = rep(rep(1:18, each=5), times=21)
+ccsm4$timestep = rep(rep(1:18, each=5), times=21)
 
 # now we can aggregate by timestep, keeping locations separate. taking the average here.
 # note we are aggregating each pdsi set (column) separately)
-temp = aggregate(temp[,4:9], by=list(temp$Long,temp$Lat,temp$timestep),mean, na.rm=TRUE)
+ccsm4 = aggregate(ccsm4[,4:9], by=list(ccsm4$Long,ccsm4$Lat,ccsm4$timestep),mean, na.rm=TRUE)
 # aggregate messes up the column names so we fix them here.
-names(temp)[1:3] = c('Long','Lat','timestep')
+names(ccsm4)[1:3] = c('Long','Lat','timestep')
 
 # check the range so we can pick one legit lat/long to test
-range(temp$Lat) 
-range(temp$Long)
+range(ccsm4$Lat) 
+range(ccsm4$Long)
 ### need to replace with UTMs!!!
 centroid = c(-121,40)
 
 # this should give every set of unique locations
-pdsi_pts = unique(temp[,c('Long','Lat')])
+pdsi_pts = unique(ccsm4[,c('Long','Lat')])
 
 # to calculate the inverse distance weighting, we made our own euclidean distance function
 eucdist = function(x) sqrt(sum((centroid[1] - x[1])^2,(centroid[2] - x[2])^2))
 
 # checking that this works
-# apply the distance function column-wise
+# apply the distance function column-wise; creates distances for each unique lat/long
 test = apply(pdsi_pts,1,eucdist)
-### what does this do?
+# append the distances to the data frame with the lat/longs for each data point
 pdsi_pts = cbind(pdsi_pts, test)
 # apply also doesn't come up with good names; fix it
 names(pdsi_pts)[3] = 'eucdist'
@@ -73,14 +72,17 @@ pdsi_pts$dweight = 1 / (pdsi_pts$eucdist ^ 2)
 pdsi_pts$dweight = pdsi_pts$dweight / sum(pdsi_pts$dweight)
 
 # now we have the relative weight of each location, so we want to merge that with our pdsi columns
-test2 = merge(temp, pdsi_pts)
+test2 = merge(ccsm4, pdsi_pts)
+# sort it by location
 test2 = test2[order(test2$timestep,test2$Long,test2$Lat),]
 
 # set up an empty matrix to hold the weight for each location
 pdsi_wtd = matrix(NA,length(unique(test2$timestep)),6)
 # had to make another function to do the inverse distance weighting for us
+# multiplies pdsi value for each location by the distance weight and... what does the sum do?
 idw = function(x) sum(x*temp2$dweight)
 ### what does the loop do?
+# we come out of the loop with a matrix consisting of the input values for RMLands?
 for (i in 1:length(unique(test2$timestep))) {
     temp2 = test2[test2$timestep==i,]
     pdsi_wtd[i,] = apply(temp2[4:9], 2, FUN=idw)
@@ -93,7 +95,9 @@ names(pdsi_wtd) = names(temp2[4:9])
 pdsi_wtd$timestep = unique(test2$timestep)
 
 # calculate mean and sd for each 5-year averaged pdsi value and store as objects
+### is this a to-do? need to repeat previous steps for this? or just need to grab these from previous datasheets maybe
 # for historic data
+# below is dummy data so that we could test the code
 hist_mean = apply(pdsi_wtd[,1:6], 2, mean) # change numbers to column names (everywhere!)
 hist_sd = apply(pdsi_wtd[,1:6], 2, sd)
 
@@ -117,5 +121,6 @@ for (i in 1:length(hist_mean)){
 }
 
 # verify: should all have mean of 1 (shows they used the right mean, not the same mean many times)
+# this won't be true when we use the historic mean and sd
 apply(clim_mods,2,mean)
 
