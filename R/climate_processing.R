@@ -227,3 +227,46 @@ write.csv(fclimate, "future_climate_params.csv")
 # this won't be true when we use the historic mean and sd
 apply(clim_mods,2,mean)
 
+run a regression on the trend to extract the trend line
+capture all the residuals
+do the rescale and inversion on the residuals 
+
+data = pdsi_wtd[,c(1,8)]
+test = lm(timestep~esm2m_pdsi1, data)
+summary(test)
+residuals = as.numeric(resid(test))
+
+# make empty matrix to hold this
+clim_mods_test = matrix(NA,18,1)
+clim_mods_test = make_clim_mod(residuals)
+
+# so it seems that the problem is that adding one and multiplying by 2 
+# are tricks used to get the result desired, but are not necessary
+# and under HRV circumstances these tricks cancel one another
+# so we reduced the equation and test it out
+make_clim_mod2 = function(x){
+    mu = (x-hist_mean)/2*hist_sd
+    1 - mu
+}
+clim_mods_test = matrix(NA,18,1)
+clim_mods_test = make_clim_mod2(pdsi_wtd_vals[,7])
+
+clim_mods2 = matrix(NA,length(unique(ccsm4$timestep)),7)
+
+for (i in 1:ncol(clim_mods2)){
+    clim_mods2[,i] = make_clim_mod2(pdsi_wtd_vals[,i])
+}
+
+fclimate2 = as.data.frame(clim_mods2)
+names(fclimate2)[1:6] = names(ccsm4[6:11])
+names(fclimate2)[7] = names(esm2m[6])
+
+# one more test
+# this doesn't get it totally right (values below 0 become values below 1)
+make_clim_mod3 = function(x){
+    mu = (x-hist_mean)/2*hist_sd + 1
+    1 + mean(mu) - mu
+}
+
+clim_mods_test = matrix(NA,18,1)
+clim_mods_test = make_clim_mod3(pdsi_wtd_vals[,7])
