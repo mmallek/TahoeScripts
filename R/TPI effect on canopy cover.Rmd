@@ -1,0 +1,184 @@
+---
+title: "Untitled"
+author: "Mallek"
+date: "December 2, 2014"
+output: html_document
+---
+
+
+```{r}
+ccavg.r3res.samp = read.csv('/Users/mmallek/Tahoe/R/ccavg_r3_clip_samp.csv')
+data = ccavg.r3res.samp
+PlotLevels = unique(data$cover)
+(PlotLevels = sort(PlotLevels))
+```
+
+```{r}
+
+
+for (i in PlotLevels){
+    plot(x = loopdata$tpi, 
+     y = loopdata$ccavg,
+     xlab = "TPI",
+     ylab = "Canopy Cover Average",
+     cex.lab = 1.5, pch = 16)
+    loopdata = data[data$cover==i,]
+    ml1 = lm(ccavg~tpi, loopdata)
+    MinMaxi <- range(data$tpi[loopdata$cover==i])
+    MyDatai <- data.frame(tpi=
+                              seq(from = MinMaxi[1],
+                                  to   = MinMaxi[2],
+                                  length=10),
+                          cover = i)
+    Pi <- predict(ml1, newdata = MyDatai)
+    lines(MyDatai$tpi, Pi, lty=1,col="black",lwd=2)
+}
+```
+
+This set of plots shows the simple regression line for TPI against Canopy Cover for each cover type individually.
+```{r}
+require(ggplot2)
+# all the sampled data points
+pl = ggplot(data, aes(x=tpi, y=ccavg)) + geom_point()
+pl
+# each cover type separately (facet)
+covertypes = c('CMM', 'LPN','LPN_ASP','MEG_M','MEG_U','MEG_X','MRIP',
+               'OCFW','OCFW_U','RFR_M','RFR_U','RFR_X','SCN','SMC_ASP',
+               'SMC_M','SMC_U','SMC_X',"WWP")
+covers = as.data.frame(covertypes)
+dict = as.data.frame(sort(unique(data$cover)))
+dict2 = cbind(dict, covers)
+require(plyr)
+dict2 = rename(dict2, c('sort(unique(data$cover))'='cover', 'covertypes'='covname'))
+#dict2 = rename(dict2, c('cover'='covcode'))
+#data$covname = data$cover
+
+#data2 <- match(data$covname, dict2$cover)
+data2 = join(data, dict2, by = "cover")
+
+pl5 = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point()
+pl5 + facet_wrap(~covname, ncol= 4) + geom_smooth(method='lm') 
+
+
+```
+Note that cover types 3 and 6 (Curl-leaf Mountain Mahogany and Lodgepole Pine - Aspen, respectively) only have 1 point. This is fine as we are not really interested in these types. In fact, we are really only interested in the set of types with at least 1000 ha in the study area. 
+
+```{r}
+data4 = data2[data2$cover %in% c(9,11,14,15,17,19,24,25,26)==TRUE,]
+# subset the data for regressions
+# line 1 for focal types, line 2 for all types
+#pl = ggplot(data4, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
+pl = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +    
+    ggtitle(paste("Average Canopy Cover of Focal Cover Types")) +
+        theme(axis.title.x = element_text(size=20, vjust=-1), 
+          axis.title.y = element_text(size=20, vjust=2), 
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          plot.title = element_text(size=20, vjust=2),
+          plot.margin = unit(c(1,1,1,1), "cm")) 
+    
+# each cover type separately (facet)
+pl + facet_wrap(~covname, ncol= 3) + geom_smooth(method='lm', col="black") +
+    ylab("Canopy Cover Average") + xlab("Topographic Position Index Value")
+```
+
+Next we can subset the data and run separate simple linear regression on each.
+
+```{r}
+PlotLevels2 = sort(unique(data3$cover))
+# make a list to store subsetted data
+data.cov = vector("list", 9)
+n = 1
+for(i in PlotLevels2){
+    data.cov[[n]] = subset(data2, cover==i, select=c(tpi, ccavg, cover))
+    n = n+1
+}
+```
+
+```{r}
+data.lms = vector("list", 9)
+for (i in 1:length(PlotLevels2)){
+    data.lms[[i]] = lm(ccavg~tpi, data.cov[[i]])
+}
+
+data.lms[[3]]$coefficients
+```
+
+```{r}
+newcovertypes = c('MEG_M','MEG_X','OCFW','OCFW_U','RFR_M','RFR_X','SMC_M','SMC_U','SMC_X')
+i=1
+for(i in 1:length(PlotLevels2)){
+    plot(data.cov[[i]]$tpi, data.cov[[i]]$ccavg, xlab="TPI", ylab="Average Canopy Cover", main=paste("Effect of TPI on average canopy cover \n during simulation for", newcovertypes[i]))
+    MinMaxi = range(data.cov[[i]])
+    MyDatai <- data.frame(tpi=
+                seq(from = MinMaxi[1],
+                to   = MinMaxi[2],
+                length=10))  
+    Pi <- predict(data.lms[[i]], newdata = MyDatai)
+    lines(MyDatai$tpi, Pi, lty=1,col="black",lwd=2)
+    #legend("topright", legend=newcovertypes[i])
+}
+```
+
+ggplot version of the plots
+```{r}
+require(grid)
+n=1
+for(i in PlotLevels2){
+    data3 = subset(data2, data2$cover==i)
+    coefs = data.lms[[n]]$coefficients
+    p1 = ggplot(data3, aes(x=tpi, y=ccavg, )) + geom_point(colour="blue", alpha=0.5, size=3) + theme_bw() + 
+        scale_fill_hue(c=45, l=80) + 
+        ggtitle(paste("Average Canopy Cover for", data3$covname[1], "During Simulated Historic Period" )) +
+        theme(axis.title.x = element_text(size=20, vjust=-1), 
+          axis.title.y = element_text(size=20, vjust=2), 
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          plot.title = element_text(size=20, vjust=2),
+          plot.margin = unit(c(1,1,1,1), "cm"))
+
+    p2 = p1 + ylab("Canopy Cover Average") + xlab("Topographic Position Index Value") +
+        geom_abline(intercept=coefs[1], slope=coefs[2], size=2)
+        #scale_y_continuous(limits = c(0,100)) +
+        #scale_x_continuous(limits = c(-300,300))
+    print(p2)
+    n = n+1
+    }
+
+
+
+```
+
+
+```{r}
+PlotLevels2 = sort(unique(data3$cover))
+temp = lm(ccavg~tpi, data2[data2$cover==9,])
+```
+
+Making the table...
+```{r}
+table = read.table("/Users/mmallek/Tahoe/R/cover_tpi.txt", header=TRUE, sep=',')
+subtable = table[table$Cover.Type %in% c(9,11,14,15,17,19,24,25,26)==TRUE,]
+subtable$TPI.Min.CC = 0
+subtable$TPI.Max.CC = 0
+subtable$CC.Perc.Delt = 0
+subtable$CovName = newcovertypes
+
+subtable$TPI.Min.CC[1] = data.lms[[1]]$coefficients[[1]] + subtable[subtable$Cover.Type==9,]$TPI.Min * data.lms[[1]]$coefficients[[2]]
+
+for(i in 1:length(PlotLevels2)){
+    subtable$TPI.Min.CC[i] = data.lms[[i]]$coefficients[[1]] + 
+                                subtable$TPI.Min[i] * data.lms[[i]]$coefficients[[2]]
+    subtable$TPI.Max.CC[i] = data.lms[[i]]$coefficients[[1]] + 
+                                subtable$TPI.Max[i] * data.lms[[i]]$coefficients[[2]]
+    subtable$CC.Perc.Delt[i] = (subtable$TPI.Max.CC[i] - subtable$TPI.Min.CC[i])/subtable$TPI.Min.CC[i]
+    subtable$CC.Change[i] = subtable$CC.Perc.Delt[i] * 100
+}
+subtable
+write.table(subtable, file="/Users/mmallek/Tahoe/R/cctable.txt", sep='\t')
+write.csv(subtable, file="/Users/mmallek/Tahoe/R/cctable.csv")
+
+
+```
+
+

@@ -1,0 +1,69 @@
+Fire Size Calibration
+========================================================
+Actual Data
+-----------
+```{r}
+firehistory = read.csv("/Users/mmallek/Tahoe/FireHistory/firehist.csv", header=T)
+firehistv = as.vector(firehistory$Fsize)
+fh.hist = hist(firehistv, breaks=c(0,1,10,100,1000,10000,100000))
+fh.hist$counts
+sum(fh.hist$counts)
+(fh.prop = fh.hist$counts / sum(fh.hist$counts))
+
+#remove NAs to use vector without log-transforming it
+firehistv.c = na.omit(firehistv)
+plot(density(log(firehistv.c)))
+
+```
+
+Revised Actual Data
+-------------------
+```{r}
+fires = read.table("/Users//mmallek//Tahoe/FireHistory/firehist_ha.txt", header=F)
+firesv = as.vector(fires[,1])
+firesv = na.omit(firesv)
+plot(density(log(firesv)))
+firesv.hist = hist(firesv, breaks=c(0,1,10,100,1000,10000,100000))
+firesv.hist$density
+
+```
+
+Simulated Data
+--------------
+```{r}
+source('/Users/mmallek/Tahoe/R/rmlstats0127.R')
+firesize = dsize('/Users/mmallek/Tahoe/ClusterBackup/results_0211_1044/', start.step=40, runs=10, session=1, log.size=F, breaks=c(0,1,10,100,1000,10000,100000), pool.runs=T)
+# get proportions
+firesize
+firesize = dsize('/Users/mmallek/Tahoe/ClusterBackup/results_0211_1044/', start.step=40, runs=10, session=1, log.size=F, breaks=c(0,5.5,20,135,1200,10000,100000), pool.runs=T)
+firesize
+firesizev = c(0.8347562435,0.0603606479,0.0465171946,0.0409319397,0.0136439799,0.0037899944)
+```
+
+Actual Data
+-----------
+```{r fig.width=4, fig.height=3}
+firehistory = read.csv("/Users/mmallek/Tahoe/FireHistory/firehist.csv", header=T)
+firehistv = as.vector(firehistory$Fsize)
+fh.hist = hist(firehistv, breaks=c(0,1,10,100,1000,10000,100000))
+fh.hist$counts
+sum(fh.hist$counts)
+(fh.prop = fh.hist$counts / sum(fh.hist$counts))
+
+fh.hist2 = hist(firehistv, breaks=c(0,5.5,20,135,1200,10000,100000))
+count = fh.hist2$counts
+tot = sum(fh.hist2$counts)
+(fh.prop2 = count / tot)
+bins = c(5.5,20,135,1200,10000,100000)
+```
+
+Comp Data 
+---------
+```{r fig.width=4, fig.height=3}
+fsize = cbind(fh.prop2, firesizev)
+barplot(fsize, beside=TRUE, col=c("red","blue"), xlab="bins", ylab="proportion", names.arg=c(5.5,20,135,1200,10000,100000))
+require(reshape2)
+df.long=melt(fsize)
+ggplot(df.long,aes(bins,value,fill=variable))+
+     geom_bar(stat="identity",position="dodge")
+```
