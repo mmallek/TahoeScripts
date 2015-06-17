@@ -151,13 +151,16 @@ grid.arrange(gp2, gp1)
 #second set: fragCLASS results
 
 # IMPORTANT - right now this works with making one fragstats output for each cover uniquely: no minimum ha argument exists for the class metrics
-df = fragclassout[[4]]#$SMC_X_LATE_OP$`class SRV`
 theme_set(theme_grey())
 myPalette = c('#FF3300','#FF9933','#009900','#0066CC','#009900','#FF9933','#FF3300','#333333')
+myPalette = c('#00000000','#FF3300','#FF9933','#009900','#009900','#FF9933','#FF3300','#0066CC','#333333')
+
 
 # testing code to extract one set of results at a time and get rid of extra columns
 #temp = df[[1]]$`class SRV` # early all
 #temp[,c(1:8,10)]
+
+df = fragclassout[[4]]#$SMC_X_LATE_OP$`class SRV`
 
 for (i in 1:7){
     cond = df[[i]]$`class SRV`[,c(1:8,10)]
@@ -178,15 +181,15 @@ for (i in 1:7){
             theme(legend.text = element_text(size = 24)) +
             scale_x_discrete(breaks=NULL) +
             ggtitle(paste(names(df[i]), ": ",df_metric[1,1], sep='')) + 
-            theme(legend.position = "top") +
+            #theme(legend.position = "top") +
             # for no legend uncomment next line
-            #theme(legend.position = "none") + 
+            theme(legend.position = "none") + 
             theme(plot.title = element_text(size=24,vjust=2))
         print(pl)
         ggsave(filename=paste(df_metric[1,1],names(df)[i], "srvplot","pdf",sep="."), 
-               path="/Users/mmallek/Tahoe/Report2/images/ClassFragPlots_wlegend/",
+               #path="/Users/mmallek/Tahoe/Report2/images/ClassFragPlots_wlegend/",
                # for no legend uncomment next line
-               #path="/Users/mmallek/Tahoe/Report2/images/ClassFragPlots_nolegend/",
+               path="/Users/mmallek/Tahoe/Report2/images/ClassFragPlots_nolegend/",
                width=20, height=3.9, units='in',limitsize=FALSE)    
     }  
 }
@@ -195,13 +198,21 @@ for (i in 1:7){
 
 ###############################################
 #third set: composition results (covcond)
+myPalette = c('#FF3300','#FF9933','#009900','#0066CC','#009900','#FF9933','#FF3300','#333333')
+myPalette = c('#FF330000','#FF3300','#FF9933','#009900','#009900','#FF9933','#FF3300')#,'#0066CC','#333333')
 
 theme_set(theme_bw())
-df = covcondout[[5]]#$SMC_X_LATE_OP$`class SRV`
+df = covcondout[[5]]
 df = df[,c(2:10,12)]
+
+df$diff1 = diff(df[4])
+df$diff1 = diff(df[4])
+
+                                      
 df_metric <- gather(df, key, measurement, 3:10)
 
-hrv = df_metric[df_metric$cover.type=='Mixed Evergreen - Mesic' & 
+
+temp = df_metric[df_metric$cover.type=='Mixed Evergreen - Mesic' & 
         df_metric$condition.class=='Early-All Structures' & df_metric$key!='current.%cover',]
 
 current = df_metric[df_metric$cover.type=='Mixed Evergreen - Mesic' & 
@@ -212,15 +223,23 @@ current = df_metric[df_metric$cover.type=='Mixed Evergreen - Mesic' &
 for (i in 1:length(unique(df_metric$cover.type))){
     for (j in 1:7){
         hrv = df_metric[df_metric$cover.type==unique(df_metric$cover.type)[i] & 
-            df_metric$condition.class==unique(df_metric$condition.class)[j] & df_metric$key!='current.%cover',]
+            df_metric$condition.class==unique(df_metric$condition.class)[j] & df_metric$key!='current.%cover',] 
+        hrv$diff = c(hrv$measurement[1],diff(hrv$measurement))
         current = df_metric[df_metric$cover.type==unique(df_metric$cover.type)[i] & 
             df_metric$condition.class==unique(df_metric$condition.class)[j] & df_metric$key=='current.%cover',]
-        pl = ggplot(data=df_metric, aes(x=condition.class, y=measurement, fill=key)) +
-            geom_bar(data=hrv, stat="identity") + coord_flip() +
-            geom_point(data=current, shape=124, size=10,aes(y=measurement),show_guide=FALSE) +
-            scale_fill_manual(values=c('tan', 'tan2', 'brown', 'lightsalmon', 'green', 'darkgreen', 'lightgreen','black'),
+        per50 = df_metric[df_metric$cover.type==unique(df_metric$cover.type)[i] & 
+            df_metric$condition.class==unique(df_metric$condition.class)[j] & df_metric$key=='srv50%',]
+        temp = bind_rows(per50, current)
+        #names(per50)[4] = "meas50"
+        pl = ggplot(data=df_metric, aes(x=condition.class)) +
+            geom_bar(data=hrv, stat="identity", aes(y=diff, fill=key)) + coord_flip() +
+            #geom_point(data=per50, shape=124, size=15,aes(x=condition.class,y=measurement),show_guide=FALSE, color="#0066CC") +
+            #geom_point(data=current, shape=124, size=10,aes(x=condition.class,y=measurement),show_guide=FALSE, color="black") +
+            geom_point(data=temp, shape=124, size=10, aes(y=measurement, colour=key)) +
+            scale_fill_manual(values=myPalette,
                               name='Simulated Range of \nVariability Percentile',
-                              labels=c("0th", "5th", "25th","50th", "75th", "95th", "100th",'Current'),drop=FALSE) +
+                             labels=c("","0th-5th", "5th-25th", "25th-50th","50th-75th", "75th-95th", "95th-100th"),drop=T) +
+            scale_colour_manual(values=c("#0066CC","#333333"), labels=c("50th", "Current"),name="") +
             ylab("Percent of Cover Extent") +
             theme(axis.title.y = element_blank(),
                   axis.title.x = element_text(size=16),
@@ -229,16 +248,19 @@ for (i in 1:length(unique(df_metric$cover.type))){
             theme(legend.title=element_text(size=16)) +
             theme(legend.text = element_text(size = 16)) +
             theme(legend.position = "top") +
-            scale_x_discrete(breaks=NULL) +
+            #scale_x_discrete(breaks=NULL) +
             # for no legend uncomment next line
-            #theme(legend.position = "none") +
+            #theme(legend.position = "none") 
+            # for no title comment next lines
             ggtitle(unique(df_metric$cover.type)[i]) + 
             theme(plot.title = element_text(size=24,vjust=1))
             
             print(pl)
             ggsave(filename=paste(unique(df_metric$cover.type)[i],unique(df_metric$condition.class)[j],"srvplot","pdf",sep="."), 
                    path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots/",
-                   width=10.1,height=2.5, units='in',limitsize=FALSE)
+                   # for no legend uncomment next line
+                   #path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots_nolegend/",
+                   width=13,height=3.25, units='in',limitsize=FALSE)
         }
     }
 
