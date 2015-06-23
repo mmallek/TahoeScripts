@@ -233,13 +233,13 @@ for (i in 1:length(unique(df_metric$cover.type))){
         #names(per50)[4] = "meas50"
         pl = ggplot(data=df_metric, aes(x=condition.class)) +
             geom_bar(data=hrv, stat="identity", aes(y=diff, fill=key)) + coord_flip() +
-            #geom_point(data=per50, shape=124, size=15,aes(x=condition.class,y=measurement),show_guide=FALSE, color="#0066CC") +
-            #geom_point(data=current, shape=124, size=10,aes(x=condition.class,y=measurement),show_guide=FALSE, color="black") +
-            geom_point(data=temp, shape=124, size=10, aes(y=measurement, colour=key)) +
+            ##geom_point(data=per50, shape=124, size=15,aes(x=condition.class,y=measurement),show_guide=FALSE, color="#0066CC") +
+            ##geom_point(data=current, shape=124, size=10,aes(x=condition.class,y=measurement),show_guide=FALSE, color="black") +
+            geom_point(data=temp, shape=124, size=15, aes(y=measurement, colour=key)) +
+            scale_colour_manual(values=c("#0066CC","#333333"), labels=c("50th", "Current"),name="") +
             scale_fill_manual(values=myPalette,
                               name='Simulated Range of \nVariability Percentile',
                              labels=c("","0th-5th", "5th-25th", "25th-50th","50th-75th", "75th-95th", "95th-100th"),drop=T) +
-            scale_colour_manual(values=c("#0066CC","#333333"), labels=c("50th", "Current"),name="") +
             ylab("Percent of Cover Extent") +
             theme(axis.title.y = element_blank(),
                   axis.title.x = element_text(size=16),
@@ -247,20 +247,23 @@ for (i in 1:length(unique(df_metric$cover.type))){
                   axis.text.y  = element_text(size=16)) +
             theme(legend.title=element_text(size=16)) +
             theme(legend.text = element_text(size = 16)) +
-            theme(legend.position = "top") +
+            #theme(legend.position = "top") +
             #scale_x_discrete(breaks=NULL) +
             # for no legend uncomment next line
-            #theme(legend.position = "none") 
+            theme(legend.position = "none") 
             # for no title comment next lines
-            ggtitle(unique(df_metric$cover.type)[i]) + 
-            theme(plot.title = element_text(size=24,vjust=1))
+            #ggtitle(unique(df_metric$cover.type)[i]) + 
+            #theme(plot.title = element_text(size=24,vjust=1))
             
             print(pl)
             ggsave(filename=paste(unique(df_metric$cover.type)[i],unique(df_metric$condition.class)[j],"srvplot","pdf",sep="."), 
-                   path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots/",
-                   # for no legend uncomment next line
-                   #path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots_nolegend/",
-                   width=13,height=3.25, units='in',limitsize=FALSE)
+                #path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots/",
+                # for no legend uncomment next line
+                path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots_nolegend/",
+                #width=13,height=3.1, units='in',limitsize=FALSE)
+                # for no legend uncomment next line
+                width=13,height=1.2, units='in',limitsize=FALSE)
+
         }
     }
 

@@ -1,0 +1,242 @@
+---
+title: "Untitled"
+author: "Mallek"
+date: "December 2, 2014"
+output: html_document
+---
+Load necessary libraries
+```{r}
+require(ggplot2)
+require(grid)
+```
+Histogram of percent of landscape disturbed by wildfire during the simulation.
+
+```{r}
+theme_set(theme_bw())
+darea = read.csv('/Users/mmallek/Tahoe/RMLands/results/hrv/Wildfire_darea_trajectory.csv', header=TRUE)
+
+darea = darea[,4]
+# ocfw row 463:923
+darea.ocfw = darea[463:923,4]
+
+## new code
+darea = dareaout[[1]]
+## end new code
+
+climate = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/climate_mean_5yr_660.csv', header=TRUE)
+climate = climate[2]
+climate = climate[1:500,]
+climate = climate[40:500]
+require(ggplot2)
+
+climdarea = as.data.frame(climate)
+climdarea = cbind(climdarea, darea)
+#climdarea = cbind(climdarea, darea.ocfw)
+
+y = darea.ocfw
+
+p = ggplot(climdarea, aes(x=climate, y=darea)) + 
+    theme_bw() + geom_point() + geom_smooth(method='lm') +
+    theme(axis.title.x = element_text(size=30, vjust=-2), 
+                       axis.title.y = element_text(size=30, vjust=2), 
+                       plot.title = element_text(size=30, vjust=2), 
+                                  axis.text.y = element_text(size=20), 
+                        axis.text.x = element_text(size=20), 
+                       plot.margin = unit(c(1,1,2,1), "cm")) + 
+    ggtitle("Relationship between climate parameter and disturbed area per timestep") +
+    ylab("Percent of Landscape Disturbed") + xlab("Climate Parameter") 
+    
+p
+
+p2 = ggplot(climdarea, aes(x=darea)) + geom_histogram(binwidth=.5) + 
+    theme_bw() + 
+     theme(axis.title.x = element_text(size=30, vjust=-2), 
+                       axis.title.y = element_text(size=30, vjust=2), 
+                       plot.title = element_text(size=30, vjust=2), 
+                        axis.text.y = element_text(size=20), 
+                        axis.text.x = element_text(size=20), 
+                       plot.margin = unit(c(1,1,2,1), "cm")) + 
+    ggtitle("Disturbed Area Percentage Frequency") +
+    ylab("Count of Timesteps") + xlab("Percent of Landscape Disturbed") 
+p2   
+median(climdarea[,2])
+```
+
+For fancy double plot of climate and darea
+
+```{r}
+climdarea$timestep = seq(40,500,1)
+rect1<- data.frame (xmin=260, xmax=265, ymin=-Inf, ymax=Inf)
+rect2 <- data.frame (xmin=290, xmax=295, ymin=-Inf, ymax=Inf)
+require(gridExtra)
+#bottom plot
+p3 = ggplot() + theme_gray() + geom_line(data=climdarea, aes(timestep, climate)) + 
+    scale_x_continuous(limits = c(250,311)) +
+    #scale_y_continuous(limits=c(0.6,1.6)) +
+    #labs(x="Timestep") + ylab("Climate Parameter") +
+    xlab("Timestep") + ylab("Climate Parameter") +
+    geom_rect(data=rect1,aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=0.1,fill="blue")+
+    geom_rect(data=rect2,aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax),alpha=0.1,fill="blue")+
+    theme(plot.margin = unit(c(-1,0.5,0.5,0.5), "lines")) +
+    theme(axis.title.x = element_text(size=30, vjust=0), 
+           axis.title.y = element_text(size=20, vjust=1.5), 
+           #plot.title = element_text(size=30, vjust=2), 
+           axis.text.y = element_text(size=15), 
+           axis.text.x = element_text(size=20))
+# top plot
+p4 = ggplot() + theme_gray() + geom_line(data=climdarea, aes(timestep, darea)) + 
+    ggtitle("Disturbed Area, Climate Parameter by Simulation Timestep") +
+    scale_x_continuous(limits = c(250,311)) +
+    scale_y_continuous(limits=c(0,80)) +
+    geom_rect(data=rect1,aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax),alpha=0.1,fill="blue") +
+    geom_rect(data=rect2,aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax),alpha=0.1,fill="blue")+
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_blank(),
+          plot.title=element_blank(),
+          axis.ticks.x=element_blank(),
+          #plot.margin = unit(c(0.5,0.5,-1,0.5), "lines")) +
+          plot.margin = unit(c(0.5,0.5,-1,0.5), "lines")) +
+
+    ylab("Disturbed area % of landscape") + theme(axis.title.y = element_text(size=20, vjust=1.5),
+                                                  #axis.title.x = element_text(size=20, vjust=2),
+                                                  axis.text.y = element_text(size=15), 
+                                                    axis.text.x = element_text(size=20))
+
+
+gp1 = ggplot_gtable(ggplot_build(p3)) # warning about missing values here
+gp2 = ggplot_gtable(ggplot_build(p4)) # warning about missing values here
+maxWidth = unit.pmax(gp1$widths[2:3], gp2$widths[2:3])
+gp1$widths[2:3] <- maxWidth
+gp2$widths[2:3] <- maxWidth
+grid.arrange(gp2, gp1) 
+
+
+```
+
+Log-normal distribution?
+```{r}
+log.glm = lm(darea ~ climate, data=climdarea)
+plot(climate,darea,xlab="Climate",ylab="Disturbed Area")
+curve(predict(log.glm, data.frame(climate=x), type="response"), add=TRUE)
+temp = fitdistr(darea, densfun="beta", start=1)
+```
+
+```{r}
+for (i in PlotLevels){
+    MinMaxi <- range(climdarea$climate)
+    MyDatai <- data.frame(clim=
+                              seq(from = MinMaxi[1], 
+                              to   = MinMaxi[2], length=10))
+    Pi <- predict(log.glm, newdata = MyDatai)
+    lines(MyDatai$tpi, Pi, lty=1,col="black",lwd=2)
+}
+```
+
+#### Also do disturbance size
+```{r}
+#dsize = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/dsize.csv', header=TRUE)
+dsize = read.csv('/Users/mmallek/Tahoe/RMLands/results/hrv/dsize.csv', header=TRUE)
+# gets only the sizes for the correct session and timesteps past 40
+dsize = subset(dsize, session.id==2 & timestep.id >= 40)
+
+# plots timestep on x and size on y
+p = ggplot(dsize, aes(x=size.obs, y=timestep.id)) + geom_point() +
+    theme_bw()
+
+
+
+climate = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/climate_mean_5yr_660.csv', header=TRUE)
+climate = climate[2] #isolate climate modifier
+climate = climate[1:500,]  # for some reason have to do it this way
+#climate = climate[40:500,] # for some reason it doesn't work to subset climate
+require(ggplot2)
+require(grid)
+require(plyr)
+require(scales)
+
+pdsi = climate[dsize$timestep.id] # get climate value for each size and timestep combination
+
+climdsize = as.data.frame(pdsi) # make a data frame with 1 column
+climdsize = cbind(climdsize, dsize$size.obs) # add to it
+climdsize = rename(climdsize, c("pdsi"="clim", "dsize$size.obs"="dsize")) # give better names
+climdsize$size.ha = climdsize$dsize * 30 * 30 * 0.0001 # add area in ha
+
+# plot it - next line was what existed when I opened it, but changed the log and got rid of the smooth
+#p2 = ggplot(climdsize, aes(x=pdsi, y=log(size.ha))) + geom_point() + geom_smooth(method='lm') +
+p2 = ggplot(data=climdsize, aes(x=clim,y=size.ha)) + geom_point()  +
+    theme_bw() +theme(axis.title.x = element_text(size=30, vjust=-2), 
+                       axis.title.y = element_text(size=30, vjust=2), 
+                       plot.title = element_text(size=30, vjust=2), 
+                        axis.text.y = element_text(size=20), 
+                        axis.text.x = element_text(size=20), 
+                       plot.margin = unit(c(1,1,2,1), "cm")) + 
+    #scale_y_continuous(labels=comma) +
+    ggtitle("Relationship between climate parameter and disturbance size") +
+    ylab("Individual Wildfire Size (Ha)") + xlab("Climate Parameter")
+# gives a warning that there are missing values
+
+p3 = ggplot(climdsize, aes(x=dsize$size.obs)) + geom_histogram()
+p3
+
+p4 =  ggplot(climdsize, aes(x=log(dsize$size.obs))) + geom_histogram() +
+    theme_bw()
+
+p = ggplot(climdarea, aes(x=climate, y=darea)) + 
+    theme_bw() + ggtitle("Climate Parameter with Disturbed Area") +
+    ylab("Percent of Landscape Disturbed") + xlab("Climate Parameter") +
+    geom_point() + geom_smooth(method='lm') 
+p
+
+p2 = ggplot(climdarea, aes(x=darea)) + geom_histogram(binwidth=.5) +
+        theme_bw() + ggtitle("Disturbed Area Percentage Frequency") +
+        ylab("Count of Timesteps") + xlab("Percent of Landscape Disturbed") 
+p2    
+```
+
+histograms of disturbed area by cover type
+```{r}
+ndarea = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv')
+ndarea = subset(ndarea, session.id==20 & timestep.id >= 40)     
+covers = c(9,11,14,15,17,19,24,25,26)
+
+darea.df = data.frame(matrix(NA, nrow=4149, ncol=3))
+names(darea.df) = c("covcode","timestep", "distarea")
+n=1
+
+for(i in covers){
+    covdarea = subset(ndarea,cov.id==i)
+    for (j in 40:500){
+        covdarea2 = subset(covdarea, timestep.id==j)
+        thesum = sum(covdarea2$mort.any)
+        hect = thesum * 30 * 30 * 0.0001
+        darea.df$covcode[n] = i
+        darea.df$timestep[n] = j
+        darea.df$distarea[n] = hect
+        n=n+1
+    }
+}
+
+# plot
+newcovertypes = c('MEG_M','MEG_X','OCFW','OCFW_U','RFR_M','RFR_X','SMC_M','SMC_U','SMC_X')
+n=1
+for(i in covers){
+    covdarea = subset(darea.df,covcode==i)
+    p2 = ggplot(covdarea, aes(x=distarea)) + geom_histogram(aes(y=..density..), col="black", fill="grey31") + #binwidth=) + 
+    theme_bw() + geom_density(col="red") +
+    theme(axis.title.x = element_text(size=20, vjust=-2), 
+            axis.title.y = element_text(size=20, vjust=2), 
+            plot.title = element_text(size=20, vjust=2), 
+            plot.margin = unit(c(1,1,2,1), "cm")   ) +
+    labs(title=newcovertypes[n]) +
+    ylab("Density") + xlab("Number of Disturbed Hectares") 
+    n=n+1
+    print(p2)
+}
+
+
+ggplot(darea.df, aes(covcode, (distarea/174830), colour = as.factor(covcode))) +
+  #geom_density()
+    #geom_histogram(binwidth=100, position="identity", alpha=0.5)
+    geom_boxplot()
+```
+
