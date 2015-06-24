@@ -25,13 +25,21 @@ dareaout = darea(path=hrv000path,
   start.step=40,
   stop.step=NULL,
   step.length=5,
+  #covtype="Mixed Evergreen - Mesic",
+  #covtype="Mixed Evergreen - Xeric",
+  #covtype="Oak-Conifer Forest and Woodland",
   #covtype="Oak-Conifer Forest and Woodland - Ultramafic",
+  #covtype="Red Fir - Mesic",
+  #covtype="Red Fir - Xeric",
+  #covtype="Sierran Mixed Conifer - Mesic",
+  #covtype="Sierran Mixed Conifer - Ultramafic",
+  covtype="Sierran Mixed Conifer - Xeric",
   cell.size=30,
-  y.scale='poop',
+  y.scale='percent',
   col.bar=c('blue','light blue','turquoise'),
   col.sub='brown',
   #cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
-  cex.main=1.5,cex.sub=1.25,cex.legend=1,cex.lab=1.25,
+  cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
   outfile=F)
 
 # calculate number of fires per timestep
@@ -102,27 +110,27 @@ out<-rotation(path=hrv000path,
   cell.size=30,
   outfile=F)
 
-out<-preturn(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
-  session=20,
+out<-preturn(path=hrv000path,
+  session=2,
   runs=NULL,
   pool.runs=TRUE,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
-  cover.names=c('Oak-Conifer Forest and Woodland - Ultramafic'),
-  cover.min.ha=0,
+  #cover.names=c('Oak-Conifer Forest and Woodland - Ultramafic'),
+  cover.min.ha=1000,
   y.scale='percent',
   col.bars=c('yellow','green','blue'),
   col.sub='brown',
   cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
-  legendlocale='top',
-  outfile=F)
+  legendlocale='topleft',
+  outfile=T)
   
-covcondout<-covcond(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
-  sessions=20,
+covcondout<-covcond(path=hrv000path,
+  sessions=2,
   var='srv50%',
   runs=NULL,
-  start.step=40,
+  start.step=0,
   stop.step=500,
   cell.size=30,
   #cover.names=c('Mixed Evergreen - Mesic'),
@@ -144,11 +152,11 @@ for(i in 1:nrow(covcondtab)){
 newcovcondtab = aggregate(covcondtab, by=stage.name, FUN=sum)
 
                        
-covcondout<-covcond.plot(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
-  session=16,
+covcondout<-covcond.plot(path=hrv000path,
+  session=2,
   var='srv50%',
   runs=001,
-  start.step=0,
+  start.step=40,
   stop.step=NULL,
   step.length=5,
   type='stack',
@@ -158,19 +166,21 @@ covcondout<-covcond.plot(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/c
   col.bars=c('black','tan','green','orange','brown','lightsalmon',
     'darkgreen','lightgreen','yellow','yellow3','yellow4','wheat'),
   col.sub='brown',
-  cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
+  cex.main=2,cex.sub=1.25,cex.legend=0.75,cex.lab=3.5,
   outfile=F,
   save.figs=F)
 
+fraghrv000 = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session000/'
 
-fraglandout = fragland(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session016/',
+fraglandout = fragland(path=fraghrv000,
   #infile='classland_session016_res.land',
-  infile='classland_session016_res.land',
-  LID.path='E:\\mallek\\results\\',
-  scenarios='new',
-  sessions=NULL,
+  infile='classland_session000_20150620.land',
+  #Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
+  LID.path='Z:\\Working\\maritza\\',
+  scenarios='hrv',
+  sessions=000,
   sessions.name='session',
-  runs=NULL,
+  runs=001,
   runs.name='run',
   #metrics=c('PD','AI'),
   #var='srv50%',
@@ -178,16 +188,15 @@ fraglandout = fragland(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_
   stop.step=NULL,
   outfile=F)
 
-# 
 
-fragland.plot(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/mmallek/Tahoe/Fragstats/',
-  infile='classland_ccsm2_r1_20150529.land', #classland_session016_res.land',
-  LID.path='Z:\\Working\\',
-  scenarios='maritza',
-  sessions=NULL,
-  sessions.name='ccsm2_run1_finalgrids',
+fragland.plot(path=fraghrv000,#'/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/mmallek/Tahoe/Fragstats/',
+  infile='classland_session000_20150620.land', #classland_session016_res.land',
+  LID.path='Z:\\Working\\maritza\\',
+  scenarios='hrv',#'maritza',
+  sessions=000,#NULL,
+  sessions.name='session',#'ccsm2_run1_finalgrids',
   runs=NULL,
-  runs.name='classland_session016_res.land',
+  runs.name='run',#'classland_session016_res.land',
   #metrics=c('PD','AI'),
   start.step=40,
   stop.step=NULL,
@@ -195,7 +204,7 @@ fragland.plot(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/
   quantiles=c(0.05,0.95),
   col.line='dark blue',col.sub='brown',
   cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
-  save.figs=F)
+  save.figs=T)
 
 fragland.pdf.plot(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
   infile='classland_session014_res.land',

@@ -195,11 +195,12 @@ p2
 
 histograms of disturbed area by cover type
 ```{r}
-ndarea = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv')
-ndarea = subset(ndarea, session.id==20 & timestep.id >= 40)     
+#ndarea = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv')
+ndarea = read.csv(paste(hrv000path,'darea.csv',sep=''))
+ndarea = subset(ndarea, session.id==2 & timestep.id >= 40)     
 covers = c(9,11,14,15,17,19,24,25,26)
 
-darea.df = data.frame(matrix(NA, nrow=4149, ncol=3))
+darea.df = data.frame(matrix(NA, nrow=4149, ncol=3)) #4149 is 461 * 9, or timesteps * number of cover types
 names(darea.df) = c("covcode","timestep", "distarea")
 n=1
 
@@ -223,9 +224,9 @@ for(i in covers){
     covdarea = subset(darea.df,covcode==i)
     p2 = ggplot(covdarea, aes(x=distarea)) + geom_histogram(aes(y=..density..), col="black", fill="grey31") + #binwidth=) + 
     theme_bw() + geom_density(col="red") +
-    theme(axis.title.x = element_text(size=20, vjust=-2), 
-            axis.title.y = element_text(size=20, vjust=2), 
-            plot.title = element_text(size=20, vjust=2), 
+    theme(axis.title.x = element_text(size=30, vjust=-2), 
+            axis.title.y = element_text(size=30),#, vjust=2), 
+            plot.title = element_text(size=30, vjust=2), 
             plot.margin = unit(c(1,1,2,1), "cm")   ) +
     labs(title=newcovertypes[n]) +
     ylab("Density") + xlab("Number of Disturbed Hectares") 
