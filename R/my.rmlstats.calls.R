@@ -4,7 +4,7 @@
 #set working directory
 setwd('/Users/mmallek/Tahoe/RMLands/results/hrv')
 setwd('/Users/mmallek/Tahoe/R/Rplots/November2014')
-hrv000path='/Users/mmallek/Tahoe/RMLands/results/hrv/'
+hrv001path='/Users/mmallek/Tahoe/RMLands/results/hrv/'
 #sessions = 2 for the hrv
 
 #must source the rmlstats library
@@ -18,7 +18,7 @@ for(i in 1:length(covtypes)){
 
 # use covtype argument if you want results for a single cover type, or set of cover types
 
-dareaout = darea(path=hrv000path,
+dareaout = darea(path=hrv001path,
   sessions=2,
   var='mean',
   runs=001,
@@ -33,7 +33,7 @@ dareaout = darea(path=hrv000path,
   #covtype="Red Fir - Xeric",
   #covtype="Sierran Mixed Conifer - Mesic",
   #covtype="Sierran Mixed Conifer - Ultramafic",
-  covtype="Sierran Mixed Conifer - Xeric",
+  #covtype="Sierran Mixed Conifer - Xeric",
   cell.size=30,
   y.scale='percent',
   col.bar=c('blue','light blue','turquoise'),
@@ -99,7 +99,7 @@ out<-dsize(path=hrv000path,
 x<-read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/dsize.csv',header=TRUE)
 x = x[,session.id==20]
 
-out<-rotation(path=hrv000path,
+out<-rotation(path=hrv001path,
   sessions=2,
   runs=1,
   pool.runs=TRUE,
@@ -110,7 +110,7 @@ out<-rotation(path=hrv000path,
   cell.size=30,
   outfile=F)
 
-out<-preturn(path=hrv000path,
+out<-preturn(path=hrv001path,
   session=2,
   runs=NULL,
   pool.runs=TRUE,
@@ -178,7 +178,7 @@ fraglandout = fragland(path=fraghrv000,
   #Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
   LID.path='Z:\\Working\\maritza\\',
   scenarios='hrv',
-  sessions=000,
+  sessions=001,
   sessions.name='session',
   runs=001,
   runs.name='run',
@@ -189,11 +189,11 @@ fraglandout = fragland(path=fraghrv000,
   outfile=F)
 
 
-fragland.plot(path=fraghrv000,#'/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/mmallek/Tahoe/Fragstats/',
+fragland.plot(path=fraghrv001,#'/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/mmallek/Tahoe/Fragstats/',
   infile='classland_session000_20150620.land', #classland_session016_res.land',
   LID.path='Z:\\Working\\maritza\\',
   scenarios='hrv',#'maritza',
-  sessions=000,#NULL,
+  sessions=001,#NULL,
   sessions.name='session',#'ccsm2_run1_finalgrids',
   runs=NULL,
   runs.name='run',#'classland_session016_res.land',
