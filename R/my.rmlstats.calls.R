@@ -126,7 +126,7 @@ out<-preturn(path=hrv001path,
   legendlocale='topleft',
   outfile=T)
   
-covcondout<-covcond(path=hrv000path,
+covcondout<-covcond(path=hrv001path,
   sessions=2,
   var='srv50%',
   runs=NULL,
@@ -170,11 +170,11 @@ covcondout<-covcond.plot(path=hrv000path,
   outfile=F,
   save.figs=F)
 
-fraghrv000 = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session000/'
+fraghrv001 = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session001/'
 
-fraglandout = fragland(path=fraghrv000,
+fraglandout = fragland(path=fraghrv001,
   #infile='classland_session016_res.land',
-  infile='classland_session000_20150620.land',
+  infile='classland_session001_20150624.land',
   #Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
   LID.path='Z:\\Working\\maritza\\',
   scenarios='hrv',
@@ -190,7 +190,7 @@ fraglandout = fragland(path=fraghrv000,
 
 
 fragland.plot(path=fraghrv001,#'/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/mmallek/Tahoe/Fragstats/',
-  infile='classland_session000_20150620.land', #classland_session016_res.land',
+  infile='classland_session001_20150624.land', #classland_session016_res.land',
   LID.path='Z:\\Working\\maritza\\',
   scenarios='hrv',#'maritza',
   sessions=001,#NULL,
@@ -254,7 +254,7 @@ fragclassout = fragclass(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_histori
       var='srv50%',
       start.step=40,
       stop.step=NULL,
-      outfile=F)
+      outfile=T)
 
 fragclass.plot(path='/Users/mmallek/Tahoe/Fragstats/',
                inland='classland_session016_res.land',

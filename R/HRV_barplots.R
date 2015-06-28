@@ -16,8 +16,8 @@ require(ggplot2)
 # - key: Name of new key column (made from names of data columns)
 # - value: Name of new value column
 # - ...: Names of source columns that contain values
-df_pd = df[1,]
-data_long <- gather(df_pd, key, value, 2:9)
+df_pd = df[1,] # only PD, for testing
+#data_long <- gather(df_pd, key, value, 2:9)
 data_long <- gather(df, key, value, 2:9)
 data_long <- gather(dfnosimi, key, value, 2:9)
 
@@ -46,6 +46,8 @@ ggplot(data=data_long, aes(x=landscape.metric, y=value)) +
 # doesn't work when data are already percentiled
 ggplot(data=data_long[1:7,], aes(x=landscape.metric[1:7], y=value[1:7])) +
     geom_boxplot() + geom_point(aes(col=key))
+##########################
+# use this code for fragland
 
 # all the plots - DONE
 df = fraglandout[[3]]
@@ -76,9 +78,10 @@ for(i in 1:nrow(df)){
     print(pl)
     ggsave(filename=paste(df_metric[1,1],"srvplot","pdf",sep="."),
            path="/Users/mmallek/Tahoe/Report2/images/LandscapeFragPlots_wlegend/",
+           width=16, height=3.7, units='in',limitsize=FALSE)
            # if no legend uncomment line below
            #path="/Users/mmallek/Tahoe/Report2/images/LandscapeFragPlots_nolegend/",
-           width=16, height=2.5, units='in',limitsize=FALSE)
+           #width=16, height=2.5, units='in',limitsize=FALSE)
 }
 
 
@@ -198,6 +201,10 @@ for (i in 1:7){
 
 ###############################################
 #third set: composition results (covcond)
+################################################
+require(ggplot2)
+require(tidyr)
+require(dplyr)
 myPalette = c('#FF3300','#FF9933','#009900','#0066CC','#009900','#FF9933','#FF3300','#333333')
 myPalette = c('#FF330000','#FF3300','#FF9933','#009900','#009900','#FF9933','#FF3300')#,'#0066CC','#333333')
 
@@ -206,7 +213,7 @@ df = covcondout[[5]]
 df = df[,c(2:10,12)]
 
 df$diff1 = diff(df[4])
-df$diff1 = diff(df[4])
+#df$diff1 = diff(df[4])
 
                                       
 df_metric <- gather(df, key, measurement, 3:10)
@@ -248,7 +255,7 @@ for (i in 1:length(unique(df_metric$cover.type))){
             theme(legend.title=element_text(size=16)) +
             theme(legend.text = element_text(size = 16)) +
             #theme(legend.position = "top") +
-            #scale_x_discrete(breaks=NULL) +
+            ###scale_x_discrete(breaks=NULL) +
             # for no legend uncomment next line
             theme(legend.position = "none") 
             # for no title comment next lines
