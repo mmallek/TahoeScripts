@@ -241,3 +241,24 @@ ggplot(darea.df, aes(covcode, (distarea/174830), colour = as.factor(covcode))) +
     geom_boxplot()
 ```
 
+### Disturbance size histogram
+```{r}
+firesize = c(0.837, 0.063, 0.047, 0.041, 0.011, 0.001)
+firesize = as.data.frame(firesize)
+firesize$bins = c("0-1", "1-10", "10-100", "100-1000", "1000-10000", "10000-100000")
+names(firesize)[1] = "observed"
+
+pl = ggplot(firesize, aes(x=factor(bins), y=observed))
+pl + geom_bar(stat="identity") + theme_bw() + ylab("Proportion of Fires") + 
+    xlab("Fire Size") +
+    theme(axis.title.x = element_text(size=30, vjust=-2), 
+          axis.title.y = element_text(size=30, vjust=2),
+          axis.text.x = element_text(size=10),
+          axis.text.y = element_text(size=10),
+          plot.title = element_text(size=30, vjust=2),
+          plot.margin = unit(c(1,1,2,1), "cm")   
+          ) 
+
+```
+
+
