@@ -7,15 +7,19 @@ output: html_document
 
 
 ```{r}
-ccavg.r3res.samp = read.csv('/Users/mmallek/Tahoe/R/ccavg_r3_clip_samp.csv')
+#ccavg.r3res.samp = read.csv('/Users/mmallek/Tahoe/R/ccavg_r3_clip_samp.csv')
+ccavg.r3res.samp = read.csv('/Users/mmallek/Tahoe/GISdata/HRV_201506/ccavg_r3res_smooth_clip_20150701_samp.csv')
 data = ccavg.r3res.samp
 PlotLevels = unique(data$cover)
 (PlotLevels = sort(PlotLevels))
+
+
+
 ```
 
 ```{r}
 
-
+# this won't run because I don't have "loopdata" - not sure what it is (7/2015)
 for (i in PlotLevels){
     plot(x = loopdata$tpi, 
      y = loopdata$ccavg,
@@ -41,15 +45,26 @@ require(ggplot2)
 # all the sampled data points
 pl = ggplot(data, aes(x=tpi, y=ccavg)) + geom_point()
 pl
+
+# right now basically all the cover types are in, but I only want some of them
+
 # each cover type separately (facet)
-covertypes = c('CMM', 'LPN','LPN_ASP','MEG_M','MEG_U','MEG_X','MRIP',
+#covertypes = c('CMM', 'LPN','LPN_ASP','MEG_M','MEG_U','MEG_X','MRIP',
+#               'OCFW','OCFW_U','RFR_M','RFR_U','RFR_X','SCN','SMC_ASP',
+#               'SMC_M','SMC_U','SMC_X',"WWP")
+covertypes = c('LPN','LPN_ASP','MEG_M','MEG_U','MEG_X','MRIP',
                'OCFW','OCFW_U','RFR_M','RFR_U','RFR_X','SCN','SMC_ASP',
                'SMC_M','SMC_U','SMC_X',"WWP")
+# covcodes of interest: 3,5,6,9,10,11,12,14,15,17,18,19,21,23,24,25,26,29
 covers = as.data.frame(covertypes)
 dict = as.data.frame(sort(unique(data$cover)))
+names(dict) = "covcode"
+dict = dict[c(4,5,7:10,12,13,15:17,18:22,25),]
+dict = as.data.frame(dict)
+
 dict2 = cbind(dict, covers)
 require(plyr)
-dict2 = rename(dict2, c('sort(unique(data$cover))'='cover', 'covertypes'='covname'))
+dict2 = rename(dict2, c('dict'='cover', 'covertypes'='covname'))
 #dict2 = rename(dict2, c('cover'='covcode'))
 #data$covname = data$cover
 
@@ -57,7 +72,7 @@ dict2 = rename(dict2, c('sort(unique(data$cover))'='cover', 'covertypes'='covnam
 data2 = join(data, dict2, by = "cover")
 
 pl5 = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point()
-pl5 + facet_wrap(~covname, ncol= 4) + geom_smooth(method='lm') 
+pl5 + facet_wrap(~covname, ncol= 4) + geom_smooth(method='lm') # works again! 2015-07-01
 
 
 ```
@@ -67,7 +82,7 @@ Note that cover types 3 and 6 (Curl-leaf Mountain Mahogany and Lodgepole Pine - 
 data4 = data2[data2$cover %in% c(9,11,14,15,17,19,24,25,26)==TRUE,]
 # subset the data for regressions
 # line 1 for focal types, line 2 for all types
-#pl = ggplot(data4, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
+pl = ggplot(data4, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
 pl = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +    
     ggtitle(paste("Average Canopy Cover of Focal Cover Types")) +
         theme(axis.title.x = element_text(size=20, vjust=-1), 
