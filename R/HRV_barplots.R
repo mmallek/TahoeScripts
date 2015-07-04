@@ -156,7 +156,7 @@ grid.arrange(gp2, gp1)
 # IMPORTANT - right now this works with making one fragstats output for each cover uniquely: no minimum ha argument exists for the class metrics
 theme_set(theme_grey())
 myPalette = c('#FF3300','#FF9933','#009900','#0066CC','#009900','#FF9933','#FF3300','#333333')
-myPalette = c('#00000000','#FF3300','#FF9933','#009900','#009900','#FF9933','#FF3300','#0066CC','#333333')
+#myPalette = c('#00000000','#FF3300','#FF9933','#009900','#009900','#FF9933','#FF3300','#0066CC','#333333')
 
 
 # testing code to extract one set of results at a time and get rid of extra columns
@@ -189,11 +189,12 @@ for (i in 1:7){
             theme(legend.position = "none") + 
             theme(plot.title = element_text(size=24,vjust=2))
         print(pl)
-        ggsave(filename=paste(df_metric[1,1],names(df)[i], "srvplot","pdf",sep="."), 
+        ggsave(filename=paste(df_metric[1,1],names(df)[i], "srvplot",".pdf",sep="-"), 
                #path="/Users/mmallek/Tahoe/Report2/images/ClassFragPlots_wlegend/",
-               # for no legend uncomment next line
+               #width=20, height=3.9, units='in',limitsize=FALSE)    
+               # for no legend uncomment next lines
                path="/Users/mmallek/Tahoe/Report2/images/ClassFragPlots_nolegend/",
-               width=20, height=3.9, units='in',limitsize=FALSE)    
+               width=20, height=2.5, units='in',limitsize=FALSE)    
     }  
 }
 
@@ -207,12 +208,12 @@ require(tidyr)
 require(dplyr)
 myPalette = c('#FF3300','#FF9933','#009900','#0066CC','#009900','#FF9933','#FF3300','#333333')
 myPalette = c('#FF330000','#FF3300','#FF9933','#009900','#009900','#FF9933','#FF3300')#,'#0066CC','#333333')
+savenames = c('megm','megx','ocfw','ocfwu','rfrm','rfrx','smcm','smcu','smcx')
 
 theme_set(theme_bw())
 df = covcondout[[5]]
 df = df[,c(2:10,12)]
 
-df$diff1 = diff(df[4])
 #df$diff1 = diff(df[4])
 
                                       
@@ -263,12 +264,12 @@ for (i in 1:length(unique(df_metric$cover.type))){
             #theme(plot.title = element_text(size=24,vjust=1))
             
             print(pl)
-            ggsave(filename=paste(unique(df_metric$cover.type)[i],unique(df_metric$condition.class)[j],"srvplot","pdf",sep="."), 
+            ggsave(filename=paste(savenames[i],unique(df_metric$condition.class)[j],"srvplot",".pdf",sep="_"), 
                 #path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots/",
                 # for no legend uncomment next line
                 path="/Users/mmallek/Tahoe/Report2/images/CovcondHRVBarplots_nolegend/",
                 #width=13,height=3.1, units='in',limitsize=FALSE)
-                # for no legend uncomment next line
+                 #for no legend/title uncomment next line
                 width=13,height=1.2, units='in',limitsize=FALSE)
 
         }

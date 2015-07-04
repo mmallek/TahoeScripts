@@ -32,10 +32,10 @@ dareaout = darea(path=hrv001path,
   #covtype="Red Fir - Mesic",
   #covtype="Red Fir - Xeric",
   #covtype="Sierran Mixed Conifer - Mesic",
-  #covtype="Sierran Mixed Conifer - Ultramafic",
+  covtype="Sierran Mixed Conifer - Ultramafic",
   #covtype="Sierran Mixed Conifer - Xeric",
   cell.size=30,
-  y.scale='percent',
+  y.scale='poop',
   col.bar=c('blue','light blue','turquoise'),
   col.sub='brown',
   #cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
@@ -82,7 +82,7 @@ out<-tarea(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/'
   cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
   outfile=FALSE)
 
-out<-dsize(path=hrv000path,
+out<-dsize(path=hrv001path,
   session=2,
   runs=001,
   pool.runs=FALSE,
@@ -94,7 +94,7 @@ out<-dsize(path=hrv000path,
   target='firehist_ha.csv',
   col.bars=c('blue','red'),
   col.sub='brown',
-  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=2)
+  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=2.3)
 
 x<-read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/dsize.csv',header=TRUE)
 x = x[,session.id==20]
@@ -130,10 +130,10 @@ covcondout<-covcond(path=hrv001path,
   sessions=2,
   var='srv50%',
   runs=NULL,
-  start.step=0,
+  start.step=40,
   stop.step=500,
   cell.size=30,
-  #cover.names=c('Mixed Evergreen - Mesic'),
+  #cover.names=c('Oak-Conifer Forest and Woodland'),
   cover.min.ha=1000,
   outfile=F)
 
@@ -152,11 +152,11 @@ for(i in 1:nrow(covcondtab)){
 newcovcondtab = aggregate(covcondtab, by=stage.name, FUN=sum)
 
                        
-covcondout<-covcond.plot(path=hrv000path,
+covcondout<-covcond.plot(path=hrv001path,
   session=2,
   var='srv50%',
   runs=001,
-  start.step=40,
+  start.step=0,
   stop.step=NULL,
   step.length=5,
   type='stack',
@@ -230,18 +230,18 @@ fragland.pdf.plot(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upt
   save.figs=T)
 
 
-fragclassout = fragclass(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session016/',
-      inland='classland_session016_res.land',
-      inclass='classland_session016_res.class',
-      LID.path='E:\\mallek\\results\\',
-      scenarios='new',
-      sessions=016,
+fragclassout = fragclass(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session001/',
+      inland='classland_session001_20150624.land',
+      inclass='classland_session001_20150624.class',
+      LID.path='Z:\\Working\\maritza\\',
+      scenarios='hrv',
+      sessions=001,
       sessions.name='session',
       runs=001,
       runs.name='run',
       gridname='covcond',
       #gridname='wfmort',
-      classes=c('MEG_M_EARLY_ALL','MEG_M_MID_CL','MEG_M_MID_MOD','MEG_M_MID_OP','MEG_M_LATE_CL','MEG_M_LATE_MOD','MEG_M_LATE_OP'),
+      #classes=c('MEG_M_EARLY_ALL','MEG_M_MID_CL','MEG_M_MID_MOD','MEG_M_MID_OP','MEG_M_LATE_CL','MEG_M_LATE_MOD','MEG_M_LATE_OP'),
       #classes=c('MEG_X_EARLY_ALL','MEG_X_MID_CL','MEG_X_MID_MOD','MEG_X_MID_OP','MEG_X_LATE_CL','MEG_X_LATE_MOD','MEG_X_LATE_OP'),
       #classes=c('OCFW_EARLY_ALL','OCFW_MID_CL','OCFW_MID_MOD','OCFW_MID_OP','OCFW_LATE_CL','OCFW_LATE_MOD','OCFW_LATE_OP'),
       #classes=c('OCFW_U_EARLY_ALL','OCFW_U_MID_CL','OCFW_U_MID_MOD','OCFW_U_MID_OP','OCFW_U_LATE_CL','OCFW_U_LATE_MOD','OCFW_U_LATE_OP'),
@@ -249,12 +249,12 @@ fragclassout = fragclass(path='/Users/mmallek/Tahoe/Fragstats/Fragoutput_histori
       #classes=c('RFR_X_EARLY_ALL','RFR_X_MID_CL','RFR_X_MID_MOD','RFR_X_MID_OP','RFR_X_LATE_CL','RFR_X_LATE_MOD','RFR_X_LATE_OP'),
       #classes=c('SMC_M_EARLY_ALL','SMC_M_MID_CL','SMC_M_MID_MOD','SMC_M_MID_OP','SMC_M_LATE_CL','SMC_M_LATE_MOD','SMC_M_LATE_OP'),
       #classes=c('SMC_X_EARLY_ALL','SMC_X_MID_CL','SMC_X_MID_MOD','SMC_X_MID_OP','SMC_X_LATE_CL','SMC_X_LATE_MOD','SMC_X_LATE_OP'),
-      #classes=c('SMC_U_EARLY_ALL','SMC_U_MID_CL','SMC_U_MID_MOD','SMC_U_MID_OP','SMC_U_LATE_CL','SMC_U_LATE_MOD','SMC_U_LATE_OP'),
-      #metrics=c('PLAND','CLUMPY','AI'),
+      classes=c('SMC_U_EARLY_ALL','SMC_U_MID_CL','SMC_U_MID_MOD','SMC_U_MID_OP','SMC_U_LATE_CL','SMC_U_LATE_MOD','SMC_U_LATE_OP'),
+      #metrics=c('AREA_AM','SHAPE_AM','CORE_AM','CLUMPY','GYRATE_AM'),
       var='srv50%',
       start.step=40,
       stop.step=NULL,
-      outfile=T)
+      outfile=F)
 
 fragclass.plot(path='/Users/mmallek/Tahoe/Fragstats/',
                inland='classland_session016_res.land',

@@ -83,7 +83,7 @@ data4 = data2[data2$cover %in% c(9,11,14,15,17,19,24,25,26)==TRUE,]
 # subset the data for regressions
 # line 1 for focal types, line 2 for all types
 pl = ggplot(data4, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
-pl = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +    
+#pl = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +    
     ggtitle(paste("Average Canopy Cover of Focal Cover Types")) +
         theme(axis.title.x = element_text(size=20, vjust=-1), 
           axis.title.y = element_text(size=20, vjust=2), 
@@ -94,13 +94,21 @@ pl = ggplot(data2, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
     
 # each cover type separately (facet)
 pl + facet_wrap(~covname, ncol= 3) + geom_smooth(method='lm', col="black") +
-    ylab("Canopy Cover Average") + xlab("Topographic Position Index Value")
+    ylab("Canopy Cover Average") + xlab("Topographic Position Index Value") + theme_bw() +
+     theme(axis.title.x = element_text(size=20, vjust=-1), 
+          axis.title.y = element_text(size=20, vjust=2), 
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          plot.title = element_text(size=20, vjust=2),
+          plot.margin = unit(c(1,1,1,1), "cm"))  +
+    theme(strip.text.x = element_text(size = 20))
 ```
 
 Next we can subset the data and run separate simple linear regression on each.
 
 ```{r}
-PlotLevels2 = sort(unique(data3$cover))
+# does this chunk have a purpose?
+PlotLevels2 = sort(unique(data4$cover))
 # make a list to store subsetted data
 data.cov = vector("list", 9)
 n = 1
@@ -119,6 +127,7 @@ for (i in 1:length(PlotLevels2)){
 data.lms[[3]]$coefficients
 ```
 
+Using the standard plotting function
 ```{r}
 newcovertypes = c('MEG_M','MEG_X','OCFW','OCFW_U','RFR_M','RFR_X','SMC_M','SMC_U','SMC_X')
 i=1
@@ -135,7 +144,9 @@ for(i in 1:length(PlotLevels2)){
 }
 ```
 
+
 ggplot version of the plots
+This worked 07-01-2015
 ```{r}
 require(grid)
 n=1
@@ -153,9 +164,9 @@ for(i in PlotLevels2){
           plot.margin = unit(c(1,1,1,1), "cm"))
 
     p2 = p1 + ylab("Canopy Cover Average") + xlab("Topographic Position Index Value") +
-        geom_abline(intercept=coefs[1], slope=coefs[2], size=2)
-        #scale_y_continuous(limits = c(0,100)) +
-        #scale_x_continuous(limits = c(-300,300))
+        geom_abline(intercept=coefs[1], slope=coefs[2], size=2) +
+        scale_y_continuous(limits = c(0,100)) +
+        scale_x_continuous(limits = c(-300,300))
     print(p2)
     n = n+1
     }
@@ -190,8 +201,8 @@ for(i in 1:length(PlotLevels2)){
     subtable$CC.Change[i] = subtable$CC.Perc.Delt[i] * 100
 }
 subtable
-write.table(subtable, file="/Users/mmallek/Tahoe/R/cctable.txt", sep='\t')
-write.csv(subtable, file="/Users/mmallek/Tahoe/R/cctable.csv")
+write.table(subtable, file="/Users/mmallek/Tahoe/RMLands/results/hrv/cctable.txt", sep='\t')
+write.csv(subtable, file="/Users/mmallek/Tahoe/RMLands/results/hrv/cctable.csv")
 
 
 ```
