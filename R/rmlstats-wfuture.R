@@ -577,7 +577,7 @@ else{
   
   			#create 100% stacked bar chart
   			#print(round(t1,2))
-  			barplot(t(t1[,-1]),space=0,border=NA,
+  			barplot(t(t1[,-1]),space=0,border=is.na,
   			   axs='s',yaxs='i',col=col.bars,
                 #xaxs='i',yaxs='i',col=col.bars,
   				axis.lty=1,names=t1$timestep,cex.lab=cex.lab,...)
@@ -601,7 +601,6 @@ else{
   			legend(x='topright',inset=c(0.02,0.02),
   				legend=cond.levels,lty=1,col=col.bars,cex=cex.legend,lwd=1.5)
   			}
-            abline(v=40)
   	
   		#add plot title	
   		if(is.null(step.length)) xlab='Timestep'
@@ -1529,10 +1528,9 @@ for(i in 1:length(dist.levels)){
       title(main='Disturbance Size Distribution',cex.main=cex.main,
         ylab='Proportion',xlab='Disturbance Size (ha)',...)
       }
-    #####################################################
-    # comment out below items to remove "Wildfire Run #" from plot
-    #mtext(side=3,col=col.sub,cex=cex.sub,
-    #  text=dist.levels[i],...)
+
+    mtext(side=3,col=col.sub,cex=cex.sub,
+      text=dist.levels[i],...)
     
     if(!is.null(target)){
       legend('topright',inset=c(0.1,0.1),legend=c('Observed','Target'),
@@ -1599,10 +1597,8 @@ for(i in 1:length(dist.levels)){
 		      ylab='Proportion',xlab='Disturbance Size (ha)',...)
         }
 
-      #####################################################
-      # comment out below items to remove "Wildfire Run #" from plot
-      #mtext(side=3,col=col.sub,cex=cex.sub,
-		#    text=paste(dist.levels[i],' Run #',runs[j],sep=''),...)
+      mtext(side=3,col=col.sub,cex=cex.sub,
+		    text=paste(dist.levels[i],' Run #',runs[j],sep=''),...)
 
       if(!is.null(target)){
         legend('topright',inset=c(0.1,0.1),legend=c('Observed','Target'),
@@ -1756,7 +1752,7 @@ if(length(sessions)>1){
 			print(y2)
 			
 			#create clustered bar chart
-			barplot(y2,beside=TRUE,border=NA,#'black',
+			barplot(y2,beside=TRUE,border='black',
 				xaxs='i',yaxs='i',col=col.bars,
 				axis.lty=1,...)
 	
@@ -1774,12 +1770,12 @@ if(length(sessions)>1){
         text=paste('Run #',runs[j],sep=''),...)
 	
 			#add legend				
-			legend(x='bottomright',#inset=c(0.05,0.05),
+			legend(x='topright',inset=c(0.05,0.05),
 				legend=c('Low mort','High mort','Any mort'),
         fill=col.bars,cex=cex.legend)
 		
-			#if(!i==length(dist.levels) || !j==length(runs)) 
-			#	readline("Press return for next plot ")
+			if(!i==length(dist.levels) || !j==length(runs)) 
+				readline("Press return for next plot ")
 
 			}
 		}
@@ -1889,15 +1885,9 @@ else{
 			print(format(z2[[i]][[j]],big.mark=','))
 	
 			#plot disturbance area trajectory
-            ############## ADDED BORDER=NA ####################
-			barplot(t(y[,c(3,2)]),space=0, border="black",#NA,
-			    #    barplot(y2,beside=TRUE,border=NA,#'black',
-			                
-				xaxs='i',yaxs='i',col=c('dark blue', 'dark green'),#col.bars,
+			barplot(t(y[,c(3,2)]),space=0,
+				xaxs='i',yaxs='i',col=col.bars,
 				axis.lty=1,names=y$timestep,...)
-            
-            # to add a line at the equilibration period
-            #abline(v=40,lty=2,lwd=2,col="black")
 	
 			#add plot title	- dist.type	
 			if(is.null(step.length)) xlab='Timestep'
@@ -1911,15 +1901,15 @@ else{
 	
 			#add subtitle - run number
 			mtext(side=3,col=col.sub,cex=cex.sub,
-            text=paste('Run #',runs[j],sep=''),...)
+        text=paste('Run #',runs[j],sep=''),...)
 	
 			#add legend		
             #####################################################
             ### I CHANGED A LINE HERE
             #######################################################
 			legend(x='topright',#inset=c(0.05,0.05),
-				#legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
-			    legend=c('High mort','Low mort'),fill=c('dark blue','dark green'),cex=cex.legend)
+				legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
+		
 			if(!i==length(dist.levels) || !j==length(runs)) 
 				readline("Press return for next plot ")
 			}
@@ -2678,45 +2668,21 @@ for(j in 1:nrow(t0)){
 		}
 
 	#compute departure index
-#	t1<-rep(0,nrow(z1))
-#	z1<-cbind(z1,t1)
-#	z1[,104]<-as.numeric(z1[,104])
-#	for(i in 1:nrow(z1)){ 		
-#		if(is.na(z1[i,104])) z1[i,106]<-'NA'
-#		else{
-#		    if(z1[i,104]<50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
-#			else if(z1[i,104]>50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
-#			else z1[i,106]<-0
-#			}
-#		}
-#	z1[,106]<-as.numeric(z1[,106])
-#	z2<-mean(abs(z1[,106]),na.rm=TRUE)
-#	z2<-round(z2,0)
-    
-    # my departure index
-    # if the percentile value is less than 50
-  t1<-rep(0,nrow(z1))
-  z1<-cbind(z1,t1)
-  z1[,104]<-as.numeric(z1[,104])
-  for(i in 1:nrow(z1)){ 		
-      if(is.na(z1[i,104])) z1[i,106]<-'NA'
-      else{
-        if(z1[i,104]<50) z1[i,106]<-round( 
-        (z1[i,103] - z1[i,52])/ # actual minus the median
-         (z1[i,52] - z1[i,2]) * 100, # median minus 0
-          0)
-      else if(z1[i,104]>50)
-        z1[i,106]<-round( 
-            (z1[i,103] - z1[i,52])/ # actual minus the median
-                (z1[i,102] - z1[i,52]) * 100, # 100th minus median 
-            0)
-      else z1[i,106]<-0
-            }
-        }
-    z1[,106]<-as.numeric(z1[,106])
+	t1<-rep(0,nrow(z1))
+	z1<-cbind(z1,t1)
+	z1[,104]<-as.numeric(z1[,104])
+	for(i in 1:nrow(z1)){ 		
+		if(is.na(z1[i,104])) z1[i,106]<-'NA'
+		else{
+			if(z1[i,104]<50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
+			else if(z1[i,104]>50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
+			else z1[i,106]<-0
+			}
+		}
+	z1[,106]<-as.numeric(z1[,106])
 	z2<-mean(abs(z1[,106]),na.rm=TRUE)
 	z2<-round(z2,0)
-  
+	
 	#put the final table together
 	z1<-z1[,c(1,2,7,27,52,77,97,102,105,103,104,106)]
 	row.names(z1)<-NULL
@@ -5296,3 +5262,123 @@ cat(a,file=outfile,append=TRUE)
 write.table(z,file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE,sep=',',append=TRUE)
 
 }
+
+#############################
+## FUTURE FUNCTIONS
+#############################
+
+#fragpath should be path to fragstats.land file
+#scenario should be name of model and run value, e.g. ccsm2_run1
+#nrun is the number of runs completed for the scenario
+#stop.run is the number of runs to analyze
+#LID.path is path up to tif file
+#covcondlist is path to csv with list of covcond files
+
+fragland.plot.future <-
+    function(fragpath, infile,path,LID.path,nrun=NULL,scenarios=NULL,
+             covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv',
+             metrics=NULL,start.step=0,stop.run=NULL,
+             quantiles=c(0.05,0.95),col.line='dark blue',col.sub='brown',
+             cex.main=1.5,cex.sub=1.5,cex.legend=1.5,cex.lab=1.5,
+             save.figs=FALSE,...){
+        
+        #set defaults
+        options(warn=0)
+        old.par<-par(no.readonly=TRUE)
+        
+        #read fragstats data
+        y<-read.csv(fragpath,strip.white=TRUE,header=TRUE)
+        
+        # read covcond list
+        z = read.csv(covcondlist, header=F)
+        #create runs variable so that each final timestep is associated with a run
+        z$run = seq(0,nrun,1)
+        colnames(z)[1:2] = c("file","run")
+        
+        y$LID = NULL
+        
+        y = cbind(z, y)
+        
+        # set metrics parameter
+        # this allows you to include only a subset of the metrics
+        all.metrics<-colnames(y)[-c(1:2)]
+        if(is.null(metrics)) metrics<-all.metrics
+        if(any(!metrics %in% all.metrics)) stop('Invalid metrics selected')
+        
+        #select columns matching metrics from previous steps
+        y.metrics<-subset(y,select=metrics)
+        y.head<-y[,1:2]
+        y<-cbind(y.head,y.metrics)
+        
+        #set file-dependent defaults
+        # may not need these
+        if(is.null(stop.run)){
+            stoprun<-max(y$run)
+        }
+        else{
+            if(stop.run>max(y$run)) 
+                warning('Stop.run exceeds maximum timestep and will be set to the maximum')
+            stoprun<-min(stop.run,max(y$run))
+        }
+        if(start.run>=stoprun) 
+            stop('Start.run must be less than maximum timestep')
+        
+        # make new dataframe that only includes the runs specified
+        q1<-y[y$run>=start.step & y$run<=stoprun,]
+        
+        #reestablish runs
+        # can't determine purpose of this step
+        runs<-sort(as.vector(unique(q1$run)))
+        
+        #loop thru metrics
+        for(i in 3:ncol(q1)){ # the first number is whichever corresponds to PD
+            #create plot limits
+            ymin<-min(min(q1[,i]),y[y$run==0,i])
+            ymax<-max(max(q1[,i]),y[y$run==0,i])
+            yrange<-ymax-ymin
+            
+            #set x label
+            xlab=paste('Final timesteps, individual runs')
+            
+            #plot to file
+            if(save.figs==TRUE){
+                bitmap(file=paste(names(q2)[i],runs[j],'.png',sep=''),
+                       height=6,width=8,res=300,...) 
+            }
+            #create plot
+            plot(q2[,4],q2[,i],type='l',lwd=2,col=col.line,
+                 ylim=c(ymin-(yrange*0.01),ymax+(yrange*0.1)),
+                 #xaxs='i',xlab=xlab,ylab=names(q2[i]),...)
+                 xaxs='r',xlab=xlab,ylab=names(q2[i]),...)
+            plot(q1[,2],q1[,i],type='l',lwd=2,col=col.line,ylim=c(ymin-(yrange*0.01),
+                                                                  ymax+(yrange*0.1)),xaxs='r',xlab=xlab,ylab=names(q1[i]))
+            
+            #add current condition and %SRV lines
+            # current condition
+            abline(h=y[y$run==0,i],lwd=2,lty=1,col='red')
+            abline(h=quantile(q1[,i],0.5,na.rm=TRUE),lwd=2,lty=2,col='darkgrey')
+            abline(h=quantile(q1[,i],quantiles[1],na.rm=TRUE),lwd=2,lty=3,col='darkgrey')
+            abline(h=quantile(q1[,i],quantiles[2],na.rm=TRUE),lwd=2,lty=3,col='darkgrey')
+            
+            #add plot title				
+            title(main=paste('Landscape Metric Trajectory',
+                             ' (',names(q1)[i],')',sep=''),line=2.5,cex.main=cex.main,...)
+            #add subtitle
+            mtext(side=3,line=1,col=col.sub,cex=cex.sub,
+                  text=scenario)
+            
+            #add legend
+            legend(x='top',horiz=TRUE, legend=c('current',paste('q',quantiles[1],sep=''),
+                                                'q0.5',paste('q',quantiles[2],sep='')),
+                   lty=c(1,3,2,3),bty='n',lwd=2,
+                   col=c('red','darkgrey','darkgrey','darkgrey'),cex=cex.legend)
+            if(save.figs==TRUE) dev.off()
+            
+            if(save.figs==FALSE & !j==length(runs))
+                readline('Press return for next plot')
+        }
+            if(save.figs==FALSE & !i==ncol(q1))
+                readline('Press return for next plot')
+        
+        par(old.par)
+    }

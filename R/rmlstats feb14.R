@@ -43,21 +43,17 @@ if(outfile==TRUE){
 return(z)
 }
 contrast <-
-function(path='D:/landeco/exercises/rmlands/fragstats/',
-  w1='contrast.floristics.csv', w2='contrast.structure.csv', 
-  w3='contrast.canopy.cover.csv', w4='contrast.development.csv', 
-  rules= 'contrast.rules.csv', out='contrast.fsq'){
+function(path='D:/landeco/exercises/rmlands/fragstats/', w1='contrast.floristics.csv', w2='contrast.structure.csv', w3='contrast.canopy.cover.csv', w4='contrast.development.csv', rules= 'contrast.rules.csv', out='contrast.csv'){
 
 #contrast.R - Create edge contrast matrix for Fragstats
 #Usage: contrast(path, floristics.csv, structure.csv, canopy.cover.csv, development.csv, rules.csv, results.csv)
 #Hard wired to expect four weights files
 #Input weight files have classes in sequential order
 #Input weight files are assumed to be symmetrical with missing values in the lower half
-#Must have function available to run >source('.../contrast.R')
+#Must have function available to run >source('d:/R/contrast.R')
 #K. McGarigal
 #April 28, 2006
 #modified June 12, 2007
-#modified Oct 2, 2014 to reflect update to fragstats4.2
 
 #create weights matrices
 read.contrast<-function(path,file){						#define read function
@@ -81,18 +77,16 @@ rules<-read.csv(paste(path,rules,sep=''), row.names=1, header=TRUE)
 temp1<-w1[rules[,1],rules[,1]]+w2[rules[,2],rules[,2]]+w3[rules[,3],rules[,3]]
 temp2<-w4[rules[,4],rules[,4]]
 temp3<-pmax(temp1,temp2)
+rownames(temp3)<-rownames(rules)
+colnames(temp3)<-rownames(rules)
 
 #write results to csv file
-outfile<-paste(path,out,sep='')
-write.table('FSQ_TABLE',file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE)
-a<-paste('CLASS_LIST_NUMERIC(',paste(rownames(rules),collapse=','),')\n',sep='')
-cat(a,file=outfile,append=TRUE)
-write.table(temp3,file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE,sep=',',append=TRUE)
+write.csv(temp3, file=paste(path,out,sep=''), quote=FALSE)
 
 }
 covcond <-
 function(path,sessions=NULL,var='srv50%',runs=NULL,start.step=1,
-	stop.step=NULL,cell.size=30,cover.names=NULL,cover.min.ha=0,outfile=FALSE){
+	stop.step=NULL,cell.size=30,cover.min.ha=0,outfile=FALSE){
 
 #set defaults
 options(warn=0)
@@ -107,21 +101,13 @@ if(is.null(sessions)) sessions<-unique(y$session.id)
 all.sessions<-unique(y$session.id)
 if(any(!sessions %in% all.sessions)) stop('Invalid session ids')
 
-#select subset of cover types
-if(!is.null(cover.names)){
-  cov.levels<-levels(y$cov.name)
-  if(any(!cover.names %in% cov.levels)) stop('Invalid cover names')
-  y<-y[y$cov.name %in% cover.names,] 
-}
-
-#get cover type area and select cover types with min area
+#calculate total area by cover type for min area cover types
 t1<-y[y$session.id==sessions[1] & y$run.id==1 & y$timestep.id==0,]
 t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
 colnames(t2)<-c('cover.type','cov.count')
 t2$area.ha<-round(t2$cov.count*cell.size^2/10000,0)
 t2<-t2[t2$area.ha>cover.min.ha,]
 t2.cover.type<-t2$cover.type
-y<-y[y$cov.name %in% t2.cover.type,]
 
 #multiple sessions
 if(length(sessions)>1){
@@ -146,7 +132,8 @@ if(length(sessions)>1){
     }
   
   #subset data based on runs, start.step, stop.step and min area
-  y<-y[y$run.id %in% runs & y$timestep.id>=start.step & y$timestep.id<=stop.step,]
+  y<-y[y$run.id %in% runs & y$timestep.id>=start.step & y$timestep.id<=stop.step & 
+    y$cov.name %in% t2.cover.type,]
   
   #get unique covcond class
   y1<-y[order(y$cov.cond.id),]
@@ -264,7 +251,8 @@ else{
     }
   
   #subset data based on runs, start.step, stop.step and min area
-  y<-y[y$run.id %in% runs & y$timestep.id>=start.step & y$timestep.id<=stop.step,]
+  y<-y[y$run.id %in% runs & y$timestep.id>=start.step & y$timestep.id<=stop.step & 
+    y$cov.name %in% t2.cover.type,]
   
   #get unique covcond class
   y1<-y[order(y$cov.cond.id),]
@@ -357,14 +345,12 @@ return(z)
 }
 covcond.plot <-
 function(path,session=NULL,var='srv50%',runs=1,start.step=0,
-	stop.step=NULL,step.length=NULL,type='stack',cell.size=30,
-  cover.names=NULL,cover.min.ha=0,
+	stop.step=NULL,step.length=NULL,type='stack',cell.size=30,cover.min.ha=0,
 	col.bars=c('black','tan','brown','orange','seagreen','salmon',
 	       'green','cyan','yellow','magenta','coral','wheat',
 	       'gray','tan2','brown2','orange2','seagreen2','salmon2',
 	       'green2','cyan2','yellow2','magenta2','coral2','wheat2'),
-  col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,cex.lab=1.5,
-  outfile=FALSE,save.figs=FALSE,...){
+  col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
 
 #set defaults
 options(warn=0)
@@ -392,9 +378,8 @@ cond.colors<-merge(temp,cond.colors)
 if(length(session)>1){
 
 	#create covcond stats for plot
-	y<-covcond(path=path,sessions=session,var=var,runs=runs,start.step=start.step,
-	stop.step=stop.step,cell.size=cell.size,cover.names=cover.names,
-  cover.min.ha=cover.min.ha)[[5]]
+	y<-covcond(path=path,session=session,var=var,runs=runs,start.step=start.step,
+	stop.step=stop.step,cell.size=cell.size,cover.min.ha=cover.min.ha)[[5]]
 
 	#create list object
 	cov.levels<-unique(y$cover.type)
@@ -419,19 +404,11 @@ if(length(session)>1){
     
 		#save results to list object
    	z[[i]]<-x
-    print(z[[i]])
 		x<-as.matrix(x[,-c(1:3)])
     
-		#plot to file
-		if(save.figs==TRUE){
-		  bitmap(file=paste(cov.levels[i],'.png',sep=''),
-		         height=6,width=8,res=300,...) 
-		}
-		
 		#create clustered bar chart
-		#barplot(x,beside=TRUE,border='dark gray',
-        barplot(x,beside=TRUE,
-			xaxs='i',yaxs='i',col=col.bars,cex.lab=cex.lab,
+		barplot(x,beside=TRUE,border='dark gray',
+			xaxs='i',yaxs='i',col=col.bars,
 			axis.lty=1,...)
 
 		#add legend
@@ -440,22 +417,14 @@ if(length(session)>1){
 			legend=cond.levels,fill=col.bars,cex=cex.legend)
 
 		#add plot title				
-		if(var=='srv.cv'){
-      title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
-				ylab='Coefficient of Variation',xlab='Scenario/Session',
+		title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
+				ylab='Percentage of Cover Type',xlab='Scenario/Session',
         cex.main=cex.main,...)
-		}
-		else{title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
-		      ylab='Percentage of Cover Type',xlab='Scenario/Session',
-		      cex.main=cex.main,...)
-		}
 	
 		#add subtitle: dist.type and cov.type
 		mtext(side=3,col=col.sub,cex=cex.sub,text=cov.levels[i],line=1,...)
-    
-		if(save.figs==TRUE) dev.off()
 	
-		if(save.figs==FALSE & !i==length(cov.levels))
+		if(!i==length(cov.levels))
 			readline("Press return for next plot ")
 	}
 
@@ -490,16 +459,9 @@ else{
     if(stop.step>max(y$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
     stop.step<-min(stop.step,max(y$timestep.id))
     }
- 
-  #select subset of cover types
-  if(!is.null(cover.names)){
-    cov.levels<-levels(y$cov.name)
-    if(any(!cover.names %in% cov.levels)) stop('Invalid cover names')
-    y<-y[y$cov.name %in% cover.names,] 
-  }
   
   #calculate total area by cover type for min area cover types
-  t1<-y[y$run.id==1 & y$timestep.id==0,]
+  t1<-y[y$timestep.id==0,]
   t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
   colnames(t2)<-c('cover.type','cov.count')
   t2$area.ha<-round(t2$cov.count*cell.size^2/10000,0)
@@ -564,23 +526,15 @@ else{
   	
   		#save results to list object		
   	  z.run[[j]]<-round(t1,3)
-      print(z.run[[j]])
-      
-  		#plot to file
-  		if(save.figs==TRUE){
-  		  bitmap(file=paste(cov.levels[i],runs[j],'.png',sep=''),
-  		         height=6,width=8,res=300,...) 
-  		}      
       
   		#plot disturbance area trajectory as 100% stacked bar chart
   		if(type=='stack'){
   
   			#create 100% stacked bar chart
   			#print(round(t1,2))
-  			barplot(t(t1[,-1]),space=0,border=NA,
-  			   axs='s',yaxs='i',col=col.bars,
-                #xaxs='i',yaxs='i',col=col.bars,
-  				axis.lty=1,names=t1$timestep,cex.lab=cex.lab,...)
+  			barplot(t(t1[,-1]),space=0,border=is.na,
+  				xaxs='i',yaxs='i',col=col.bars,
+  				axis.lty=1,names=t1$timestep,...)
   
   			#add legend
   			cond.levels<-as.vector(cond.levels[,2])				
@@ -594,14 +548,14 @@ else{
   			#create line chart
   			#print(round(t1,2))
   			matplot(t1[,1]*10,t1[,2:ncol(t1)],type='l',
-  				ylab='',xlab='',lty=1,col=col.bars,cex.lab=cex.lab,...)
+  				ylab='',xlab='',lty=1,col=col.bars,
+  				...)
   
   			#add legend
   			cond.levels<-as.vector(cond.levels[,2])				
   			legend(x='topright',inset=c(0.02,0.02),
   				legend=cond.levels,lty=1,col=col.bars,cex=cex.legend,lwd=1.5)
   			}
-            abline(v=40)
   	
   		#add plot title	
   		if(is.null(step.length)) xlab='Timestep'
@@ -612,10 +566,8 @@ else{
   		#add subtitle: dist.type and cov.type
   		mtext(side=3,col=col.sub,cex=cex.sub,
         text=paste(cov.levels[i],': Run #',runs[j],sep=''),line=1,...)
-      
-  		if(save.figs==TRUE) dev.off()
   	
-  		if(save.figs==FALSE & (!i==length(cov.levels) | !j==length(runs)))
+  		if(!i==length(cov.levels) | !j==length(runs))
   			readline("Press return for next plot ")
 
       } #end loop thru runs
@@ -636,15 +588,10 @@ else{
 	}
 		
 par(old.par)
-invisible(z)
+return(z)
 }
 edgedepth <-
-function(path='d:/landeco/exercises/rmlands/fragstats/', 
-  w1='edgedepth.canopy.cover.csv', 
-  w2='edgedepth.structure.csv', 
-  w3='edgedepth.development.csv', 
-  rules='edgedepth.rules.csv', 
-  out='edgedepth.fsq'){
+function(path='d:/landeco/exercises/rmlands/fragstats/', w1='edgedepth.canopy.cover.csv', w2='edgedepth.structure.csv', w3='edgedepth.development.csv', rules='edgedepth.rules.csv', out='edgedepth.csv'){
 
 #edgedepth.R - Create edge depth matrix for Fragstats
 #Usage: contrast(path, canopy.cover.csv, structure.csv, development.csv, rules.csv, results.csv)
@@ -653,9 +600,8 @@ function(path='d:/landeco/exercises/rmlands/fragstats/',
 #Must have function available to run >source('d:/R/edgedepth.R')
 #K. McGarigal
 #April 28, 2006
-#modified June 12, 2007
-#modified Oct 2, 2014 to reflect update to fragstats4.2
-  
+#Modified June 12, 2007
+
 #create weights matrices
 read.edgedepth<-function(path,file){					#define read function
 	z<-read.csv(paste(path,file,sep=''), header=TRUE)	#assign weights file
@@ -675,400 +621,279 @@ rules<-read.csv(paste(path,rules,sep=''), row.names=1, header=TRUE)
 
 #max edge depths for each pairwise combination of cover classes
 temp1<-pmax(w1[rules[,1],rules[,1]],w2[rules[,2],rules[,2]],w3[rules[,3],rules[,3]])
+rownames(temp1)<-rownames(rules)
+colnames(temp1)<-rownames(rules)
 
 #write results to csv file
-outfile<-paste(path,out,sep='')
-write.table('FSQ_TABLE',file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE)
-a<-paste('CLASS_LIST_NUMERIC(',paste(rownames(rules),collapse=','),')\n',sep='')
-cat(a,file=outfile,append=TRUE)
-write.table(temp1,file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE,sep=',',append=TRUE)
+write.csv(temp1, file=paste(path,out,sep=''), quote=FALSE)
 
 }
 rotation <-
 function(path,sessions=NULL,runs=NULL,pool.runs=TRUE,
   var='any.mort',start.step=1,stop.step=NULL,step.length,
   cell.size=30,outfile=FALSE){
+
+#set defaults
+options(warn=0)
+
+#set start.step default
+if(is.null(start.step)) start.step<-1
+
+#read covcond and darea data
+y<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
+x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
+
+#create list object
+cov.list<-as.data.frame(unique(y$cov.name))
+names(cov.list)<-'cov.name'
+
+#set sessions parameter and verify valid session ids
+y.sessions<-unique(y$session.id)
+x.sessions<-unique(x$session.id)
+if(is.null(sessions)){
+  if(any(!y.sessions %in% x.sessions)) stop('Inconsistent session ids in covcond.csv and darea.csv')
+  if(any(!x.sessions %in% y.sessions)) stop('Inconsistent session ids in covcond.csv and darea.csv')
+  sessions<-y.sessions
+}
+else{
+  if(any(!sessions %in% y.sessions)) stop('Invalid session ids in covcond.csv')
+  if(any(!sessions %in% x.sessions)) stop('Invalid session ids in darea.csv')
+}
+
+#subset based on session.id
+x<-x[x$session.id %in% sessions,]
+y<-y[y$session.id %in% sessions,]
+
+#calculate total area by cover type
+y1<-y[y$session.id==sessions[1] & y$run.id==1 & y$timestep.id==0,]
+y2<-aggregate(y1$cell.count,list(y1$cov.name),sum)
+colnames(y2)<-c('cov.name','cov.count')
+y2<-merge(cov.list,y2,by='cov.name',sort=FALSE)
+
+
+#multiple sessions
+if(length(sessions)>1){
   
-  #set defaults
-  options(warn=0)
-  
-  #set start.step default
-  if(is.null(start.step)) start.step<-1
-  
-  #read covcond and darea data
-  y<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
-  x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
-  
-  #create covcond list
-  covcond.list<-as.data.frame(unique(subset(y,select=c('cov.name','cond.name'))))
-  covcond.list<-covcond.list[order(covcond.list$cov.name,covcond.list$cond.name),]
-  
-  #set sessions parameter and verify valid session ids
-  y.sessions<-unique(y$session.id)
-  x.sessions<-unique(x$session.id)
-  if(is.null(sessions)){
-    if(any(!y.sessions %in% x.sessions)) stop('Inconsistent session ids in covcond.csv and darea.csv')
-    if(any(!x.sessions %in% y.sessions)) stop('Inconsistent session ids in covcond.csv and darea.csv')
-    sessions<-y.sessions
+  #check consistency in arguments
+  if(pool.runs==FALSE) warning('Runs are always pooled with multiple sessions')
+
+  #set global runs parameter and verify valid run ids
+  y.runs<-unique(y$run.id)
+  x.runs<-unique(x$run.id)
+  if(is.null(runs)){
+    if(any(!y.runs %in% x.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
+    if(any(!x.runs %in% y.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
+    runs<-y.runs
   }
   else{
-    if(any(!sessions %in% y.sessions)) stop('Invalid session ids in covcond.csv')
-    if(any(!sessions %in% x.sessions)) stop('Invalid session ids in darea.csv')
+    if(any(!runs %in% y.runs)) stop('Invalid run ids in covcond.csv')
+    if(any(!runs %in% x.runs)) stop('Invalid run ids in darea.csv')
   }
   
-  #subset based on session.id
-  x<-x[x$session.id %in% sessions,]
-  y<-y[y$session.id %in% sessions,]
+  #subset based on run.id
+  x<-x[x$run.id %in% runs,]
+  y<-y[y$run.id %in% runs,]
+
+  #set global start.step and stop.step parameters
+  if(start.step>min(max(x$timestep.id),max(y$timestep.id)))
+    stop('Start.step exceeds maximum timestep')
+  if(is.null(stop.step)) stop.step<-min(max(x$timestep.id),max(y$timestep.id))
+  else{
+    if(stop.step>min(max(x$timestep.id),max(y$timestep.id))) 
+      warning('Stop.step exceeds maximum timestep and was set to the maximum')
+    stop.step<-min(stop.step,max(x$timestep.id),max(y$timestep))
+  }
   
-  #calculate total area by cover type
-  y1<-y[y$session.id==sessions[1] & y$run.id==1 & y$timestep.id==0,]
-  y2<-aggregate(y1$cell.count,list(y1$cov.name),sum)
-  colnames(y2)<-c('cov.name','cov.count')
+  #create list object
+  dist.levels<-levels(x$dist.type)
+  z1<-list(sessions,runs,start.step,stop.step,step.length)
+  names(z1)<-c('sessions','maximum runs','start.step','stop.step','step.length')
+  z2<-vector("list", length(dist.levels)) #create empty list
+  names(z2)<-paste(dist.levels,'Rotation Periods (yrs)',sep=' ')
+  z<-c(z1,z2)
+  
+	#loop thru disturbance types
+	for(i in 1:length(dist.levels)){ 
 
-  #multiple sessions
-  if(length(sessions)>1){
-    
-    #check consistency in arguments
-    if(pool.runs==FALSE) warning('Runs are always pooled with multiple sessions')
-    
-    #set global runs parameter and verify valid run ids
-    y.runs<-unique(y$run.id)
-    x.runs<-unique(x$run.id)
-    if(is.null(runs)){
-      if(any(!y.runs %in% x.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
-      if(any(!x.runs %in% y.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
-      runs<-y.runs
-    }
-    else{
-      if(any(!runs %in% y.runs)) stop('Invalid run ids in covcond.csv')
-      if(any(!runs %in% x.runs)) stop('Invalid run ids in darea.csv')
-    }
-    
-    #subset based on run.id
-    x<-x[x$run.id %in% runs,]
-    y<-y[y$run.id %in% runs,]
-    
-    #set global start.step and stop.step parameters
-    if(start.step>min(max(x$timestep.id),max(y$timestep.id)))
-      stop('Start.step exceeds maximum timestep')
-    if(is.null(stop.step)) stop.step<-min(max(x$timestep.id),max(y$timestep.id))
-    else{
-      if(stop.step>min(max(x$timestep.id),max(y$timestep.id))) 
-        warning('Stop.step exceeds maximum timestep and was set to the maximum')
-      stop.step<-min(stop.step,max(x$timestep.id),max(y$timestep))
-    }
-    
-    #create list object
-    dist.levels<-levels(x$dist.type)
-    z1<-list(sessions,runs,start.step,stop.step,step.length)
-    names(z1)<-c('sessions','maximum runs','start.step','stop.step','step.length')
-    z2<-vector("list", length(dist.levels)) #create empty list
-    names(z2)<-paste(dist.levels,'Rotation Periods (yrs)',sep=' ')
-    z<-c(z1,z2)
-    
-    #loop thru disturbance types
-    for(i in 1:length(dist.levels)){ 
+		#loop thru selected sessions
+		for(j in 1:length(sessions)){
+
+		  #subset based on dist.type and session.id
+		  t1<-x[x$dist.type==dist.levels[i] & x$session.id==sessions[j] &
+        x$run.id %in% runs & x$timestep.id>=start.step & x$timestep.id<=stop.step,]
+		  if(nrow(t1)==0) stop('There are no observations meeting the specified criteria for one of the sessions')
+		  
+		  #compute number of runs for session
+      s.runs<-unique(t1$run.id)
       
-      #loop thru selected sessions
-      for(j in 1:length(sessions)){
-        
-        #subset based on dist.type and session.id
-        t1<-x[x$dist.type==dist.levels[i] & x$session.id==sessions[j] &
-          x$run.id %in% runs & x$timestep.id>=start.step & x$timestep.id<=stop.step,]
-        if(nrow(t1)==0) stop('There are no observations meeting the specified criteria for one of the sessions')
-        s1<-y[y$session.id==sessions[j] &
-          y$run.id %in% runs & y$timestep.id>=start.step-1 & y$timestep.id<stop.step,]
-        if(nrow(s1)==0) stop('There are no observations meeting the specified criteria for one of the sessions')
-        
-        #compute number of runs for session
-        s.runs<-unique(t1$run.id)
-        
-        #set period parameter for session
-        if(start.step==0) period<-(stop.step-start.step)*step.length*length(s.runs)
-        else period<-(stop.step-start.step+1)*step.length*length(s.runs)
+			#set parameters for session
+		  if(start.step==0) period<-(stop.step-start.step)*step.length*length(s.runs)
+      else period<-(stop.step-start.step+1)*step.length*length(s.runs)
+			
+      #compute rotation periods
+			if(var=='low.mort') t2<-aggregate(t1$mort.low,list(t1$cov.name),sum)
+			else if(var=='high.mort') t2<-aggregate(t1$mort.high,list(t1$cov.name),sum)
+			else t2<-aggregate(t1$mort.any,list(t1$cov.name),sum)
+			colnames(t2)<-c('cov.name',paste(var,'.',sessions[j],sep=''))
+			t2<-merge(y2,t2,by='cov.name',sort=FALSE,all.x=FALSE)
+			t2[,1]<-as.character(t2[,1])
+			sums<-as.vector(apply(t2[,2:3],2,sum))
+			t2[nrow(t2)+1,2:3]<-sums
+			t2[nrow(t2),1]<-'Total'
+			t2[,3]<-round(period/(t2[,3]/t2$cov.count),0)
+			t2$cov.count<-round(t2$cov.count*((cell.size^2)/10000),0)
+			colnames(t2)<-c('cov.name','area.ha',paste(var,'.',sessions[j],sep=''))
+			if(j==1) t3<-t2
+			else t3<-merge(t3,t2,by=c('cov.name','area.ha'),sort=FALSE)
+			}
 
-        #set number of timesteps parameter for session
-        if(start.step==0) tsteps<-(stop.step-start.step)*length(s.runs)
-        else tsteps<-(stop.step-start.step+1)*length(s.runs)
+      z[[i+5]]<-t3
 
-        #calculate total area by covcond type
-        m1<-aggregate(s1$cell.count,list(s1$cov.name,s1$cond.name),sum)
-        colnames(m1)<-c('cov.name','cond.name','covcond.count')
-        m1<-m1[order(m1$cov.name,m1$cond.name),]
-        m1<-merge(covcond.list,m1,by=c('cov.name','cond.name'),sort=TRUE,all.x=TRUE)
+		}
+		
+	#output tables to file
+	if(outfile==TRUE){
+		for(i in 6:length(z)){
+			write.table(z[[i]],file=paste(path,dist.levels[i-5],'_rotation.csv',sep=''),
+			quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
+			}
+		}
+	}
+
+#single session
+else{
+
+  #set runs parameter and verify valid run ids
+  y.runs<-unique(y$run.id)
+  x.runs<-unique(x$run.id)
+  if(is.null(runs)){
+    if(any(!y.runs %in% x.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
+    if(any(!x.runs %in% y.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
+    runs<-y.runs
+    }
+  else{
+    if(any(!runs %in% y.runs)) stop('Invalid run ids in covcond.csv')
+    if(any(!runs %in% x.runs)) stop('Invalid run ids in darea.csv')
+    }
+  
+  #subset based on run.id
+  x<-x[x$run.id %in% runs,]
+
+  #set start.step and stop.step parameters
+  if(start.step>max(x$timestep.id))
+    stop('Start.step exceeds maximum timestep')
+  if(is.null(stop.step)) stop.step<-max(x$timestep.id)
+  else{
+    if(stop.step>max(x$timestep.id)) 
+      warning('Stop.step exceeds maximum timestep and was set to the maximum')
+    stop.step<-min(stop.step,max(x$timestep.id))
+    }
+  
+	#subset based on start.step and stop.step
+	x<-x[x$timestep.id>=start.step & x$timestep.id<=stop.step,]
+	
+  #create list object
+  dist.levels<-levels(x$dist.type)
+  z1<-list(sessions,runs,start.step,stop.step,step.length)
+  names(z1)<-c('sessions','runs','start.step','stop.step','step.length')
+  z2<-vector("list", length(dist.levels)) #create empty list
+  names(z2)<-paste(dist.levels,'Rotation Periods (yrs)',sep=' ')
+  z<-c(z1,z2)
+  
+  #loop thru disturbance types
+	for(i in 1:length(dist.levels)){ 
+
+    #subset based on dist.type
+		t1<-x[x$dist.type==dist.levels[i],]
+
+    #for pooled runs
+    if(pool.runs==TRUE){
+
+      #set period parameter
+      if(start.step==0) period<-(stop.step-start.step)*step.length*length(runs)
+      else period<-(stop.step-start.step+1)*step.length*length(runs)
+      
+  		#compute rotation periods    
+  		t.low<-aggregate(t1$mort.low,list(t1$cov.name),sum)
+  		colnames(t.low)<-c('cov.name','low.count')
+  		t.high<-aggregate(t1$mort.high,list(t1$cov.name),sum)
+      colnames(t.high)<-c('cov.name','high.count')
+  		t.any<-aggregate(t1$mort.any,list(t1$cov.name),sum)
+      colnames(t.any)<-c('cov.name','any.count')
+  		t2<-merge(t.low,t.high,by='cov.name',sort=FALSE)
+  		t2<-merge(t2,t.any,by='cov.name',sort=FALSE)
+  		t2<-merge(y2,t2,by='cov.name',sort=FALSE,all.x=FALSE)
+  		t2[,1]<-as.character(t2[,1])
+  		sums<-as.vector(apply(t2[,2:5],2,sum))
+  		t2[nrow(t2)+1,2:5]<-sums
+  		t2[nrow(t2),1]<-'Total'
+  		t2$low.count<-round(period/(t2$low.count/t2$cov.count),0)
+  		t2$high.count<-round(period/(t2$high.count/t2$cov.count),0)
+  		t2$any.count<-round(period/(t2$any.count/t2$cov.count),0)
+  		t2$cov.count<-round(t2$cov.count*((cell.size^2)/10000),0)
+  		colnames(t2)<-c('cov.name','area.ha','low.mort',
+  		   'high.mort','any.mort')
+      z[[i+5]]<-t2
+    
+      }
+
+    #for separate runs
+    else{
+      
+      #set period parameter
+      if(start.step==0) period<-(stop.step-start.step)*step.length
+      else period<-(stop.step-start.step+1)*step.length
+            
+      #loop thru selected runs
+      for(j in 1:length(runs)){
         
-        #compute rotation period by cover type
-        if(var=='low.mort') t2<-aggregate(t1$mort.low,list(t1$cov.name),sum)
-        else if(var=='high.mort') t2<-aggregate(t1$mort.high,list(t1$cov.name),sum)
-        else t2<-aggregate(t1$mort.any,list(t1$cov.name),sum)
-        colnames(t2)<-c('cov.name',paste(var,'.',sessions[j],sep=''))
-        t2<-merge(y2,t2,by='cov.name',sort=TRUE,all.x=TRUE)
-        t2[is.na.data.frame(t2)]<-0
+        #subset based on dist.type
+        t1r<-t1[t1$run.id==runs[j],]
+        
+        #compute rotation periods    
+        if(var=='low.mort') t2<-aggregate(t1r$mort.low,list(t1r$cov.name),sum)
+        else if(var=='high.mort') t2<-aggregate(t1r$mort.high,list(t1r$cov.name),sum)
+        else t2<-aggregate(t1r$mort.any,list(t1r$cov.name),sum)
+        colnames(t2)<-c('cov.name',paste(var,'.',runs[j],sep=''))
+        t2<-merge(y2,t2,by='cov.name',sort=FALSE,all.x=FALSE)
         t2[,1]<-as.character(t2[,1])
         sums<-as.vector(apply(t2[,2:3],2,sum))
         t2[nrow(t2)+1,2:3]<-sums
         t2[nrow(t2),1]<-'Total'
         t2[,3]<-round(period/(t2[,3]/t2$cov.count),0)
         t2$cov.count<-round(t2$cov.count*((cell.size^2)/10000),0)
-        colnames(t2)<-c('cov.name','area.ha',paste(var,'.',sessions[j],sep=''))
+        colnames(t2)<-c('cov.name','area.ha',paste(var,'.',runs[j],sep=''))
         if(j==1) t3<-t2
         else t3<-merge(t3,t2,by=c('cov.name','area.ha'),sort=FALSE)
-        
-        #compute rotation period by covcond class
-        if(var=='low.mort') t2<-aggregate(t1$mort.low,list(t1$cov.name,t1$cond.name),sum)
-        else if(var=='high.mort') t2<-aggregate(t1$mort.high,list(t1$cov.name,t1$cond.name),sum)
-        else t2<-aggregate(t1$mort.any,list(t1$cov.name,t1$cond.name),sum)
-        colnames(t2)<-c('cov.name','cond.name',paste(var,'.',sessions[j],sep=''))
-        t2<-merge(m1,t2,by=c('cov.name','cond.name'),sort=TRUE,all.x=TRUE)
-        t2[,1]<-as.character(t2[,1])
-        t2[,2]<-as.character(t2[,2]) 
-        sums<-as.vector(apply(t2[,3:4],2,sum,na.rm=TRUE))
-        t2[nrow(t2)+1,3:4]<-sums
-        t2[nrow(t2),1:2]<-c('Total','Total')
-        t2[,4]<-round(step.length/(t2[,4]/t2$covcond.count),0)
-        t2r<-t2[,-3] #rotation periods for each session
-        t2x<-t2[,-4] #covcond area for each session
-        if(j==1){
-          t3r<-t2r
-          t3x<-t2x
         }
-        else{
-          t3r<-merge(t3r,t2r,by=c('cov.name','cond.name'),sort=FALSE,all=TRUE)
-          t3x<-merge(t3x,t2x,by=c('cov.name','cond.name'),sort=FALSE,all=TRUE)
-        }
-      }
       
-      #merge output across runs
-      t3x[,-c(1:2)][is.na(t3x[,-c(1:2)])]<-0
-      t3x$mean.covcond.count<-apply(t3x[,-c(1:2)],1,mean)
-      t3x$area.ha<-round((t3x$mean.covcond.count/tsteps)*((cell.size^2)/10000),0)
-      t3x<-subset(t3x,select=c('cov.name','cond.name','area.ha'))  
-      out2<-merge(t3x,t3r,by=c('cov.name','cond.name'),sort=FALSE)
-      
-      z[[i+5]]<-list('By Cover Type'=t3,'By Cover-Condition Class'=out2)
-        
-    }
-  }
-
-
-  #single session
-  else{
-    
-    #set runs parameter and verify valid run ids
-    y.runs<-unique(y$run.id)
-    x.runs<-unique(x$run.id)
-    if(is.null(runs)){
-      if(any(!y.runs %in% x.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
-      if(any(!x.runs %in% y.runs)) stop('Inconsistent run ids in covcond.csv and darea.csv')
-      runs<-y.runs
-    }
-    else{
-      if(any(!runs %in% y.runs)) stop('Invalid run ids in covcond.csv')
-      if(any(!runs %in% x.runs)) stop('Invalid run ids in darea.csv')
-    }
-
-    #check for invalid parameterization
-    if(length(runs)==1 & pool.runs==FALSE)
-      stop('Must have multiple runs when pool.runs=FALSE')
-    
-    #subset based on run.id
-    x<-x[x$run.id %in% runs,]
-    y<-y[y$run.id %in% runs,]
-    
-    #set start.step and stop.step parameters
-    if(start.step>max(x$timestep.id))
-      stop('Start.step exceeds maximum timestep')
-    if(is.null(stop.step)) stop.step<-max(x$timestep.id)
-    else{
-      if(stop.step>max(x$timestep.id)) 
-        warning('Stop.step exceeds maximum timestep and was set to the maximum')
-      stop.step<-min(stop.step,max(x$timestep.id))
-    }
-    
-    #subset based on start.step and stop.step
-    x<-x[x$timestep.id>=start.step & x$timestep.id<=stop.step,]
-    y<-y[y$timestep.id>=start.step-1 & y$timestep.id<stop.step,]
-    
-    #create list object
-    dist.levels<-levels(x$dist.type)
-    z1<-list(sessions,runs,start.step,stop.step,step.length)
-    names(z1)<-c('sessions','runs','start.step','stop.step','step.length')
-    z2<-vector("list", length(dist.levels)) #create empty list
-    names(z2)<-paste(dist.levels,'Rotation Periods (yrs)',sep=' ')
-    z<-c(z1,z2)
-    
-    #loop thru disturbance types
-    for(i in 1:length(dist.levels)){ 
-      
-      #subset based on dist.type
-      t1<-x[x$dist.type==dist.levels[i],]
-
-      #for pooled runs
-      if(pool.runs==TRUE){
-
-        #calculate total area by covcond type
-        m1<-aggregate(y$cell.count,list(y$cov.name,y$cond.name),sum)
-        colnames(m1)<-c('cov.name','cond.name','covcond.count')
-        m1<-merge(covcond.list,m1,by=c('cov.name','cond.name'),sort=TRUE,all.x=TRUE)
-        
-        #set period parameter
-        if(start.step==0) period<-(stop.step-start.step)*step.length*length(runs)
-        else period<-(stop.step-start.step+1)*step.length*length(runs)
-        
-        #set number of timesteps parameter
-        if(start.step==0) tsteps<-(stop.step-start.step)*length(runs)
-        else tsteps<-(stop.step-start.step+1)*length(runs)
-
-        #compute rotation period by cover type    
-        t.low<-aggregate(t1$mort.low,list(t1$cov.name),sum)
-        colnames(t.low)<-c('cov.name','low.count')
-        t.high<-aggregate(t1$mort.high,list(t1$cov.name),sum)
-        colnames(t.high)<-c('cov.name','high.count')
-        t.any<-aggregate(t1$mort.any,list(t1$cov.name),sum)
-        colnames(t.any)<-c('cov.name','any.count')
-        t2<-merge(t.low,t.high,by='cov.name',sort=FALSE)
-        t2<-merge(t2,t.any,by='cov.name',sort=FALSE)
-        t2<-merge(y2,t2,by='cov.name',sort=TRUE,all.x=TRUE)
-        t2[is.na.data.frame(t2)]<-0
-        t2[,1]<-as.character(t2[,1])
-        sums<-as.vector(apply(t2[,2:5],2,sum))
-        t2[nrow(t2)+1,2:5]<-sums
-        t2[nrow(t2),1]<-'Total'
-        t2$low.count<-round(period/(t2$low.count/t2$cov.count),0)
-        t2$high.count<-round(period/(t2$high.count/t2$cov.count),0)
-        t2$any.count<-round(period/(t2$any.count/t2$cov.count),0)
-        t2$cov.count<-round(t2$cov.count*((cell.size^2)/10000),0)
-        colnames(t2)<-c('cov.name','area.ha','low.mort',
-                        'high.mort','any.mort')
-        out1<-t2        
-
-        #compute rotation period by covcond class    
-        t.low<-aggregate(t1$mort.low,list(t1$cov.name,t1$cond.name),sum)
-        colnames(t.low)<-c('cov.name','cond.name','low.count')
-        t.high<-aggregate(t1$mort.high,list(t1$cov.name,t1$cond.name),sum)
-        colnames(t.high)<-c('cov.name','cond.name','high.count')
-        t.any<-aggregate(t1$mort.any,list(t1$cov.name,t1$cond.name),sum)
-        colnames(t.any)<-c('cov.name','cond.name','any.count')
-        t2<-merge(t.low,t.high,by=c('cov.name','cond.name'),sort=FALSE)
-        t2<-merge(t2,t.any,by=c('cov.name','cond.name'),sort=FALSE)
-        t2<-merge(m1,t2,by=c('cov.name','cond.name'),sort=TRUE,all.x=TRUE)
-        t2[,4:6][is.na(t2[4:6])]<-0
-        t2[,1]<-as.character(t2[,1])
-        t2[,2]<-as.character(t2[,2]) 
-        sums<-as.vector(apply(t2[,3:6],2,sum,na.rm=TRUE))
-        t2[nrow(t2)+1,3:6]<-sums
-        t2[nrow(t2),1:2]<-c('Total','Total')
-        t2$low.count<-round(step.length/(t2$low.count/t2$covcond.count),0)
-        t2$high.count<-round(step.length/(t2$high.count/t2$covcond.count),0)
-        t2$any.count<-round(step.length/(t2$any.count/t2$covcond.count),0)
-        t2$covcond.count<-round((t2$covcond.count/tsteps)*((cell.size^2)/10000),0)
-        colnames(t2)<-c('cov.name','cond.name','area.ha','low.mort',
-                        'high.mort','any.mort')
-        out2<-t2
-
-        z[[i+5]]<-list('By Cover Type'=out1,'By Cover-Condition Class'=out2)
-
-      }
-      
-      #for separate runs
-      else{
-  
-        #set period parameter
-        if(start.step==0) period<-(stop.step-start.step)*step.length
-        else period<-(stop.step-start.step+1)*step.length
-
-        #set number of timesteps parameter
-        if(start.step==0) tsteps<-(stop.step-start.step)
-        else tsteps<-(stop.step-start.step+1)
-        
-        #loop thru selected runs
-        for(j in 1:length(runs)){
-          
-          #subset based on dist.type
-          t1r<-t1[t1$run.id==runs[j],]
-          y1r<-y[y$run.id==runs[j],]
-
-          #calculate total area by covcond type
-          m1r<-aggregate(y1r$cell.count,list(y1r$cov.name,y1r$cond.name),sum)
-          colnames(m1r)<-c('cov.name','cond.name','covcond.count')
-          m1r<-merge(covcond.list,m1r,by=c('cov.name','cond.name'),sort=TRUE,all.x=TRUE)
-          
-          #compute rotation periods by cover type  
-          if(var=='low.mort') t2<-aggregate(t1r$mort.low,list(t1r$cov.name),sum)
-          else if(var=='high.mort') t2<-aggregate(t1r$mort.high,list(t1r$cov.name),sum)
-          else t2<-aggregate(t1r$mort.any,list(t1r$cov.name),sum)
-          colnames(t2)<-c('cov.name',paste(var,'.',runs[j],sep=''))
-          t2<-merge(y2,t2,by='cov.name',sort=TRUE,all.x=TRUE)
-          t2[,1]<-as.character(t2[,1])
-          sums<-as.vector(apply(t2[,2:3],2,sum,na.rm=TRUE))
-          t2[nrow(t2)+1,2:3]<-sums
-          t2[nrow(t2),1]<-'Total'
-          t2[,3]<-round(period/(t2[,3]/t2$cov.count),0)
-          t2$cov.count<-round(t2$cov.count*((cell.size^2)/10000),0)
-          colnames(t2)<-c('cov.name','area.ha',paste(var,'.',runs[j],sep=''))
-          if(j==1) t3<-t2
-          else t3<-merge(t3,t2,by=c('cov.name','area.ha'),sort=FALSE,all.x=TRUE)
-          
-          #compute rotation period by covcond type    
-          if(var=='low.mort') t2<-aggregate(t1r$mort.low,list(t1r$cov.name,t1r$cond.name),sum)
-          else if(var=='high.mort') t2<-aggregate(t1r$mort.high,list(t1r$cov.name,t1r$cond.name),sum)
-          else t2<-aggregate(t1r$mort.any,list(t1r$cov.name,t1r$cond.name),sum)
-          colnames(t2)<-c('cov.name','cond.name',paste(var,'.',runs[j],sep=''))
-          t2<-merge(m1r,t2,by=c('cov.name','cond.name'),sort=TRUE,all.x=TRUE)
-          t2[,1]<-as.character(t2[,1])
-          t2[,2]<-as.character(t2[,2])
-          sums<-as.vector(apply(t2[,3:4],2,sum,na.rm=TRUE))
-          t2[nrow(t2)+1,3:4]<-sums
-          t2[nrow(t2),1:2]<-c('Total','Total')
-          t2[,4]<-round(step.length/(t2[,4]/t2$covcond.count),0)
-          t2r<-t2[,-3] #rotation period for run
-          t2x<-t2[,-4] #covcond area for run
-          if(j==1){
-            t3r<-t2r
-            t3x<-t2x
-            }
-          else{
-            t3r<-merge(t3r,t2r,by=c('cov.name','cond.name'),sort=FALSE,all=TRUE)
-            t3x<-merge(t3x,t2x,by=c('cov.name','cond.name'),sort=FALSE,all=TRUE)
-            }
-          }
-
-          #merge covcond area output across runs
-          t3x[,-c(1:2)][is.na(t3x[,-c(1:2)])]<-0
-          t3x$mean.covcond.count<-apply(t3x[,-c(1:2)],1,mean)
-          t3x$area.ha<-round((t3x$mean.covcond.count/tsteps)*((cell.size^2)/10000),0)
-          t3x<-subset(t3x,select=c('cov.name','cond.name','area.ha'))  
-          out2<-merge(t3x,t3r,by=c('cov.name','cond.name'),sort=FALSE)
-        
-          z[[i+5]]<-list('By Cover Type'=t3,'By Cover-Condition Class'=out2)
-          
-        }
-      }
-    }
-
-    #output tables to file
-    if(outfile==TRUE){
-      for(i in 6:length(z)){
-        write.table(z[[i]][[1]],file=paste(path,dist.levels[i-5],'_rotation.cov.csv',sep=''),
-                    quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
-        write.table(z[[i]][[2]],file=paste(path,dist.levels[i-5],'_rotation.covcond.csv',sep=''),
-                    quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
+        z[[i+5]]<-t3
       }
     }
   
-  return(z)
+	
+	#output tables to file
+	if(outfile==TRUE){
+		for(i in 6:length(z)){
+			write.table(z[[i]],file=paste(path,dist.levels[i-5],'_rotation.csv',sep=''),
+			quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
+			}
+		}
+	}
+
+return(z)
 }
 preturn <-
 function(path,session,runs=NULL,pool.runs=TRUE,
-  stop.step=NULL,step.length,cell.size=30,cover.min.ha=0,
-  cover.names=NULL,y.scale='percent',
+  stop.step=NULL,step.length,
+  cell.size=30,cover.min.ha=0,y.scale='percent',
   col.bars=c('yellow','green','blue'),col.sub='brown',
-  cex.main=1.5,cex.sub=1.5,cex.legend=1.5,legendlocale='topleft',outfile=FALSE,...){
+  cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
 
 ##things to do:
 #need to figure out a way to exclude the equilibration period
 
-require(Hmisc)
+library(Hmisc)
 
 #set defaults
 options(warn=0)
@@ -1109,24 +934,19 @@ else{
 #subset data based on stop.step
 x<-x[x$timestep.id==stop.step,]
 
-#select subset of cover types
-if(!is.null(cover.names)){
-  cov.levels<-levels(x$cov.name)
-  if(any(!cover.names %in% cov.levels)) stop('Invalid cover names')
-  x<-x[x$cov.name %in% cover.names,] 
-  }
-    
-#select cover types with min area
-if(cover.min.ha>0){
-  x2<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
-  t1<-x2[x2$run.id==runs[1] & x2$timestep.id==0,]
-  t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
-  colnames(t2)<-c('cover.type','cov.count')
-  t2$area.ha<-t2$cov.count*cell.size^2/10000
-  t2<-t2[t2$area.ha>cover.min.ha,]
-  t2.cover.type<-t2$cover.type
-  x<-x[x$cov.name %in% t2.cover.type,]
-  }
+#read covcond data
+x2<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
+
+#calculate total area by cover type for min area cover types
+t1<-x2[x2$run.id==runs[1] & x2$timestep.id==0,]
+t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
+colnames(t2)<-c('cover.type','cov.count')
+t2$area.ha<-t2$cov.count*cell.size^2/10000
+t2<-t2[t2$area.ha>cover.min.ha,]
+t2.cover.type<-t2$cover.type
+
+#subset data based on min.area
+x<-x[x$cov.name %in% t2.cover.type,]
 
 #create list object
 dist.levels<-levels(x$dist.type)
@@ -1251,7 +1071,7 @@ for(i in 1:length(dist.levels)){ #loop thru dist.types
 				text=paste(dist.levels[i],': ',cov.levels[j],sep=' '),...)
 
 			#add legend				
-			legend(x=legendlocale,inset=c(0.05,0.05),bty='n',
+			legend(x='topleft',inset=c(0.05,0.05),bty='n',
 				legend=c(paste('Low mort (median RI =',q.l,'yrs)',sep=' '),
 				paste('High mort (median RI =',q.h,'yrs)',sep=' '),
 				paste('Any mort (median RI =',q.a,'yrs)',sep=' ')),
@@ -1300,9 +1120,9 @@ for(i in 1:length(dist.levels)){ #loop thru dist.types
   		    
   		    #optionally convert to percentage
   		    if(y.scale=='percent'){ 
-  		      q$mort.low<-round((q$mort.low/sum(q$mort.low))*100,4)
-  		      q$mort.high<-round((q$mort.high/sum(q$mort.high))*100,4)
-  		      q$mort.any<-round((q$mort.any/sum(q$mort.any))*100,4)
+  		      q$mort.low<-round((q$mort.low/sum(q$mort.low))*100,2)
+  		      q$mort.high<-round((q$mort.high/sum(q$mort.high))*100,2)
+  		      q$mort.any<-round((q$mort.any/sum(q$mort.any))*100,2)
   		      }
   		    
   		    #compute median return intervals
@@ -1350,7 +1170,7 @@ for(i in 1:length(dist.levels)){ #loop thru dist.types
             text=paste(dist.levels[i],': ',cov.levels[j],': Run #',runs[k],sep=' '),...)
   		    
   		    #add legend				
-  		    legend(x=legendlocale,inset=c(0.05,0.05),bty='n',
+  		    legend(x='topleft',inset=c(0.05,0.05),bty='n',
              legend=c(paste('Low mort (median RI =',q.l,'yrs)',sep=' '),
                 paste('High mort (median RI =',q.h,'yrs)',sep=' '),
                 paste('Any mort (median RI =',q.a,'yrs)',sep=' ')),
@@ -1529,10 +1349,9 @@ for(i in 1:length(dist.levels)){
       title(main='Disturbance Size Distribution',cex.main=cex.main,
         ylab='Proportion',xlab='Disturbance Size (ha)',...)
       }
-    #####################################################
-    # comment out below items to remove "Wildfire Run #" from plot
-    #mtext(side=3,col=col.sub,cex=cex.sub,
-    #  text=dist.levels[i],...)
+
+    mtext(side=3,col=col.sub,cex=cex.sub,
+      text=dist.levels[i],...)
     
     if(!is.null(target)){
       legend('topright',inset=c(0.1,0.1),legend=c('Observed','Target'),
@@ -1599,10 +1418,8 @@ for(i in 1:length(dist.levels)){
 		      ylab='Proportion',xlab='Disturbance Size (ha)',...)
         }
 
-      #####################################################
-      # comment out below items to remove "Wildfire Run #" from plot
-      #mtext(side=3,col=col.sub,cex=cex.sub,
-		#    text=paste(dist.levels[i],' Run #',runs[j],sep=''),...)
+      mtext(side=3,col=col.sub,cex=cex.sub,
+		    text=paste(dist.levels[i],' Run #',runs[j],sep=''),...)
 
       if(!is.null(target)){
         legend('topright',inset=c(0.1,0.1),legend=c('Observed','Target'),
@@ -1619,16 +1436,13 @@ par(old.par)
 return(z)
 }
 darea <-
-function(path,sessions=NULL,var='mean',runs=NULL,start.step=1,
-	stop.step=NULL,step.length=NULL, covtype=NULL, cell.size=30,y.scale='percent',
+function(path,session=NULL,var='mean',runs=NULL,start.step=1,
+	stop.step=NULL,step.length=NULL,cell.size=30,y.scale='percent',
 	col.bars=c('blue','light blue','turquoise'),col.sub='brown',
   cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
 
 ##things to do:
 #add plot by cover type? see preturn for possible approach
-    
-# add argument that specifies whether to do it by cover type
-# can be true/false or provide vector of cover types
 
 #set defaults
 options(warn=0)
@@ -1637,42 +1451,34 @@ old.par<-par(no.readonly=TRUE)
 #read darea data
 x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
 
-
-if (!is.null(covtype)){
-    x<-x[x$cov.name==covtype,]
-}
-
 #rescale cell counts
-# DON'T BE A DUMBASS!!!
-#x$mort.high<-round(x$mort.high*((cell.size^2)/10000),0)
-#x$mort.low<-round(x$mort.low*((cell.size^2)/10000),0)
-#x$mort.any<-round(x$mort.any*((cell.size^2)/10000),0)
-x$mort.high<-x$mort.high*((cell.size^2)/10000)
-x$mort.low<-x$mort.low*((cell.size^2)/10000)
-x$mort.any<-x$mort.any*((cell.size^2)/10000)
+x$mort.high<-round(x$mort.high*((cell.size^2)/10000),0)
+x$mort.low<-round(x$mort.low*((cell.size^2)/10000),0)
+x$mort.any<-round(x$mort.any*((cell.size^2)/10000),0)
 
 #set global session and runs parameters
-if(is.null(sessions)) sessions<-unique(x$session.id)
+if(is.null(session)) session<-unique(x$session.id)
 
 #verify valid session ids
 all.sessions<-unique(x$session.id)
-if(any(!sessions %in% all.sessions)) stop('Invalid session ids')
+if(any(!session %in% all.sessions)) stop('Invalid session ids')
 
 #clustered bar charts for multiple sessions
-if(length(sessions)>1){
+if(length(session)>1){
 
   #subset data based on session.id
-  x<-x[x$session.id %in% sessions,]
-
-  #verify valid run.ids
-  if(is.null(runs)) runs<-unique(x$run.id)
+  x<-x[x$session.id %in% session,]
+  
+  #set runs parameters based on max run.id
+  if(is.null(runs)) runs<-max(x$run.id)
   else{
-    all.runs<-unique(x$run.id)
-    if(!runs %in% all.runs) stop('Invalid run ids')
-  }
+    if(runs>max(x$run.id)) warning('Runs exceeds maximum run id and was set to the maximum')
+    runs<-min(runs,max(x$run.id))
+    }
   
   #subset data based on runs
-  x<-x[x$run.id %in% runs,]
+  x<-x[x$run.id<=runs,]
+  run.levels<-as.vector(unique(x$run.id))
   
   #create dist.levels vector for loop
   dist.levels<-as.vector(unique(x$dist.type))
@@ -1685,14 +1491,14 @@ if(length(sessions)>1){
 	for(i in 1:length(dist.levels)){ 
 
     #create list objects for results
-	  z[[i]]<-vector("list",length(runs))
-	  names(z[[i]])<-paste('run number ',runs,sep='')
+	  z[[i]]<-vector("list",length(run.levels))
+	  names(z[[i]])<-paste('run number ',run.levels,sep='')
 	  
 		#loop thru runs
-		for(j in 1:length(runs)){
+		for(j in 1:length(run.levels)){
 
       #subset data for dist.type and run.id
-		  x2<-x[x$dist.type==dist.levels[i] & x$run.id==runs[j],]
+		  x2<-x[x$dist.type==dist.levels[i] & x$run.id==run.levels[j],]
 		  
 		  #set start.step and stop.step parameters
 		  if(start.step>max(x2$timestep.id)) stop('Start.step exceeds maximum timestep')
@@ -1708,18 +1514,18 @@ if(length(sessions)>1){
 		  timestep<-as.data.frame(timestep)
 		  
       #sort sesssion.id
-		  sessions<-sort(unique(x2$session.id))
+		  session<-sort(unique(x2$session.id))
 		  
       #create results matrix
-			y2<-matrix(0,nrow=3,ncol=length(sessions))
+			y2<-matrix(0,nrow=3,ncol=length(session))
 			rownames(y2)<-c('low.mort','high.mort','any.mort')
-			colnames(y2)<-sessions
+			colnames(y2)<-session
 
 			#loop thru sessions
-			for(k in 1:length(sessions)){
+			for(k in 1:length(session)){
 	
         #select records for session
-			  y<-x2[x2$session.id==sessions[k],]
+			  y<-x2[x2$session.id==session[k],]
 
 			  #summarize darea by dist.type, run and timestep
 			  y.low<-aggregate(y$mort.low,list(y$timestep.id),sum)
@@ -1737,7 +1543,7 @@ if(length(sessions)>1){
 				#optionally convert darea to percent of eligible
 				if(y.scale=='percent'){
 					t<-read.csv(paste(path,'eligible.csv',sep=''),header=TRUE)
-					t<-t[t$session.id==sessions[k] & t$dist.type==dist.levels[i],]
+					t<-t[t$session.id==session[k] & t$dist.type==dist.levels[i],]
 					t<-round(t$cell.count*((cell.size^2)/10000),0)
 					y[,2:4]<-round((y[,2:4]/t)*100,2)
 					}
@@ -1756,7 +1562,7 @@ if(length(sessions)>1){
 			print(y2)
 			
 			#create clustered bar chart
-			barplot(y2,beside=TRUE,border=NA,#'black',
+			barplot(y2,beside=TRUE,border='black',
 				xaxs='i',yaxs='i',col=col.bars,
 				axis.lty=1,...)
 	
@@ -1771,15 +1577,15 @@ if(length(sessions)>1){
 	
 			#add subtitle - run number
 			mtext(side=3,col=col.sub,cex=cex.sub,
-        text=paste('Run #',runs[j],sep=''),...)
+        text=paste('Run #',run.levels[j],sep=''),...)
 	
 			#add legend				
-			legend(x='bottomright',#inset=c(0.05,0.05),
+			legend(x='topright',inset=c(0.05,0.05),
 				legend=c('Low mort','High mort','Any mort'),
         fill=col.bars,cex=cex.legend)
 		
-			#if(!i==length(dist.levels) || !j==length(runs)) 
-			#	readline("Press return for next plot ")
+			if(!i==length(dist.levels) || !j==runs) 
+				readline("Press return for next plot ")
 
 			}
 		}
@@ -1797,17 +1603,18 @@ if(length(sessions)>1){
 else{
 
   #subset data based on session.id
-  x<-x[x$session.id==sessions,]
-
-  #verify valid run.ids
-  if(is.null(runs)) runs<-unique(x$run.id)
-  else{
-    all.runs<-unique(x$run.id)
-    if(!runs %in% all.runs) stop('Invalid run ids')
-  }
+  x<-x[x$session.id==session,]
   
-  #subset data based on runs
-  x<-x[x$run.id %in% runs,]
+  #set runs parameters
+  if(is.null(runs)) runs<-max(x$run.id)
+  else{
+    if(runs>max(x$run.id)) warning('Runs exceeds maximum run id and was set to the maximum')
+    runs<-min(runs,max(x$run.id))
+    }
+  
+  #subset data based on run.id
+  x<-x[x$run.id<=runs,]
+  run.levels<-as.vector(unique(x$run.id))
   
   #set start.step and stop.step parameters
   if(start.step>max(x$timestep.id)) stop('Start.step exceeds maximum timestep')
@@ -1835,18 +1642,16 @@ else{
 	for(i in 1:length(dist.levels)){
 
     #create list objects for results
-    z1[[i]]<-vector("list",length(runs))
-	  names(z1[[i]])<-paste('run number ',runs,sep='')
-	  z2[[i]]<-vector("list",length(runs))
-	  names(z2[[i]])<-paste('run number ',runs,sep='')
+    z1[[i]]<-vector("list",length(run.levels))
+	  names(z1[[i]])<-paste('run number ',run.levels,sep='')
+	  z2[[i]]<-vector("list",length(run.levels))
+	  names(z2[[i]])<-paste('run number ',run.levels,sep='')
 	  
 		#loop thru runs 
-		for(j in 1:length(runs)){
-            
-            # here would be a place to subset by cover type
+		for(j in 1:length(run.levels)){
 
 			#summarize darea by dist.type, run and timestep
-			y<-x[x$dist.type==dist.levels[i] & x$run.id==runs[j],]
+			y<-x[x$dist.type==dist.levels[i] & x$run.id==run.levels[j],]
 			y.low<-aggregate(y$mort.low,list(y$timestep.id),sum)
 			colnames(y.low)<-c('timestep','mort.low')
 			y.high<-aggregate(y$mort.high,list(y$timestep.id),sum)
@@ -1860,15 +1665,12 @@ else{
 			y<-y[order(y$timestep),]
 	
 			#optionally convert darea to percent of eligible
-            # this eligible bit is what ruins everything
-            # have to put a dummy string in for y in the function call
 			if(y.scale=='percent'){
 				t<-read.csv(paste(path,'eligible.csv',sep=''),header=TRUE)
-				t<-t[t$session.id==sessions & t$dist.type==dist.levels[i],]
+				t<-t[t$session.id==session & t$dist.type==dist.levels[i],]
 				t<-round(t$cell.count*((cell.size^2)/10000),0)
 				y[,2:4]<-round((y[,2:4]/t)*100,2)
 				}
-            
 	
 			#print results to console and list object		
 			z1[[i]][[j]]<-y
@@ -1889,15 +1691,9 @@ else{
 			print(format(z2[[i]][[j]],big.mark=','))
 	
 			#plot disturbance area trajectory
-            ############## ADDED BORDER=NA ####################
-			barplot(t(y[,c(3,2)]),space=0, border="black",#NA,
-			    #    barplot(y2,beside=TRUE,border=NA,#'black',
-			                
-				xaxs='i',yaxs='i',col=c('dark blue', 'dark green'),#col.bars,
+			barplot(t(y[,c(3,2)]),space=0,
+				xaxs='i',yaxs='i',col=col.bars,
 				axis.lty=1,names=y$timestep,...)
-            
-            # to add a line at the equilibration period
-            #abline(v=40,lty=2,lwd=2,col="black")
 	
 			#add plot title	- dist.type	
 			if(is.null(step.length)) xlab='Timestep'
@@ -1911,16 +1707,13 @@ else{
 	
 			#add subtitle - run number
 			mtext(side=3,col=col.sub,cex=cex.sub,
-            text=paste('Run #',runs[j],sep=''),...)
+        text=paste('Run #',run.levels[j],sep=''),...)
 	
-			#add legend		
-            #####################################################
-            ### I CHANGED A LINE HERE
-            #######################################################
-			legend(x='topright',#inset=c(0.05,0.05),
-				#legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
-			    legend=c('High mort','Low mort'),fill=c('dark blue','dark green'),cex=cex.legend)
-			if(!i==length(dist.levels) || !j==length(runs)) 
+			#add legend				
+			legend(x='topright',inset=c(0.05,0.05),
+				legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
+		
+			if(!i==length(dist.levels) || !j==runs) 
 				readline("Press return for next plot ")
 			}
 		}
@@ -1941,249 +1734,7 @@ else{
 	}
 
 par(old.par)
-invisible(z)
-}
-dinit <-
-function(path,sessions=NULL,var='mean',runs=NULL,start.step=1,
-	stop.step=NULL,step.length=NULL,col.line='blue',
-  col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
-
-##things to do:
-#add plot by cover type? see preturn for possible approach
-
-#set defaults
-options(warn=0)
-old.par<-par(no.readonly=TRUE)
-	
-#read darea data
-x<-read.csv(paste(path,'dinit.csv',sep=''),header=TRUE)
-
-#set global session and runs parameters
-if(is.null(sessions)) sessions<-sort(unique(x$session.id))
-
-#verify valid session ids
-all.sessions<-unique(x$session.id)
-if(any(!sessions %in% all.sessions)) stop('Invalid session ids')
-
-#clustered bar charts for multiple sessions
-if(length(sessions)>1){
-  
-  #subset data based on session.id
-  x<-x[x$session.id %in% sessions,]
-  
-  #verify valid run.ids
-  if(is.null(runs)) runs<-unique(x$run.id)
-  else{
-    all.runs<-unique(x$run.id)
-    if(!runs %in% all.runs) stop('Invalid run ids')
-  }
-  
-  #subset data based on runs
-  x<-x[x$run.id %in% runs,]
-  
-  #create dist.levels vector for loop
-  dist.levels<-as.vector(unique(x$dist.type))
-  
-  #create list objects for results
-  z<-vector("list",length(dist.levels))
-  names(z)<-paste(dist.levels,' dinit comparison (',var,')',sep='')
-  
-  #loop thru disturbance types
-  for(i in 1:length(dist.levels)){ 
-    
-    #create list objects for results
-    out<-matrix(NA,nrow=length(runs),ncol=length(sessions))
-    colnames(out)<-paste('session',sessions,'')
-    run<-runs
-    out<-cbind(run,out)
-    
-    #loop thru runs
-    for(j in 1:length(runs)){
-      
-      #subset data for dist.type and run.id
-      x2<-x[x$dist.type==dist.levels[i] & x$run.id==runs[j],]
-      
-      #set start.step and stop.step parameters
-      if(start.step>max(x2$timestep.id)) stop('Start.step exceeds maximum timestep')
-      if(is.null(stop.step)) stop.step<-max(x2$timestep.id)
-      else{
-        if(stop.step>max(x2$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
-        stop.step<-min(stop.step,max(x2$timestep.id))
-      }
-      
-      #subset data based on start.step and stop.step
-      x2<-x2[x2$timestep.id>=start.step & x2$timestep.id<=stop.step,]
-      timestep<-seq(start.step,stop.step,1)
-      timestep<-as.data.frame(timestep)
-
-      #sort sesssion.id
-      sessions<-sort(unique(x2$session.id))
-      
-      #loop thru sessions
-      for(k in 1:length(sessions)){
-        
-        #select records for session
-        y<-x2[x2$session.id==sessions[k],]
-
-        #summarize counts by timestep
-        y.sum<-aggregate(y$count,list(y$timestep.id),sum)
-        colnames(y.sum)<-c('timestep','count')
-        y<-merge(timestep,y.sum,by='timestep',all.x=TRUE,sort=FALSE)
-        y[is.na.data.frame(y)]<-0
-        y<-y[order(y$timestep),]
-        
-        #compute darea summary
-        if(var=='min') out[j,k+1]<-min(y$count)
-        else if(var=='max') out[j,k+1]<-max(y$count)
-        else if(var=='median') out[j,k+1]<-round(median(y$count),0)
-        else if(var=='mean') out[j,k+1]<-round(mean(y$count),0)
-        
-      }
-      
-      #create clustered bar chart
-      barplot(out[j,-1],border='black',names.arg=sessions,
-              xaxs='i',yaxs='i',col=seq(1,length(sessions)),
-              axis.lty=1)
-      
-      #add plot title	- dist.type			
-      title(main=paste(dist.levels[i],' (',var,' dinit/timestep',')',sep=''),
-        ylab='Count',xlab='Scenario/Session',cex.main=cex.main,...)
-      
-      #add subtitle - run number
-      mtext(side=3,col=col.sub,cex=cex.sub,
-        text=paste('Run #',runs[j],sep=''),...)
-      
-      if(!i==length(dist.levels) || !j==length(runs)) 
-        readline("Press return for next plot ")
-      
-    }
-  }
-
-  #print summary to console and list object
-  z[i]<-as.data.frame(out)
-  print(out)
-  
-  #output tables to file
-  if(outfile==TRUE){
-    for(i in 1:length(z)){
-      write.table(z[i],file=paste(path,dist.levels[i],'_darea_comparison.csv',sep=''),
-                  quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
-    }
-  }
-}
-
-#stacked bar chart trajectory for single sesssion	
-else{
-  
-  #subset data based on session.id
-  x<-x[x$session.id==sessions,]
-  
-  #verify valid run.ids
-  if(is.null(runs)) runs<-unique(x$run.id)
-  else{
-    all.runs<-unique(x$run.id)
-    if(!runs %in% all.runs) stop('Invalid run ids')
-  }
-  
-  #subset data based on runs
-  x<-x[x$run.id %in% runs,]
-  
-  #set start.step and stop.step parameters
-  if(start.step>max(x$timestep.id)) stop('Start.step exceeds maximum timestep')
-  if(is.null(stop.step)) stop.step<-max(x$timestep.id)
-  else{
-    if(stop.step>max(x$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
-    stop.step<-min(stop.step,max(x$timestep.id))
-  }
-  
-  #subset data based on start.step and stop.step
-  x<-x[x$timestep.id>=start.step & x$timestep.id<=stop.step,]
-  timestep<-seq(start.step,stop.step,1)
-  timestep<-as.data.frame(timestep)
-  
-  #create dist.level vector for loops
-  dist.levels<-as.vector(unique(x$dist.type))
-  
-  #create list objects for results
-  z1<-vector("list",length(dist.levels))
-  names(z1)<-paste(dist.levels,' disturbance trajectory',sep='')
-  z2<-vector("list",length(dist.levels))
-  names(z2)<-paste(dist.levels,' disturbance summary',sep='')
-  
-  #loop thru disturbance types
-  for(i in 1:length(dist.levels)){
-    
-    #create list objects for results
-    z1[[i]]<-vector("list",length(runs))
-    names(z1[[i]])<-paste('run number ',runs,sep='')
-    z2[[i]]<-vector("list",length(runs))
-    names(z2[[i]])<-paste('run number ',runs,sep='')
-    
-    #loop thru runs 
-    for(j in 1:length(runs)){
-      
-      #summarize counts by cov.name
-      y<-x[x$dist.type==dist.levels[i] & x$run.id==runs[j],]
-      y.sum<-aggregate(y$count,list(y$timestep.id),sum)
-      colnames(y.sum)<-c('timestep','count')
-      y<-merge(timestep,y.sum,by='timestep',all.x=TRUE,sort=FALSE)
-      y[is.na.data.frame(y)]<-0
-      y<-y[order(y$timestep),]
-      
-      #print results to console and list object		
-      z1[[i]][[j]]<-y
-      print(format(z1[[i]][[j]],big.mark=','))
-      
-      #compute dinit summary
-      temp<-matrix(0,nrow=4,ncol=2)		
-      colnames(temp)<-c('summary statistic','count')
-      temp[,1]<-c('minimum count/timestep','maximum count/timestep',
-                  'median count/timestep','mean count/timestep')
-      temp[1,2]<-min(y$count)
-      temp[2,2]<-max(y$count)
-      temp[3,2]<-round(median(y$count),0)
-      temp[4,2]<-round(mean(y$count),0)
-      
-      #print summary to console and list object
-      z2[[i]][[j]]<-as.data.frame(temp)
-      print(format(z2[[i]][[j]],big.mark=','))
-      
-      #plot disturbance area trajectory
-      plot(y$timestep,y$count,type='l',xlab='',ylab='',
-           col=col.line,lwd=2)
-      
-      #add plot title	- dist.type	
-      if(is.null(step.length)) xlab='Timestep'
-      else xlab=paste('Timestep (x',step.length,' yrs)')
-      title(main=paste(dist.levels[i],'Disturbance Trajectory',sep=' '),
-        ylab='Count',xlab=xlab,cex.main=cex.main,...)
-      
-      #add subtitle - run number
-      mtext(side=3,col=col.sub,cex=cex.sub,
-            text=paste('Run #',runs[j],sep=''),...)
-      
-      if(!i==length(dist.levels) || !j==length(runs)) 
-        readline("Press return for next plot ")
-    }
-  }
-  
-  #create list object
-  z<-list(z1,z2)
-  names(z)<-c('Disturbance Area Trajectory','Disturbance Area Summary')
-  
-  #output tables to file
-  if(outfile==TRUE){
-    for(i in 1:length(z1)){
-      write.table(z1[[i]],file=paste(path,dist.levels[i],'_darea_trajectory.csv',sep=''),
-                  quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
-      write.table(z2[[i]],file=paste(path,dist.levels[i],'_darea_summary.csv',sep=''),
-                  quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
-    }
-  }
-}
-
-par(old.par)
-invisible(z)
+return(z)
 }
 tarea <-
 function(path,session=NULL,var='mean',runs=NULL,start.step=1,
@@ -2492,16 +2043,10 @@ else{
 			#add subtitle - run number
 			mtext(side=3,col=col.text,text=paste('Run #',run.levels[j],sep=''))
 	
-			#add legend	
-      if(length(dtype.levels)>1){
-			  legend(x='topright',inset=c(0.05,0.05),
-				  legend=dtype.levels,fill=col.bar)
-      }
-      else{
-        legend(x='topright',inset=c(0.05,0.05),
-          legend=dtype.levels,fill='blue')
-      }
-         
+			#add legend				
+			legend(x='topright',inset=c(0.05,0.05),
+				legend=dtype.levels,fill=col.bar)
+		
 			if(!i==length(mtype.levels) || !j==runs) 
 				readline("Press return for next plot ")
 			}
@@ -2528,7 +2073,7 @@ invisible(z)
 fragland <-
 function(path,infile,LID.path,scenarios=NULL,
   sessions=NULL,sessions.name='session',runs=NULL,runs.name='run',
-  metrics=NULL,var='srv50%',start.step=0,stop.step=NULL,outfile=FALSE){
+  var='srv50%',start.step=0,stop.step=NULL,outfile=FALSE){
 
 #set defaults
 options(warn=0)
@@ -2608,16 +2153,6 @@ for(j in 1:nrow(t0)){
 #rearrange dataframe 
 y<-y[,c(1:3,ncol(y),4:c(ncol(y)-1))]
 
-#set metrics parameter
-all.metrics<-colnames(y)[-c(1:4)]
-if(is.null(metrics)) metrics<-all.metrics
-if(any(!metrics %in% all.metrics)) stop('Invalid metrics selected')
-
-#select columns
-y.metrics<-subset(y,select=metrics)
-y.head<-y[,1:4]
-y<-cbind(y.head,y.metrics)
-
 #create results files for multiple scenarios and/or sessions
 if(nrow(t0)>1){
 	landscape.metric<-colnames(y)[-c(1:4)]
@@ -2678,45 +2213,21 @@ for(j in 1:nrow(t0)){
 		}
 
 	#compute departure index
-#	t1<-rep(0,nrow(z1))
-#	z1<-cbind(z1,t1)
-#	z1[,104]<-as.numeric(z1[,104])
-#	for(i in 1:nrow(z1)){ 		
-#		if(is.na(z1[i,104])) z1[i,106]<-'NA'
-#		else{
-#		    if(z1[i,104]<50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
-#			else if(z1[i,104]>50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
-#			else z1[i,106]<-0
-#			}
-#		}
-#	z1[,106]<-as.numeric(z1[,106])
-#	z2<-mean(abs(z1[,106]),na.rm=TRUE)
-#	z2<-round(z2,0)
-    
-    # my departure index
-    # if the percentile value is less than 50
-  t1<-rep(0,nrow(z1))
-  z1<-cbind(z1,t1)
-  z1[,104]<-as.numeric(z1[,104])
-  for(i in 1:nrow(z1)){ 		
-      if(is.na(z1[i,104])) z1[i,106]<-'NA'
-      else{
-        if(z1[i,104]<50) z1[i,106]<-round( 
-        (z1[i,103] - z1[i,52])/ # actual minus the median
-         (z1[i,52] - z1[i,2]) * 100, # median minus 0
-          0)
-      else if(z1[i,104]>50)
-        z1[i,106]<-round( 
-            (z1[i,103] - z1[i,52])/ # actual minus the median
-                (z1[i,102] - z1[i,52]) * 100, # 100th minus median 
-            0)
-      else z1[i,106]<-0
-            }
-        }
-    z1[,106]<-as.numeric(z1[,106])
+	t1<-rep(0,nrow(z1))
+	z1<-cbind(z1,t1)
+	z1[,104]<-as.numeric(z1[,104])
+	for(i in 1:nrow(z1)){ 		
+		if(is.na(z1[i,104])) z1[i,106]<-'NA'
+		else{
+			if(z1[i,104]<50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
+			else if(z1[i,104]>50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
+			else z1[i,106]<-0
+			}
+		}
+	z1[,106]<-as.numeric(z1[,106])
 	z2<-mean(abs(z1[,106]),na.rm=TRUE)
 	z2<-round(z2,0)
-  
+	
 	#put the final table together
 	z1<-z1[,c(1,2,7,27,52,77,97,102,105,103,104,106)]
 	row.names(z1)<-NULL
@@ -2753,13 +2264,11 @@ if(outfile==TRUE){
 return(z)
 }
 fragland.pdf.plot <-
-function(infile,path,LID.path,scenarios=NULL,
-  sessions=NULL,sessions.name='session',runs=NULL,runs.name='run',
-  pool.runs=TRUE,metrics=NULL,current=TRUE,start.step=0,stop.step=NULL,
+function(infile,path,scenarios=NULL,sessions=NULL,runs=NULL,
+  pool.runs=TRUE,current=TRUE,start.step=0,stop.step=NULL,
   ref.scenario=NULL,ref.session=NULL,ref.tstep=NULL,ref.include=TRUE,
   quantiles=c(0.05,0.95),col.line='dark blue',col.sub='brown',
-  cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
-  outfile=FALSE,save.figs=FALSE,...){
+  cex.main=1.5,cex.sub=1.25,cex.legend=1.25,outfile=FALSE,...){
 
 #set defaults
 options(warn=0)
@@ -2837,16 +2346,6 @@ for(j in 1:nrow(t0)){
 #rearrange dataframe 
 y<-y[,c(1:3,ncol(y),4:c(ncol(y)-1))]
 
-#set metrics parameter
-all.metrics<-colnames(y)[-c(1:4)]
-if(is.null(metrics)) metrics<-all.metrics
-if(any(!metrics %in% all.metrics)) stop('Invalid metrics selected')
-
-#select columns
-y.metrics<-subset(y,select=metrics)
-y.head<-y[,1:4]
-y<-cbind(y.head,y.metrics)
-
 #set file-dependent defaults
 if(is.null(stop.step)){
   stopstep<-max(y$timestep)
@@ -2915,16 +2414,9 @@ if(!is.null(ref.scenario) & !is.null(ref.session)){
     }
     xrange<-xmax-xmin
     
-    #plot to file
-    if(save.figs==TRUE){
-      bitmap(file=paste(names(q2)[i],'.png',sep=''),
-        height=6,width=8,res=300,...) 
-    }
-    
     #create blank plot
     plot(1,1,type='n',xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
-      ylim=c(0,1.3),xaxs='i',xlab=names(q1[i]),ylab='Density',main='',
-      cex.lab=cex.lab,...)
+      ylim=c(0,1.3),xaxs='i',xlab=names(q1[i]),ylab='Density',main='',...)
     
     #plot reference scenario and session
     q3<-q2[q2$scenario==t1[1,1] & q2$session==t1[1,2] & 
@@ -3001,19 +2493,18 @@ if(!is.null(ref.scenario) & !is.null(ref.session)){
       else if(ref.include==FALSE & current==FALSE){
         z[i-4,k+1]<-departure(ref=q3[,i],alt=q5[,i])
       }
-      
-      #add current condition
-      if(current==TRUE){
-        segments(y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & y$timestep==0,i],
-           0,y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & y$timestep==0,i],1,
-           lwd=2,lty=1,col=k)
-      }
+    }
+    
+    #add current condition	
+    if(current==TRUE){
+      segments(y[y$timestep==0,i],0,y[y$timestep==0,i],1,
+        lwd=2,lty=1,col='red')
     }
     
     #add legend
     if(current==TRUE){
       legend(x='topleft',ncol=1,legend='current',bty='n',
-        lty=1,lwd=2,col='darkgrey',cex=cex.legend,title='Current')
+        lty=1,lwd=2,col='red',cex=cex.legend,title='Current')
     }
     #reference scenario
     legend(x='top',ncol=1,legend=c(paste(t1[,1],t1[,2],sep='.')),bty='n',
@@ -3042,9 +2533,7 @@ if(!is.null(ref.scenario) & !is.null(ref.session)){
     #add horizontal line at zero
     abline(h=0,col='gray')
     
-    if(save.figs==TRUE) dev.off()
-    
-    if(save.figs==FALSE & !i==ncol(q1))
+    if(!i==ncol(q1))
       readline('Press return for next plot')
     
   } #end loop thru metrics
@@ -3094,16 +2583,9 @@ else if(nrow(t0)>1){
       #order data
       q2<-q1[order(q1$timestep),]
       
-      #plot to file
-      if(save.figs==TRUE){
-        bitmap(file=paste(names(q2)[i],'.png',sep=''),
-               height=6,width=8,res=300,...) 
-      }
-            
       #create blank plot
       plot(1,1,type='n',xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
-        ylim=c(0,1.1),xaxs='i',xlab=names(q2[i]),ylab='Density',
-        cex.lab=cex.lab,main='',...)
+        ylim=c(0,1.1),xaxs='i',xlab=names(q2[i]),ylab='Density',main='',...)
       
       #loop thru scenarios and sessions
       for(k in 1:nrow(t0)){
@@ -3114,13 +2596,12 @@ else if(nrow(t0)>1){
           temp<-density(q3[,i],from=xmin,to=xmax,na.rm=TRUE)
           lines(temp$x,temp$y/max(temp$y),lwd=2,lty=k,col=k)  
         }
-        #add current condition
-        if(current==TRUE){
-          segments(y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & y$timestep==0,i],
-            0,y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & y$timestep==0,i],1,
-            lwd=2,lty=1,col='darkgrey')
-        }
-           
+      }
+      
+      #add current condition	
+      if(current==TRUE){
+        segments(y[y$timestep==0,i],0,y[y$timestep==0,i],1,
+          lwd=2,lty=1,col='red')
       }
       
       #add legend
@@ -3128,7 +2609,7 @@ else if(nrow(t0)>1){
         legend(x='topleft',ncol=3,
           legend=c('current',paste(t0[,1],t0[,2],sep='.')),
           lty=c(1,seq(1,nrow(t0))),bty='n',lwd=2,
-          col=c('darkgrey',seq(1,nrow(t0))),cex=cex.legend)
+          col=c('red',seq(1,nrow(t0))),cex=cex.legend)
       }
       else{  
         legend(x='topleft',ncol=3,
@@ -3147,8 +2628,6 @@ else if(nrow(t0)>1){
       #add horizontal line at zero
       abline(h=0,col='gray')
       
-      if(save.figs==TRUE) dev.off()
-      
     } #end if pooled across runs
     
     #for separate plot per run
@@ -3161,16 +2640,9 @@ else if(nrow(t0)>1){
         q2<-q1[q1$run.id==runs[j],]
         q2<-q2[order(q2$timestep),]
         
-        #plot to file
-        if(save.figs==TRUE){
-          bitmap(file=paste(names(q2)[i],runs[j],'.png',sep=''),
-                 height=6,width=8,res=300,...) 
-        }
-                
         #create blank plot
         plot(1,1,type='n',xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
-          ylim=c(0,1.1),xaxs='i',xlab=names(q1[i]),ylab='Density',
-          cex.lab=cex.lab,main='',...)
+          ylim=c(0,1.1),xaxs='i',xlab=names(q1[i]),ylab='Density',main='',...)
         
         #loop thru scenarios and sessions
         for(k in 1:nrow(t0)){
@@ -3181,21 +2653,20 @@ else if(nrow(t0)>1){
             temp<-density(q3[,i],from=xmin,to=xmax,na.rm=TRUE)
             lines(temp$x,temp$y/max(temp$y),lwd=2,lty=k,col=k)  
           }
-          
-          #add current condition
-          if(current==TRUE){
-            segments(y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & y$timestep==0,i],
-              0,y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & y$timestep==0,i],1,
-              lwd=2,lty=1,col='darkgrey')
-          }
         }
-                
+        
+        #add current condition	
+        if(current==TRUE){
+          segments(y[y$timestep==0,i],0,y[y$timestep==0,i],1,
+            lwd=2,lty=1,col='red')
+        }
+        
         #add legend
         if(current==TRUE){
           legend(x='topleft',ncol=3,
             legend=c('current',paste(t0[,1],t0[,2],sep='.')),
             lty=c(1,seq(1,nrow(t0))),bty='n',lwd=2,
-            col=c('darkgrey',seq(1,nrow(t0))),cex=cex.legend)
+            col=c('red',seq(1,nrow(t0))),cex=cex.legend)
         }
         else{  
           legend(x='topleft',ncol=3,
@@ -3215,16 +2686,14 @@ else if(nrow(t0)>1){
         #add horizontal line at zero
         abline(h=0,col='gray')
         
-        if(save.figs==TRUE) dev.off()
-        
-        if(save.figs==FALSE & !j==length(runs))
+        if(!j==length(runs))
           readline('Press return for next plot')
         
       } #end loop thru runs
       
     } #end separate plot per run
     
-    if(save.figs==FALSE & !i==ncol(q1))
+    if(!i==ncol(q1))
       readline('Press return for next plot')
     
   } #end loop thru metrics
@@ -3261,19 +2730,12 @@ else{
       #select data for run
       q2<-q1[order(q1$timestep),]
       
-      #plot to file
-      if(save.figs==TRUE){
-        bitmap(file=paste(names(q2)[i],'.png',sep=''),
-               height=6,width=8,res=300,...) 
-      }
-            
       #plot density
       z1<-density(q2[,i],from=xmin,to=xmax,na.rm=TRUE)
       plot(z1$x,z1$y/max(z1$y),type='l',
         xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
         ylim=c(0,1.1),xaxs='i',xlab=names(q2[i]),
-        ylab='Density',main='',lwd=2,col=col.line,
-        cex.lab=cex.lab,...)
+        ylab='Density',main='',lwd=2,col=col.line,...)
       
       #add current condition and %SRV lines	
       if(current==TRUE){
@@ -3315,10 +2777,8 @@ else{
       
       #add horizontal line at zero
       abline(h=0,col='gray')
-      
-      if(save.figs==TRUE) dev.off()
 
-      if(save.figs==FALSE & !i==ncol(q1))
+      if(!i==ncol(q1))
         readline('Press return for next plot')
       
     } #end pooled across runs
@@ -3333,19 +2793,12 @@ else{
         q2<-q1[q1$run.id==runs[j],]
         q2<-q2[order(q2$timestep),]
         
-        #plot to file
-        if(save.figs==TRUE){
-          bitmap(file=paste(names(q2)[i],runs[j],'.png',sep=''),
-                 height=6,width=8,res=300,...) 
-        }
-                
         #plot density
         z1<-density(q2[,i],from=xmin,to=xmax,na.rm=TRUE)
         plot(z1$x,z1$y/max(z1$y),type='l',
           xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
           ylim=c(0,1.1),xaxs='i',xlab=names(q2[i]),
-          ylab='Density',main='',lwd=2,col=col.line,
-          cex.lab=cex.lab,...)
+          ylab='Density',main='',lwd=2,col=col.line,...)
         
         #add current condition and %SRV lines	
         if(current==TRUE){
@@ -3388,9 +2841,7 @@ else{
         #add horizontal line at zero
         abline(h=0,col='gray')
         
-        if(save.figs==TRUE) dev.off()
-        
-        if(save.figs==FALSE & !j==length(runs) | !i==ncol(q1))
+        if(!j==length(runs) | !i==ncol(q1))
           readline('Press return for next plot')
         
       } #end loop thru runs
@@ -3406,10 +2857,8 @@ par(old.par)
 fragland.plot <-
 function(infile,path,LID.path,scenarios=NULL,
   sessions=NULL,sessions.name='session',runs=NULL,runs.name='run',
-  metrics=NULL,start.step=0,stop.step=NULL,step.length=NULL,
-  quantiles=c(0.05,0.95),col.line='dark blue',col.sub='brown',
-  cex.main=1.5,cex.sub=1.5,cex.legend=1.5,cex.lab=1.5,
-  save.figs=FALSE,...){
+  start.step=0,stop.step=NULL,step.length=NULL,quantiles=c(0.05,0.95),
+	col.line='dark blue',col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,...){
 
 #set defaults
 options(warn=0)
@@ -3487,16 +2936,6 @@ for(j in 1:nrow(t0)){
 #rearrange dataframe 
 y<-y[,c(1:3,ncol(y),4:c(ncol(y)-1))]
 
-#set metrics parameter
-all.metrics<-colnames(y)[-c(1:4)]
-if(is.null(metrics)) metrics<-all.metrics
-if(any(!metrics %in% all.metrics)) stop('Invalid metrics selected')
-
-#select columns
-y.metrics<-subset(y,select=metrics)
-y.head<-y[,1:4]
-y<-cbind(y.head,y.metrics)
-
 #set file-dependent defaults
 if(is.null(stop.step)){
   stopstep<-max(y$timestep)
@@ -3536,14 +2975,6 @@ if(nrow(t0)>1){
       #create blank plot
       if(is.null(step.length)) xlab='Timestep'
       else xlab=paste('Timestep (x',step.length,' yrs)')
-       
- 			#plot to file
- 			if(save.figs==TRUE){
- 			  bitmap(file=paste(names(q2)[i],runs[j],'.png',sep=''),
- 			         height=6,width=8,res=300,...) 
- 			}
-       
-      #create plot 
       plot(1,1,type='n',xlim=c(start.step,stopstep),xaxs='i',
         ylim=c(ymin-(yrange*0.01),ymax+(yrange*0.1)),
         xlab=xlab,ylab=names(q1[i]),main='',...)
@@ -3558,7 +2989,7 @@ if(nrow(t0)>1){
   			}
  	
   		#add legend
-       legend(x='top',ncol=3,
+  		legend(x='top',horiz=TRUE,
   			legend=paste(t0[,1],t0[,2],sep='.'),
           lty=seq(1,nrow(t0)),bty='n',lwd=2,
           col=c(seq(1,nrow(t0))),cex=cex.legend)
@@ -3570,14 +3001,12 @@ if(nrow(t0)>1){
  			#add subtitle
 			mtext(side=3,line=1,col=col.sub,cex=cex.sub,
         text=paste('Run #',runs[j],sep=' '),...)
-      
-			if(save.figs==TRUE) dev.off()
-			  	
-  		if(save.figs==FALSE & !j==length(runs))
+  	
+  		if(!j==length(runs))
   			readline('Press return for next plot')
     	}
 
- 		if(save.figs==FALSE & !i==ncol(q1))
+ 		if(!i==ncol(q1))
  			readline('Press return for next plot')
     }
   }
@@ -3603,19 +3032,9 @@ else{
   		#plot metric trajectory
       if(is.null(step.length)) xlab='Timestep'
       else xlab=paste('Timestep (x',step.length,' yrs)')
- 			
-      #plot to file
-      if(save.figs==TRUE){
-        bitmap(file=paste(names(q2)[i],runs[j],'.png',sep=''),
-          height=6,width=8,res=300,...) 
-      }
-
-      #create plot
   		plot(q2[,4],q2[,i],type='l',lwd=2,col=col.line,
   			ylim=c(ymin-(yrange*0.01),ymax+(yrange*0.1)),
-        #xaxs='i',xlab=xlab,ylab=names(q2[i]),...)
-  		xaxs='r',xlab=xlab,ylab=names(q2[i]),...)
-      
+        xaxs='i',xlab=xlab,ylab=names(q2[i]),...)
   
   		#add current condition and %SRV lines	
   		abline(h=y[y$timestep==0 & y$run.id==runs[j],i],lwd=2,lty=1,
@@ -3638,14 +3057,12 @@ else{
           'q0.5',paste('q',quantiles[2],sep='')),
           lty=c(1,3,2,3),bty='n',lwd=2,
   		    col=c('red','darkgrey','darkgrey','darkgrey'),cex=cex.legend)
-
-			if(save.figs==TRUE) dev.off()
-      
-  		if(save.figs==FALSE & !j==length(runs))
+  
+  		if(!j==length(runs))
   			readline('Press return for next plot')
   		}
 
-		if(save.figs==FALSE & !i==ncol(q1))
+		if(!i==ncol(q1))
 			readline('Press return for next plot')
 		}
 	}
@@ -3655,8 +3072,7 @@ par(old.par)
 fragclass <-
 function(path,inland,inclass,LID.path,scenarios=NULL,
   sessions=NULL,sessions.name='session',runs=NULL,runs.name='run',
-  gridname,classes=NULL,metrics=NULL,var='srv50%',start.step=0,stop.step=NULL,
-  outfile=FALSE){
+  gridname,var='srv50%',start.step=0,stop.step=NULL,outfile=FALSE){
 
 #add option to select classes and metrics
 
@@ -3777,8 +3193,7 @@ for(j in 1:nrow(t0)){
 y.land<-y.land[,c(1:4,ncol(y.land))]
   
 #get unique covcond types
-if(is.null(classes)) s1<-sort(as.vector(unique(y.class$TYPE)))
-else s1<-classes
+s1<-sort(as.vector(unique(y.class$TYPE)))
 
 #merge fragstats class data with landscape timestep
 t1<-merge(y.land,s1)
@@ -3791,15 +3206,8 @@ for(i in 7:ncol(y)){
   y[,i]<-as.numeric(as.character(y[,i]))
   }
 
-#set metrics parameter
-class.metrics<-colnames(y)[-c(1:6)]
-if(is.null(metrics)) metrics<-class.metrics
-if(any(!metrics %in% class.metrics)) stop('Invalid metrics selected')
-
-#select columns
-y.metrics<-subset(y,select=metrics)
-y.head<-y[,1:6]
-y<-cbind(y.head,y.metrics)
+#get class metric names
+class.metric<-colnames(y)[-c(1:6)]
 
 #create list objects for class results
 r<-vector('list',length(s1))
@@ -3816,7 +3224,7 @@ for(i in 1:length(s1)){
 
 	#create results files for multiple scenarios
 	if(nrow(t0)>1){
-		zz1<-as.data.frame(metrics)
+		zz1<-as.data.frame(class.metric)
   	zz2<-t0[,1:2]
   	row.names(zz2)<-NULL
     zz2$ldi<-NA
@@ -3858,7 +3266,7 @@ for(i in 1:length(s1)){
 		
 		#put most of it together
 		z1<-round(as.data.frame(q2),3)
-		z1<-cbind(metrics,z1)
+		z1<-cbind(class.metric,z1)
 		z1<-cbind(z1,current.value)
 		temp<-matrix(0,nrow(z1),2)
 		z1<-cbind(z1,temp)
@@ -3940,15 +3348,13 @@ for(i in 1:length(s1)){
 #create list object
 z<-list(inland,inclass,t0,r)
 names(z)<-c('inland','inclass','run stats','class statistics')
-invisible(z)
+return(z)
 }
 fragclass.plot <-
 function(path,inland,inclass,LID.path,scenarios=NULL,
   sessions=NULL,sessions.name='session',runs=NULL,runs.name='run',
-  classes=NULL,metrics=NULL,gridname,start.step=0,stop.step=NULL,
-  step.length=NULL,quantiles=c(0.05,0.95),col.line='dark blue',
-  col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,cex.lab=1.5,
-  save.figs=FALSE,...){
+  gridname,start.step=0,stop.step=NULL,step.length=NULL,quantiles=c(0.05,0.95),
+  col.line='dark blue',col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,...){
 
 #set defaults
 options(warn=0)
@@ -4029,7 +3435,7 @@ if(any(!runs %in% all.runs)) stop('Invalid run ids')
 
 #select data
 y.land<-y.land[y.land$scenario %in% scenarios & 
-  y.land$session.id %in% sessions & y.land$run.id %in% runs,]
+                 y.land$session.id %in% sessions & y.land$run.id %in% runs,]
 if(nrow(y.land)==0){
   stop('No observations given specified scenarios, sessions and runs')
 }
@@ -4068,8 +3474,7 @@ for(j in 1:nrow(t0)){
 y.land<-y.land[,c(1:4,ncol(y.land))]
 
 #get unique covcond types
-if(is.null(classes)) s1<-sort(as.vector(unique(y.class$TYPE)))
-else s1<-classes
+s1<-sort(as.vector(unique(y.class$TYPE)))
 
 #merge fragstats class data with landscape timestep
 t1<-merge(y.land,s1)
@@ -4082,15 +3487,8 @@ for(i in 7:ncol(y)){
   y[,i]<-as.numeric(as.character(y[,i]))
 }
 
-#set metrics parameter
-class.metrics<-colnames(y)[-c(1:6)]
-if(is.null(metrics)) metrics<-class.metrics
-if(any(!metrics %in% class.metrics)) stop('Invalid metrics selected')
-
-#select columns
-y.metrics<-subset(y,select=metrics)
-y.head<-y[,1:6]
-y<-cbind(y.head,y.metrics)
+#get class metric names
+class.metric<-colnames(y)[-c(1:6)]
 
 #set file-dependent defaults
 if(is.null(stop.step)){
@@ -4137,31 +3535,23 @@ if(nrow(t0)>1){
         #create blank plot
         if(is.null(step.length)) xlab='Timestep'
         else xlab=paste('Timestep (x',step.length,' yrs)')
-        
-  			#plot to file
-  			if(save.figs==TRUE){
-  			  bitmap(file=paste(names(q3)[i],runs[j],'.',s1[m],'.png',sep=''),
-  			         height=6,width=8,res=300,...) 
-  			}
-        
-        #create plot
         plot(1,1,type='n',xlim=c(start.step,stopstep),xaxs='i',
           ylim=c(ymin-(yrange*0.01),ymax+(yrange*0.1)),
-          xlab=xlab,ylab=names(q3[i]),main='',cex.lab=cex.lab,...)
+          xlab=xlab,ylab=names(q3[i]),main='',...)
 
     		#loop thru scenarios and sessions
     		for(k in 1:nrow(t0)){
     	
     			#plot scenarios and sessions
     			q4<-q3[q3$scenario==t0[k,1] & q3$session.id==t0[k,2],]
-          if(!nrow(q4)==0) lines(q4[,6],q4[,i],lty=k,lwd=2,col=k)
+          if(!nrow(q4)==0) lines(q4[,6],q4[,i],lty=k,col=k)
     
     			}
    	
     		#add legend
-    		legend(x='top',ncol=3,
+    		legend(x='top',horiz=TRUE,
     			legend=paste(t0[,1],t0[,2],sep='.'),
-            lty=seq(1,nrow(t0)),bty='n',lwd=2,
+            lty=seq(1,nrow(t0)),bty='n',lwd=1.5,
             col=c(seq(1,nrow(t0))),cex=cex.legend)
     		
     		#add plot title				
@@ -4170,19 +3560,17 @@ if(nrow(t0)>1){
   
    			#add subtitle
   			mtext(side=3,line=1,col=col.sub,cex=cex.sub,
-          text=paste(s1[m],': Run #',runs[j],sep=''))
-        
-  			if(save.figs==TRUE) dev.off()
-  			    	
-    		if(save.figs==FALSE & !j==length(runs))
+          text=past(s1[m],': Run #',runs[j],sep=''))
+    	
+    		if(!j==length(runs))
     			readline('Press return for next plot')
       	}
   
-   		if(save.figs==FALSE & !i==ncol(q2))
+   		if(!i==ncol(q2))
    			readline('Press return for next plot')
       }
 
- 		if(save.figs==FALSE & !m==length(s1))
+ 		if(!m==length(s1))
  			readline('Press return for next plot')
     }
   }
@@ -4217,17 +3605,9 @@ else{
   			#plot metric trajectory
         if(is.null(step.length)) xlab='Timestep'
         else xlab=paste('Timestep (x',step.length,' yrs)')
-        
-  			#plot to file
-  			if(save.figs==TRUE){
-  			  bitmap(file=paste(names(q3)[i],runs[j],'.',s1[m],'.png',sep=''),
-  			         height=6,width=8,res=300,...) 
-  			}
-  			
-  			#create plot 
     		plot(q3[,6],q3[,i],type='l',lwd=2,col=col.line,
   				ylim=c(ymin-(yrange*0.01),ymax+(yrange*0.1)),
-  				xaxs='i',xlab=xlab,ylab=names(q3[i]),cex.lab=cex.lab,...)
+  				xaxs='i',xlab=xlab,ylab=names(q3[i]),...)
 
     		#add current condition and %SRV lines	
     		abline(h=y[y$timestep==0 & y$TYPE==s1[m] & y$run.id==runs[j],i],
@@ -4253,17 +3633,15 @@ else{
   			mtext(side=3,line=1,col=col.sub,cex=cex.sub,
           text=paste(s1[m],': Run #',runs[j],sep=''))
 
-  			if(save.figs==TRUE) dev.off()
-  			
-    		if(save.figs==FALSE & !j==length(runs))
+    		if(!j==length(runs))
     			readline('Press return for next plot')
       	}
   
-   		if(save.figs==FALSE & !i==ncol(q2))
+   		if(!i==ncol(q2))
    			readline('Press return for next plot')
       }
 
- 		if(save.figs==FALSE & !m==length(s1))
+ 		if(!m==length(s1))
  			readline('Press return for next plot')
     }
   }
@@ -4272,12 +3650,10 @@ par(old.par)
 fragclass.pdf.plot <-
 function(path,inland,inclass,LID.path,scenarios=NULL,
   sessions=NULL,sessions.name='session',runs=NULL,runs.name='run',
-  pool.runs=TRUE,gridname,classes=NULL,metrics=NULL,current=TRUE,
-  start.step=0,stop.step=NULL,
+  gridname,pool.runs=TRUE,current=TRUE,start.step=0,stop.step=NULL,
   ref.scenario=NULL,ref.session=NULL,ref.tstep=NULL,ref.include=TRUE,
   quantiles=c(0.05,0.95),col.line='dark blue',col.sub='brown',
-  cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.5,
-  outfile=FALSE,save.figs=FALSE,...){
+  cex.main=1.5,cex.sub=1.25,cex.legend=1.25,outfile=FALSE,...){
 
 #set defaults
 options(warn=0)
@@ -4397,29 +3773,21 @@ for(j in 1:nrow(t0)){
 y.land<-y.land[,c(1:4,ncol(y.land))]
 
 #get unique covcond types
-if(is.null(classes)) s1<-sort(as.vector(unique(y.class$TYPE)))
-else s1<-classes
+s1<-sort(as.vector(unique(y.class$TYPE)))
 
 #merge fragstats class data with landscape timestep
 t1<-merge(y.land,s1)
 names(t1)<-c('scenario','session.id','run.id','grid','timestep','TYPE')
 y<-merge(t1,y.class,by=c('scenario','session.id','run.id','grid','TYPE'),
-  all.x=TRUE)
+         all.x=TRUE)
 
 #ensure numeric variables
 for(i in 7:ncol(y)){
   y[,i]<-as.numeric(as.character(y[,i]))
 }
 
-#set metrics parameter
-class.metrics<-colnames(y)[-c(1:6)]
-if(is.null(metrics)) metrics<-class.metrics
-if(any(!metrics %in% class.metrics)) stop('Invalid metrics selected')
-
-#select columns
-y.metrics<-subset(y,select=metrics)
-y.head<-y[,1:6]
-y<-cbind(y.head,y.metrics)
+#get class metric names
+class.metric<-colnames(y)[-c(1:6)]
 
 #set file-dependent defaults
 if(is.null(stop.step)){
@@ -4497,16 +3865,9 @@ if(!is.null(ref.scenario) & !is.null(ref.session)){
         }      
       xrange<-xmax-xmin
    
-      #plot to file
-      if(save.figs==TRUE){
-        bitmap(file=paste(names(q3)[i],'.',s1[m],'.png',sep=''),
-               height=6,width=8,res=300,...) 
-      }
-      
       #create blank plot
       plot(1,1,type='n',xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
-        ylim=c(0,1.3),xaxs='i',xlab=names(q3[i]),ylab='Density',main='',
-        cex.lab=cex.lab,...)
+        ylim=c(0,1.3),xaxs='i',xlab=names(q3[i]),ylab='Density',main='',...)
 
   		#plot reference scenario and session
       q4<-q3[q3$scenario==t1[1,1] & q3$session.id==t1[1,2] & 
@@ -4625,10 +3986,8 @@ if(!is.null(ref.scenario) & !is.null(ref.session)){
   
       #add horizontal line at zero
       abline(h=0,col='gray')
-      
-			if(save.figs==TRUE) dev.off()
 
-      if(save.figs==FALSE & !i==ncol(q3))
+      if(!i==ncol(q3))
    			readline('Press return for next plot')
 
       } #end loop thru metrics
@@ -4649,7 +4008,7 @@ if(!is.null(ref.scenario) & !is.null(ref.session)){
         'cdi.csv',sep='.'),quote=FALSE,row.names=FALSE,append=TRUE,sep=',')
     	}
 
- 		if(save.figs==FALSE & !m==length(s1))
+ 		if(!m==length(s1))
  			readline('Press return for next plot')
 
     } #end loop thru covcond types
@@ -4691,17 +4050,10 @@ else if(nrow(t0)>1){
           
         #order data
   			q3<-q2[order(q2$timestep),]
-        
-  			#plot to file
-  			if(save.figs==TRUE){
-  			  bitmap(file=paste(names(q3)[i],'.',s1[m],'.png',sep=''),
-  			         height=6,width=8,res=300,...) 
-  			}
-  			
+      
         #create blank plot
         plot(1,1,type='n',xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
-        ylim=c(0,1.1),xaxs='i',xlab=names(q3[i]),ylab='Density',main='',
-        cex.lab=cex.lab,...)
+        ylim=c(0,1.1),xaxs='i',xlab=names(q3[i]),ylab='Density',main='',...)
   
   			#loop thru scenarios
     		for(k in 1:nrow(t0)){
@@ -4712,24 +4064,20 @@ else if(nrow(t0)>1){
             temp<-density(q4[,i],from=xmin,to=xmax,na.rm=TRUE)
             lines(temp$x,temp$y/max(temp$y),lty=k,lwd=2,col=k)
             }
-    			
-          #add current condition
-    			if(current==TRUE){
-    			  segments(y[y$scenario==t0[k,1] & y$session.id==t0[k,2] &
-              y$timestep==0 & y$TYPE==s1[m],i],0,
-    			    y[y$scenario==t0[k,1] & y$session.id==t0[k,2] &
-              y$timestep==0 & y$TYPE==s1[m],i],1,
-    			    lwd=2,lty=1,col='darkgrey')
     			}
-    			
-    		}
-	
+
+        #add current condition	
+  		  if(current==TRUE){
+          segments(y[y$timestep==0 & y$TYPE==s1[m],i],0,
+            y[y$timestep==0 & y$TYPE==s1[m],i],1,lwd=2,lty=1,col='red')
+          }
+    		
         #add legend
         if(current==TRUE){
       		legend(x='topleft',ncol=3,
       			legend=c('current',paste(t0[,1],t0[,2],sep='.')),
             lty=c(1,seq(1,nrow(t0))),bty='n',lwd=2,
-            col=c('darkgrey',seq(1,nrow(t0))),cex=cex.legend)
+            col=c('red',seq(1,nrow(t0))),cex=cex.legend)
           }
         else{  
       		legend(x='topleft',ncol=3,
@@ -4744,12 +4092,10 @@ else if(nrow(t0)>1){
   
    			#add subtitle
   			mtext(side=3,line=1,col=col.sub,cex=cex.sub,
-          text=paste(s1[m],': Pooled across runs',sep=''))
+          text=paste(s1[m]),': Pooled across runs',sep='')
   
         #add horizontal line at zero
         abline(h=0,col='gray')
-        
-  			if(save.figs==TRUE) dev.off()
     		
         } #end for pooled across runs
 
@@ -4762,17 +4108,10 @@ else if(nrow(t0)>1){
           #select data for run
           q3<-q2[q2$run.id==runs[j],]
     			q3<-q3[order(q3$timestep),]
-          
-    			#plot to file
-    			if(save.figs==TRUE){
-    			  bitmap(file=paste(names(q3)[i],runs[j],'.',s1[m],'.png',sep=''),
-    			         height=6,width=8,res=300,...) 
-    			}
-    			        
+        
           #create blank plot
           plot(1,1,type='n',xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
-          ylim=c(0,1.1),xaxs='i',xlab=names(q3[i]),ylab='Density',main='',
-          cex.lab=cex.lab,...)
+          ylim=c(0,1.1),xaxs='i',xlab=names(q3[i]),ylab='Density',main='',...)
     
     			#loop thru scenarios
       		for(k in 1:nrow(t0)){
@@ -4783,24 +4122,20 @@ else if(nrow(t0)>1){
               temp<-density(q4[,i],from=xmin,to=xmax,na.rm=TRUE)
               lines(temp$x,temp$y/max(temp$y),lty=k,lwd=2,col=k)
               }
-            
-      			#add current condition
-      			if(current==TRUE){
-      			  segments(y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & 
-                y$timestep==0 & y$TYPE==s1[m],i],0,
-		            y[y$scenario==t0[k,1] & y$session.id==t0[k,2] & 
-                y$timestep==0 & y$TYPE==s1[m],i],1,
-		            lwd=2,lty=1,col='darkgrey')
       			}
-      			
-      		}
+  
+          #add current condition	
+    		  if(current==TRUE){
+            segments(y[y$timestep==0 & y$TYPE==s1[m],i],0,
+              y[y$timestep==0 & y$TYPE==s1[m],i],1,lty=1,lwd=2,col='red')
+            }
       		
           #add legend
           if(current==TRUE){
         		legend(x='topleft',ncol=3,
         			legend=c('current',paste(t0[,1],t0[,2],sep='.')),
               lty=c(1,seq(1,nrow(t0))),bty='n',lwd=2,
-              col=c('darkgrey',seq(1,nrow(t0))),cex=cex.legend)
+              col=c('red',seq(1,nrow(t0))),cex=cex.legend)
             }
           else{  
         		legend(x='topleft',ncol=3,
@@ -4814,27 +4149,25 @@ else if(nrow(t0)>1){
             ' (',names(q4)[i],')',sep=''),line=2.5,cex.main=cex.main,...)
     
      			#add subtitle
-    			mtext(side=3,line=1,col=col.sub,cex=cex.sub,
+    			mtext(side=3,line=1,col=col.sub,
             text=paste(s1[m],': Run #',runs[j],sep=''))
     
           #add horizontal line at zero
           abline(h=0,col='gray')
-          
-    			if(save.figs==TRUE) dev.off()
-    			    		
-       		if(save.figs==FALSE & !j==length(runs))
+    		
+       		if(!j==length(runs))
       			readline('Press return for next plot')
 
           } #end loop thru runs
           
         } #end for separate plot per run 
     
-   		if(save.figs==FALSE & !i==ncol(q2))
+   		if(!i==ncol(q2))
    			readline('Press return for next plot')
 
       } #end loop thru metrics
 
- 		if(save.figs==FALSE & !m==length(s1))
+ 		if(!m==length(s1))
  			readline('Press return for next plot')
 
     } #end loop thru covcond types
@@ -4877,19 +4210,12 @@ else{
         #select data for run
         q3<-q2[order(q2$timestep),]
         
-        #plot to file
-        if(save.figs==TRUE){
-          bitmap(file=paste(names(q3)[i],'.',s1[m],'.png',sep=''),
-                 height=6,width=8,res=300,...) 
-        }
-        
         #plot density
         z1<-density(q3[,i],from=xmin,to=xmax,na.rm=TRUE)
         plot(z1$x,z1$y/max(z1$y),type='l',
           xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
           ylim=c(0,1.1),xaxs='i',xlab=names(q3[i]),
-          ylab='Density',lwd=2,main='',col=col.line,
-          cex.lab=cex.lab,...)
+          ylab='Density',lwd=2,main='',col=col.line,...)
         
         #add current condition and %SRV lines	
         if(current==TRUE){
@@ -4909,7 +4235,7 @@ else{
         
         #add legend
         if(current==TRUE){
-          legend(x='topleft',ncol=4,
+          legend(x='topleft',ncol=3,
             legend=c('current',paste('q',quantiles[1],sep=''),
             'q0.5',paste('q',quantiles[2],sep='')),
             lty=c(1,3,2,3),bty='n',lwd=2,
@@ -4933,9 +4259,7 @@ else{
         #add horizontal line at zero
         abline(h=0,col='gray')
         
-        if(save.figs==TRUE) dev.off()
-        
-        if(save.figs==FALSE & (!i==ncol(q2) | !m==length(s1)))
+        if(!i==ncol(q2) | !m==length(s1))
           readline('Press return for next plot')
         }
       
@@ -4948,20 +4272,13 @@ else{
           #select data for run
           q3<-q2[q2$run.id==runs[j],]
     			q3<-q3[order(q3$timestep),]
-          
-    			#plot to file
-    			if(save.figs==TRUE){
-    			  bitmap(file=paste(names(q3)[i],runs[j],'.',s1[m],'.png',sep=''),
-    			         height=6,width=8,res=300,...) 
-    			}
-    			  
+  
           #plot density
           z1<-density(q3[,i],from=xmin,to=xmax,na.rm=TRUE)
           plot(z1$x,z1$y/max(z1$y),type='l',
             xlim=c(xmin-(xrange*0.03),xmax+(xrange*0.03)),
             ylim=c(0,1.1),xaxs='i',xlab=names(q3[i]),
-            ylab='Density',lwd=2,main='',col=col.line,
-            cex.lab=cex.lab,...)
+            ylab='Density',lwd=2,main='',col=col.line,...)
     		
       		#add current condition and %SRV lines	
       		if(current==TRUE){
@@ -4981,7 +4298,7 @@ else{
   
       		#add legend
           if(current==TRUE){
-            legend(x='topleft',ncol=4,
+            legend(x='topleft',ncol=3,
         			legend=c('current',paste('q',quantiles[1],sep=''),
               'q0.5',paste('q',quantiles[2],sep='')),
               lty=c(1,3,2,3),bty='n',lwd=2,
@@ -5004,10 +4321,8 @@ else{
   
           #add horizontal line at zero
           abline(h=0,col='gray')
-          
-    			if(save.figs==TRUE) dev.off()
                 
-       		if(save.figs==FALSE & (!j==length(runs) | !i==ncol(q2) | !m==length(s1)))
+       		if(!j==length(runs) | !i==ncol(q2) | !m==length(s1))
       			readline('Press return for next plot')
 
           } #end loop thru runs
@@ -5266,10 +4581,7 @@ else{
 par(old.par)
 }
 similarity <-
-function(path="D:/FragProtocol/Files/", 
-  contrast="contrast.fsq",
-  rules='contrast.rules.csv', 
-  out="similarity.fsq"){
+function(path="D:/FragProtocol/Files/", contrast="contrast.csv", out="similarity.csv"){
 
 #similar.R - Create similarity matrix for Fragstats
 #Usage: similar(path, contrast.csv, results.csv)
@@ -5277,22 +4589,17 @@ function(path="D:/FragProtocol/Files/",
 #Must have function available to run >source("d:/R/similar.R")
 #K. McGarigal
 #April 28, 2006
-#modified Oct 2, 2014 to reflect update to fragstats4.2
-
-#create rules dataframe
-rules<-read.csv(paste(path,rules,sep=''),row.names=1,header=TRUE)
 
 #create weights matrices
-z<-read.csv(paste(path,contrast,sep=''),skip=2,header=FALSE)	#assign weights file
+z<-read.csv(paste(path,contrast,sep=""), row.names=1, header=TRUE)	#assign weights file
 
 #take complement of contrast weights
 z<-1-z
 
+#assign correct column names
+colnames(z)<-rownames(z)
+
 #write results to csv file
-outfile<-paste(path,out,sep='')
-write.table('FSQ_TABLE',file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE)
-a<-paste('CLASS_LIST_NUMERIC(',paste(rownames(rules),collapse=','),')\n',sep='')
-cat(a,file=outfile,append=TRUE)
-write.table(z,file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE,sep=',',append=TRUE)
+write.csv(z, file=paste(path,out,sep=""), quote=FALSE)
 
 }

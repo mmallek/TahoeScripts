@@ -2,10 +2,20 @@
 ###R function calls for Tahoe project
 
 #set working directory
-setwd('/Users/mmallek/Tahoe/RMLands/results/hrv')
+setwd('/Users/mmallek/Tahoe/RMLands/results201507/hrv')
 setwd('/Users/mmallek/Tahoe/R/Rplots/November2014')
-hrv001path='/Users/mmallek/Tahoe/RMLands/results/hrv/'
-#sessions = 2 for the hrv
+hrvpath='/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
+futurepath='/Users/mmallek/Tahoe/RMLands/results201507/future/'
+#sessions = 3 for the hrv
+# for future:
+# ID6 = hrvclimate, forward 100 years
+# ID9 = ccsm1
+# ID8 = ccsm2
+# ID10 = ccsm3
+# ID13 = ccsm4
+# ID14 = ccsm5
+# ID20 = ccsm6
+# ID21 = esm2m
 
 #must source the rmlstats library
 source('/Users/mmallek/Tahoe/Scripts/R/rmlstats.R')
@@ -18,11 +28,15 @@ for(i in 1:length(covtypes)){
 
 # use covtype argument if you want results for a single cover type, or set of cover types
 
-dareaout = darea(path=hrv001path,
-  sessions=2,
+dareaout = darea(
+  #path=hrvpath,
+  path=futurepath,
+  session=21,
+  # all future sessions
+  #sessions=c(6,9,8,10,13,14,20,21),
   var='mean',
-  runs=001,
-  start.step=40,
+  runs=c(1:100),
+  start.step=1,
   stop.step=NULL,
   step.length=5,
   #covtype="Mixed Evergreen - Mesic",
@@ -32,15 +46,15 @@ dareaout = darea(path=hrv001path,
   #covtype="Red Fir - Mesic",
   #covtype="Red Fir - Xeric",
   #covtype="Sierran Mixed Conifer - Mesic",
-  covtype="Sierran Mixed Conifer - Ultramafic",
+  #covtype="Sierran Mixed Conifer - Ultramafic",
   #covtype="Sierran Mixed Conifer - Xeric",
   cell.size=30,
-  y.scale='poop',
-  col.bar=c('blue','light blue','turquoise'),
+  y.scale='percent',
+  col.bar=c('dark green','dark blue','brown'),
   col.sub='brown',
   #cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
   cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
-  outfile=F)
+  outfile=T)
 
 # calculate number of fires per timestep
 numfire = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv', header=TRUE)
@@ -55,11 +69,11 @@ tahoedata = rename(tahoedata,c('num_fires'='numfires'))
 # session 16 used for HRV analysis
 #
 
-out<-dinit(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
-   sessions=20,
+out<-dinit(path=futurepath,
+   sessions=6,
    var='median',
-   runs=001,
-   start.step=0,
+   runs=c(1:100),
+   start.step=1,
    stop.step=NULL,
    step.length=5,
    col.line='blue',
@@ -82,11 +96,11 @@ out<-tarea(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/'
   cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
   outfile=FALSE)
 
-out<-dsize(path=hrv001path,
-  session=2,
-  runs=001,
-  pool.runs=FALSE,
-  start.step=40,
+out<-dsize(path=futurepath,
+  session=6,
+  runs=c(1:100),
+  pool.runs=T,
+  start.step=1,
   stop.step=NULL,
   cell.size=30,
   log.size=FALSE,
@@ -94,48 +108,49 @@ out<-dsize(path=hrv001path,
   target='firehist_ha.csv',
   col.bars=c('blue','red'),
   col.sub='brown',
-  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=2.3)
+  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=2)
 
 x<-read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/dsize.csv',header=TRUE)
 x = x[,session.id==20]
 
-out<-rotation(path=hrv001path,
-  sessions=2,
-  runs=1,
+out<-rotation(path=futurepath,
+  session=c(6,9,8,10,13,14,20,21),
+  runs=c(1:100),
   pool.runs=TRUE,
-  var='any.mort',
-  start.step=40,
+  var='high.mort',
+  start.step=1,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
-  outfile=F)
+  outfile=T)
+    
 
-out<-preturn(path=hrv001path,
-  session=2,
-  runs=NULL,
+out<-preturn(path=futurepath,
+  session=21,
+  runs=c(1:100),
   pool.runs=TRUE,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
-  #cover.names=c('Oak-Conifer Forest and Woodland - Ultramafic'),
+  #cover.names=c('Red Fir - Xeric'),
   cover.min.ha=1000,
   y.scale='percent',
   col.bars=c('yellow','green','blue'),
   col.sub='brown',
   cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
   legendlocale='topleft',
-  outfile=T)
+  outfile=F)
   
-covcondout<-covcond(path=hrv001path,
-  sessions=2,
+covcondout<-covcond(path=futurepath,
+  sessions=21,
   var='srv50%',
-  runs=NULL,
-  start.step=40,
-  stop.step=500,
+  runs=c(1:100), #can pool runs
+  start.step=1,
+  stop.step=NULL,
   cell.size=30,
   #cover.names=c('Oak-Conifer Forest and Woodland'),
   cover.min.ha=1000,
-  outfile=F)
+  outfile=T)
 
 covcondtab = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/covcond.csv')
 covcondtab = subset(covcondtab, session.id==20)
@@ -152,16 +167,16 @@ for(i in 1:nrow(covcondtab)){
 newcovcondtab = aggregate(covcondtab, by=stage.name, FUN=sum)
 
                        
-covcondout<-covcond.plot(path=hrv001path,
-  session=2,
+covcondout<-covcond.plot(path=futurepath,
+  session=6,
   var='srv50%',
-  runs=001,
-  start.step=0,
+  runs=c(1:10),
+  start.step=1,
   stop.step=NULL,
   step.length=5,
   type='stack',
   cell.size=30,
-  #cover.names=c('Curl-leaf Mountain Mahogany'),
+  cover.names=c('Mixed Evergreen - Xeric'),
   cover.min.ha=1000,
   col.bars=c('black','tan','green','orange','brown','lightsalmon',
     'darkgreen','lightgreen','yellow','yellow3','yellow4','wheat'),
@@ -170,21 +185,24 @@ covcondout<-covcond.plot(path=hrv001path,
   outfile=F,
   save.figs=F)
 
-fraghrv001 = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session001/'
+hrvpath = '/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
+futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/'
+# LID Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
+# LID Z:\Working\maritza\future\ccsm-2_s002_finalgrids\covcond090(1)_res_clip.tif
 
-fraglandout = fragland(path=fraghrv001,
+fraglandout = fragland(path=futurepath,
   #infile='classland_session016_res.land',
-  infile='classland_session001_20150624.land',
+  infile='classland_pastclimate_20150723.land',
   #Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
   LID.path='Z:\\Working\\maritza\\',
-  scenarios='hrv',
-  sessions=001,
-  sessions.name='session',
-  runs=001,
-  runs.name='run',
+  scenarios='future',
+  sessions=NULL,
+  sessions.name=NULL,
+  runs=NULL,
+  runs.name='ccsm-2_s002_finalgrids',
   #metrics=c('PD','AI'),
   #var='srv50%',
-  start.step=40,
+  start.step=1,
   stop.step=NULL,
   outfile=F)
 
@@ -336,21 +354,42 @@ calibrate(path='/Users/mmallek/Tahoe/ClusterBackup/october2014/',
   new=FALSE,
   outfile=FALSE)
 
+hrvpath = '/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
+futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/'
+# LID Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
+# LID Z:\Working\maritza\future\ccsm-2_s002_finalgrids\covcond090(1)_res_clip.tif
 
+#fragpath should be path to fragstats.land file
+#scenario should be name of model and run value, e.g. ccsm2_run1
+#nrun is the number of runs completed for the scenario
+#stop.run is the number of runs to analyze
+#LID.path is path up to tif file
+#covcondlist is path to csv with list of covcond files
+setwd('/Users/mmallek/Tahoe/RMLands/results201507/future/ccsm1')
 fragland.plot.future(
-    fragpath='/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/classland_ccsm2_r1_20150529.land', 
+    fragpath= '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/classland_ccsm1_20150723.land',
+    #fragpath = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/classland_ccsm2_r1_20150529.land', 
     #LID.path='Z:\\Working\\maritza\\ccsm2_run1_finalgrids\\',
-    LID.path='E:\\mallek\\results\\new\\session016\\run001\\',
-    scenarios='ccsm2_run1',
-    covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv',
-    nrun=500,
+    #LID.path='E:\\mallek\\results\\new\\session016\\run001\\',
+    LID.path='Z:\\Working\\maritza\\future',
+    scenarios='ccsm1',
+    covcondlist='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/covcondlist_100ts.csv',
+    nrun=100,
     metrics=c('PD','ED','AREA_AM','GYRATE_AM','SHAPE_AM','CORE_AM','CWED','CONTAG','SIDI','SIEI','AI'),
     #metrics=c('PD','ED','AREA_AM'),
     start.step=1,
-    stop.run=500,
+    stop.run=NULL,
     quantiles=c(0.05,0.95),
     col.line='dark blue',col.sub='brown',
     cex.main=1.5,cex.sub=1.25,cex.legend=1,cex.lab=1.25,
     save.figs=F)
 
-
+fragland,future(
+         fragpath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/classland_pastclimate_20150723.land',
+         infile = 'classland_pastclimate_20150723.land',
+         LID.path = 'Z:\\Working\\maritza\\future',
+         scenarios = 'pastclimate',
+         nrun=100, 
+         covcondlist = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/covcondlist_100ts.csv',
+         metrics = c('PD','ED','AREA_AM','GYRATE_AM','SHAPE_AM','CORE_AM','CWED','CONTAG','SIDI','SIEI','AI'),
+         outfile=T)
