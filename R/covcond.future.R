@@ -139,6 +139,8 @@ fragland.boxplot <-
 #########################################
 path = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
 sessions=c(6,9,8,10,13,14,20,21)
+scenario_name = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
+                                'ccsm4','ccsm4','ccsm6','esm2m'))
 cover.names='Oak-Conifer Forest and Woodland'
 runs=18
     
@@ -156,7 +158,7 @@ covcondout<-covcond(path=futurepath,
 scenarios = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
                             'ccsm4','ccsm4','ccsm6','esm2m'))
 
-covcond <-
+covcond.cover.barplot <-
     function(path,sessions=NULL,var='srv50%',runs=NULL,start.step=1,
              stop.step=NULL,cell.size=30,cover.names=NULL,cover.min.ha=0,outfile=FALSE){
         
@@ -164,8 +166,12 @@ covcond <-
         options(warn=0)
         
         #read covcond data
-        y<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
-        colnames(y)[2:3] = c("timestep.id","run.id")
+        y0<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
+        # switch timestep and run IDs
+        # only want final run ID (18) for RV of future
+        # each timestep actually a run, but we want all of them
+        colnames(y0)[2:3] = c("timestep.id","run.id") # now run.id gives current
+        y = y0
         
         #set session parameter
         if(is.null(sessions)) sessions<-unique(y$session.id)
@@ -181,6 +187,8 @@ covcond <-
             y<-y[y$cov.name %in% cover.names,] 
         }
         
+        # get rid of non-seral types
+        y = y[y$cond.name != 'Non-seral',]
         #get cover type area and select cover types with min area
         # calculate area in each cover type
         # compare cover type areas to min cover type area specified in arguments
@@ -192,6 +200,7 @@ covcond <-
         t2<-t2[t2$area.ha>cover.min.ha,]
         t2.cover.type<-t2$cover.type
         y<-y[y$cov.name %in% t2.cover.type,]
+
         
         #multiple sessions
         if(length(sessions)>1){
@@ -208,23 +217,23 @@ covcond <-
             if(any(!runs %in% all.runs)) stop('Invalid run ids')
             
             # extract only the final timesteps
-            y = y[y$timestep.id==18,]
-            y = y[y$session.id==6,]
+            #y = y[y$timestep.id==18,]
+            #y = y[y$session.id==6,]
             
             #set start.step and stop.step parameters
-            if(start.step>max(y$timestep.id)) stop('Start.step exceeds maximum timestep')
-            if(is.null(stop.step)) stop.step<-max(y$timestep.id)
-            else{
-                if(stop.step>max(y$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
-                stop.step<-min(stop.step,max(y$timestep.id))
-            }
+            #if(start.step>max(y$timestep.id)) stop('Start.step exceeds maximum timestep')
+            #if(is.null(stop.step)) stop.step<-max(y$timestep.id)
+            #else{
+            #    if(stop.step>max(y$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
+            #    stop.step<-min(stop.step,max(y$timestep.id))
+            #}
             
             #subset data based on runs, start.step, stop.step and min area
             #y<-y[y$run.id %in% runs & y$timestep.id>=start.step & y$timestep.id<=stop.step,]
             # this gets you the data frame with only the final timestep (18, as run.id)
             y<-y[y$run.id %in% runs,]
             
-            #get unique covcond class
+            #extra set of unique covcond classes
             y1<-y[order(y$cov.cond.id),]
             y1<-y1[(y1$cov.cond.id != y1$cov.cond.id[c((1:dim(y1)[1])[-1],1)]),
                    c('cov.cond.id','cov.name','cond.name')]
@@ -237,7 +246,7 @@ covcond <-
             
             #create dataframe for covcond stats results
             zz1<-y1
-            colnames(zz1)<-c('covcond.id','cover.type','condition.class')
+            colnames(zz1)<-c('cov.cond.id','cover.type','condition.class')
             
             #create dataframe for cover departure results
             d1<-as.data.frame(unique(y1$cov.name)) 
@@ -248,6 +257,10 @@ covcond <-
             colnames(zz2)<-c('cover.type','area.ha')
             
             # calculate current proportions
+############# need to fix this            
+            for(i in 1:nrow(zz2)){
+                s2$proportion = s2$cell.count*.09/zz2[1,2]
+            }
             s2$proportion = s2$cell.count*.09/zz2[1,2]
             current = cbind(zz1, s2)
             levels(current$condition.class) = c('Early-All Structures', 'Early-Aspen', 
@@ -268,27 +281,33 @@ covcond <-
                     q2<-y[y$session.id==sessions[j] & y$cov.cond.id==cov.cond[i],]
                     # don't need to calculate quantiles for boxplots
                     #q1[i,1:101]<-quantile(q2$cell.count,probs=seq(0,1,0.01))
-                    q1[i,1:100] = q2$cell.count
+                    q1[i,1:nrow(q2)] = q2$cell.count
                 }
                 
                 z1 = cbind(y1, q1)
 
-                z2 = apply(z1[,5:96], MARGIN=2, FUN=function(x) x*.09/zz2[1,2])
-                z2 = as.data.frame(z2)
-                z2 = cbind(y1, z2)
-                levels(z2$cond.name) = c('Early-All Structures', 'Early-Aspen', 
+                for(i in 1:length(unique(z1$cov.name))){
+                    z1[z1$cov.name==unique(z1$cov.name)[i],4:103] = 
+                           apply(z1[z1$cov.name==unique(z1$cov.name)[i],4:103], MARGIN=2, 
+                                 FUN=function(x) x*.09/zz2[i,2])
+                }
+                #z2 = as.data.frame(z2)
+                #z2 = cbind(y1, z1)
+                z2 = merge(y1, z1)
+                z2$cond.name = factor(z2$cond.name, levels=c('Early-All Structures', 'Early-Aspen', 
                                          'Mid-Closed', 'Mid-Moderate', 'Mid-Open',
                                          'Mid-Aspen', "Mid-Aspen and Conifer", "Late-Conifer and Aspen", 
-                                         'Late-Closed','Late-Moderate', 'Late-Open', 'Non-seral')
+                                         'Late-Closed','Late-Moderate', 'Late-Open', 'Non-seral'))
                 
                 # use gather on z2 data frame to get a column with the metric name, 
                 # a column with that metric's value, for all of the fragland metrics
                 data_long = gather(z2, run, proportion, -cov.cond.id, -cov.name, -cond.name)
                 
-                
-                p = ggplot(data=data_long, aes(x=cond.name, y=proportion )) 
-                p1 = p + 
-                    geom_crossbar(data=current, aes(x=condition.class,y=proportion, ymin=proportion, 
+                for(i in 1:length(unique(z1$cov.name))){
+                p = ggplot(data=data_long[data_long$cov.name==unique(z1$cov.name)[i],], aes(x=cond.name, y=proportion )) 
+                p1 = p +
+###################### current has bad values for proportions                    
+                    geom_crossbar(data=current[current$cover.type==unique(z1$cov.name)[i],], aes(x=condition.class,y=proportion, ymin=proportion, 
                                                     ymax=proportion), lwd=2,col="#333333") +
                     stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
                     stat_summary(fun.y = o, geom="point", col="#CC3300") +
@@ -302,67 +321,17 @@ covcond <-
                     theme(plot.title = element_text(size=24,vjust=1)) +
                     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
 ##################### need to put scenario into data frame
-                    ggtitle(paste(data_long$cov.name, scenario, sep=' ')) + 
+                    ggtitle(paste(unique(z1$cov.name)[i], scenario_name[1], sep=' ')) + 
                     xlab("Seral Stage") +
                     ylab("Proportion of Cover Type") 
-                    
+                    print(p1)
+                }
   ##################
 
 ### need to make another set of plots where it's across scenarios and for each seral stage
                 
                 
-                #put most of it together
-                z1<-matrix(0,nrow=length(cov.cond),ncol=14)
-                z1<-as.data.frame(z1)
-                z1[,1:3]<-y1[,1:3]
-                z1[,4:10]<-q1[,c(1,6,26,51,76,96,101)]
-                z1[,12]<-s2[,2]
-                colnames(z1)<-c('covcond.id','cover.type','condition.class',
-                                'srv0%','srv5%','srv25%','srv50%','srv75%','srv95%','srv100%',
-                                'srv.cv','current.%cover','current.%srv','departure.index')
-                z1<-merge(z1,t2,by='cover.type',sort=FALSE)
-                
-                #calculate srv.cv and current.%SRV for each covcond class
-                for(i in 1:length(cov.cond)){
-                    if(is.na(z1[i,4])) z1[i,c(11,13)]<-'NA'
-                    else if(z1[i,10]-z1[i,4]==0) z1[i,c(11,13)]<-'NA'
-                    else{
-                        z1[i,11]<-round(((z1[i,9]-z1[i,5])/z1[i,7])*100,0)
-                        z1[i,13]<-max(0,which(q1[i,]<z1[i,12]))		
-                        if(z1[i,13]==101) z1[i,13]<-100
-                    }
-                }
-                
-                #calculate SRV departure index for each class
-                z1[,13]<-as.numeric(z1[,13])
-                for(i in 1:nrow(z1)){ 		
-                    if(is.na(z1[i,13])) z1[i,14]<-'NA'
-                    else{
-                        if(z1[i,13]==50) z1[i,14]<-0
-                        else if(z1[i,13]<50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
-                        else if(z1[i,13]>50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
-                    }
-                }
-                z1[,14]<-as.numeric(z1[,14])
-                format(z1,big.mark=',')
-                
-                #rescale cell counts; convert SRV percentiles to percentages
-                z1[,c(4:10,12)]<-round((z1[,c(4:10,12)]/z1$cov.count)*100,2)
-                z1<-z1[,-15] #drop cov.count column
-                z1<-z1[,c(2,1,3:14)] #reorder columns
-                
-                #merge selected covcond stat to final results table
-                temp<-subset(z1,select=var)
-                names(temp)<-paste(var,'.',sessions[j],sep='')
-                zz1<-cbind(zz1,temp)
-                
-                #calculate SRV departure index for each cover type
-                d2<-aggregate(abs(z1[,14]),list(z1[,2]),mean,na.rm=TRUE)
-                names(d2)<-c('cover.type',paste('sdi','.',sessions[j],sep=''))    
-                zz2<-merge(zz2,d2,by='cover.type',sort=FALSE)
-                zz2[,-1]<-round(zz2[,-1],0)
-                format(zz2,big.mark=',')
-                
+               
             }
             
             #create list object and print tables
