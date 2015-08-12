@@ -1,0 +1,325 @@
+#### New darea function for future data
+
+darea.future <-
+    function(path,sessions=,var='mean',runs=,start.step=,
+            step.length=5, covtype=NULL, cell.size=30,y.scale='percent',
+             col.bars=c('blue','light blue','turquoise'),col.sub='brown',
+             cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
+        
+        
+        #read darea data
+        x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
+        
+        # if cover type specified, subset data frame (x) here
+        if (!is.null(covtype)){
+            x<-x[x$cov.name==covtype,]
+        }
+        
+        #rescale cell counts
+        # DON'T BE A DUMBASS!!!
+        #x$mort.high<-round(x$mort.high*((cell.size^2)/10000),0)
+        #x$mort.low<-round(x$mort.low*((cell.size^2)/10000),0)
+        #x$mort.any<-round(x$mort.any*((cell.size^2)/10000),0)
+        x$mort.high<-x$mort.high*((cell.size^2)/10000)
+        x$mort.low<-x$mort.low*((cell.size^2)/10000)
+        x$mort.any<-x$mort.any*((cell.size^2)/10000)
+        
+        # take out default for sessions and runs - these need to be specified in function call
+        
+        # next what we really want is to grab the last 5 timesteps for each run
+        
+        # for now let's assume 1 session is specified
+        x<-x[x$session.id %in% sessions,]
+        
+        # we want all the runs, so ignore that
+        # also only have 1 type of disturbance, so no need to separate by that
+        # now we want to limit by timesteps
+        x = x[x$timestep.id > start.step,]
+        
+        y = x
+        
+        # what we eventually want to create here is a plot that shows the darea
+        # for the last 5 timesteps of each run. So it will be the same size as
+        # the hrv version but with the 5 timesteps lined up sequentially
+        
+        y.low<-aggregate(y$mort.low,list(y$timestep.id),sum)
+        colnames(y.low)<-c('timestep','mort.low')
+        y.high<-aggregate(y$mort.high,list(y$timestep.id),sum)
+        colnames(y.high)<-c('timestep','mort.high')
+        y.any<-aggregate(y$mort.any,list(y$timestep.id),sum)
+        colnames(y.any)<-c('timestep','mort.any')
+        y<-merge(y.low,y.high,by='timestep',sort=FALSE)
+        y<-merge(y,y.any,by='timestep',sort=FALSE)
+        y<-merge(timestep,y,by='timestep',all.x=TRUE,sort=FALSE)
+        y[is.na.data.frame(y)]<-0
+        y<-y[order(y$timestep),]
+        
+        #summarize darea by dist.type, run and timestep
+        y<-x[x$run.id==runs[j],]
+        y.low<-aggregate(y$mort.low,list(y$timestep.id),sum)
+        colnames(y.low)<-c('timestep','mort.low')
+        y.high<-aggregate(y$mort.high,list(y$timestep.id),sum)
+        colnames(y.high)<-c('timestep','mort.high')
+        y.any<-aggregate(y$mort.any,list(y$timestep.id),sum)
+        colnames(y.any)<-c('timestep','mort.any')
+        y<-merge(y.low,y.high,by='timestep',sort=FALSE)
+        y<-merge(y,y.any,by='timestep',sort=FALSE)
+        y<-merge(timestep,y,by='timestep',all.x=TRUE,sort=FALSE)
+        y[is.na.data.frame(y)]<-0
+        y<-y[order(y$timestep),]
+        
+#####        
+        
+        #clustered bar charts for multiple sessions
+        if(length(sessions)>1){     
+            #create list objects for results
+            z<-vector("list",length(dist.levels))
+            names(z)<-paste(dist.levels,' darea comparison (',y.scale,')',sep='')
+            
+            #loop thru disturbance types
+            for(i in 1:length(dist.levels)){ 
+                
+                #create list objects for results
+                z[[i]]<-vector("list",length(runs))
+                names(z[[i]])<-paste('run number ',runs,sep='')
+                
+                #loop thru runs
+                for(j in 1:length(runs)){
+                    
+                    #subset data for dist.type and run.id
+                    x2<-x[x$dist.type==dist.levels[i] & x$run.id==runs[j],]
+                    
+                    #sort sesssion.id
+                    sessions<-sort(unique(x2$session.id))
+                    
+                    #create results matrix
+                    y2<-matrix(0,nrow=3,ncol=length(sessions))
+                    rownames(y2)<-c('low.mort','high.mort','any.mort')
+                    colnames(y2)<-sessions
+                    
+                    #loop thru sessions
+                    for(k in 1:length(sessions)){
+                        
+                        #select records for session
+                        y<-x2[x2$session.id==sessions[k],]
+                        
+                        #summarize darea by dist.type, run and timestep
+                        y.low<-aggregate(y$mort.low,list(y$timestep.id),sum)
+                        colnames(y.low)<-c('timestep','mort.low')
+                        y.high<-aggregate(y$mort.high,list(y$timestep.id),sum)
+                        colnames(y.high)<-c('timestep','mort.high')
+                        y.any<-aggregate(y$mort.any,list(y$timestep.id),sum)
+                        colnames(y.any)<-c('timestep','mort.any')
+                        y<-merge(y.low,y.high,by='timestep',sort=FALSE)
+                        y<-merge(y,y.any,by='timestep',sort=FALSE)
+                        y<-merge(timestep,y,by='timestep',all.x=TRUE,sort=FALSE)
+                        y[is.na.data.frame(y)]<-0
+                        y<-y[order(y$timestep),]
+                        
+                        #optionally convert darea to percent of eligible
+                        if(y.scale=='percent'){
+                            t<-read.csv(paste(path,'eligible.csv',sep=''),header=TRUE)
+                            t<-t[t$session.id==sessions[k] & t$dist.type==dist.levels[i],]
+                            t<-round(t$cell.count*((cell.size^2)/10000),0)
+                            y[,2:4]<-round((y[,2:4]/t)*100,2)
+                        }
+                        
+                        #compute darea summary
+                        if(var=='min') y2[,k]<-round(apply(y[,2:4],2,min),2)
+                        else if(var=='max') y2[,k]<-round(apply(y[,2:4],2,max),2)
+                        else if(var=='median') y2[,k]<-round(apply(y[,2:4],2,median),2)
+                        else if(var=='mean') y2[,k]<-round(apply(y[,2:4],2,mean),2)
+                        
+                    }
+                    
+                    #print summary to console and list object
+                    mortality<-c('low.mort','high.mort','any.mort')
+                    z[[i]][[j]]<-as.data.frame(cbind(mortality,y2))
+                    print(y2)
+                    
+                    #create clustered bar chart
+                    barplot(y2,beside=TRUE,border=NA,#'black',
+                            xaxs='i',yaxs='i',col=col.bars,
+                            axis.lty=1,...)
+                    
+                    #add plot title	- dist.type			
+                    if(y.scale=='percent')
+                        title(main=paste(dist.levels[i],' (',var,' darea/timestep',')',sep=''),
+                              ylab='Percent of Eligible',xlab='Scenario/Session',
+                              cex.main=cex.main,...)
+                    else
+                        title(main=paste(dist.levels[i],' (',var,' darea/timestep',')',sep=''),
+                              ylab='Area (ha)',xlab='Scenario/Session',cex.main=cex.main,...)
+                    
+                    #add subtitle - run number
+                    mtext(side=3,col=col.sub,cex=cex.sub,
+                          text=paste('Run #',runs[j],sep=''),...)
+                    
+                    #add legend				
+                    legend(x='bottomright',#inset=c(0.05,0.05),
+                           legend=c('Low mort','High mort','Any mort'),
+                           fill=col.bars,cex=cex.legend)
+
+                    
+                }
+            }
+            
+            #output tables to file
+            if(outfile==TRUE){
+                for(i in 1:length(z)){
+                    write.table(z[[i]],file=paste(path,dist.levels[i],'_darea_comparison.csv',sep=''),
+                                quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
+                }
+            }
+        }
+        
+        #stacked bar chart trajectory for single sesssion	
+        else{
+            
+            #subset data based on session.id
+            x<-x[x$session.id==sessions,]
+            
+            #verify valid run.ids
+            if(is.null(runs)) runs<-unique(x$run.id)
+            else{
+                all.runs<-unique(x$run.id)
+                if(!runs %in% all.runs) stop('Invalid run ids')
+            }
+            
+            #subset data based on runs
+            x<-x[x$run.id %in% runs,]
+            
+            #set start.step and stop.step parameters
+            if(start.step>max(x$timestep.id)) stop('Start.step exceeds maximum timestep')
+            if(is.null(stop.step)) stop.step<-max(x$timestep.id)
+            else{
+                if(stop.step>max(x$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
+                stop.step<-min(stop.step,max(x$timestep.id))
+            }
+            
+            #subset data based on start.step and stop.step
+            x<-x[x$timestep.id>=start.step & x$timestep.id<=stop.step,]
+            timestep<-seq(start.step,stop.step,1)
+            timestep<-as.data.frame(timestep)
+            
+            #create dist.level vector for loops
+            dist.levels<-as.vector(unique(x$dist.type))
+            
+            #create list objects for results
+            z1<-vector("list",length(dist.levels))
+            names(z1)<-paste(dist.levels,' disturbance trajectory (',y.scale,')',sep='')
+            z2<-vector("list",length(dist.levels))
+            names(z2)<-paste(dist.levels,' disturbance summary (',y.scale,')',sep='')
+            
+            #loop thru disturbance types
+            for(i in 1:length(dist.levels)){
+                
+                #create list objects for results
+                z1[[i]]<-vector("list",length(runs))
+                names(z1[[i]])<-paste('run number ',runs,sep='')
+                z2[[i]]<-vector("list",length(runs))
+                names(z2[[i]])<-paste('run number ',runs,sep='')
+                
+                #loop thru runs 
+                for(j in 1:length(runs)){
+                    
+                    # here would be a place to subset by cover type
+                    
+                    #summarize darea by dist.type, run and timestep
+                    y<-x[x$dist.type==dist.levels[i] & x$run.id==runs[j],]
+                    y.low<-aggregate(y$mort.low,list(y$timestep.id),sum)
+                    colnames(y.low)<-c('timestep','mort.low')
+                    y.high<-aggregate(y$mort.high,list(y$timestep.id),sum)
+                    colnames(y.high)<-c('timestep','mort.high')
+                    y.any<-aggregate(y$mort.any,list(y$timestep.id),sum)
+                    colnames(y.any)<-c('timestep','mort.any')
+                    y<-merge(y.low,y.high,by='timestep',sort=FALSE)
+                    y<-merge(y,y.any,by='timestep',sort=FALSE)
+                    y<-merge(timestep,y,by='timestep',all.x=TRUE,sort=FALSE)
+                    y[is.na.data.frame(y)]<-0
+                    y<-y[order(y$timestep),]
+                    
+                    #optionally convert darea to percent of eligible
+                    # this eligible bit is what ruins everything
+                    # have to put a dummy string in for y in the function call
+                    if(y.scale=='percent'){
+                        t<-read.csv(paste(path,'eligible.csv',sep=''),header=TRUE)
+                        t<-t[t$session.id==sessions & t$dist.type==dist.levels[i],]
+                        t<-round(t$cell.count*((cell.size^2)/10000),0)
+                        y[,2:4]<-round((y[,2:4]/t)*100,2)
+                    }
+                    
+                    
+                    #print results to console and list object		
+                    z1[[i]][[j]]<-y
+                    print(format(z1[[i]][[j]],big.mark=','))
+                    
+                    #compute darea summary
+                    temp<-matrix(0,nrow=4,ncol=4)		
+                    colnames(temp)<-c('summary statistic','mort.low','mort.high','mort.any')
+                    temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
+                                'median darea/timestep','mean darea/timestep')
+                    temp[1,2:4]<-round(apply(y[,2:4],2,min),2)
+                    temp[2,2:4]<-round(apply(y[,2:4],2,max),2)
+                    temp[3,2:4]<-round(apply(y[,2:4],2,median),2)
+                    temp[4,2:4]<-round(apply(y[,2:4],2,mean),2)
+                    
+                    #print summary to console and list object
+                    z2[[i]][[j]]<-as.data.frame(temp)
+                    print(format(z2[[i]][[j]],big.mark=','))
+                    
+                    #plot disturbance area trajectory
+                    ############## ADDED BORDER=NA ####################
+                    barplot(t(y[,c(3,2)]),space=0, border=NA,
+                            #    barplot(y2,beside=TRUE,border=NA,#'black',
+                            
+                            xaxs='i',yaxs='i',col=c('dark blue', 'dark green'),#col.bars,
+                            axis.lty=1,names=y$timestep,...)
+                    
+                    # to add a line at the equilibration period
+                    #abline(v=40,lty=2,lwd=2,col="black")
+                    
+                    #add plot title	- dist.type	
+                    if(is.null(step.length)) xlab='Timestep'
+                    else xlab=paste('Timestep (x',step.length,' yrs)')
+                    if(y.scale=='percent')
+                        title(main=paste(dist.levels[i],'Disturbance Trajectory',sep=' '),
+                              ylab='Percent of Eligible',xlab=xlab,cex.main=cex.main,...)
+                    else
+                        title(main=paste(dist.levels[i],'Disturbance Trajectory',sep=' '),
+                              ylab='Area (ha)',xlab=xlab,cex.main=cex.main,...)
+                    
+                    #add subtitle - run number
+                    mtext(side=3,col=col.sub,cex=cex.sub,
+                          text=paste('Run #',runs[j],sep=''),...)
+                    
+                    #add legend		
+                    #####################################################
+                    ### I CHANGED A LINE HERE
+                    #######################################################
+                    legend(x='topright',#inset=c(0.05,0.05),
+                           #legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
+                           legend=c('High mort','Low mort'),fill=c('dark blue','dark green'),cex=cex.legend)
+                    if(!i==length(dist.levels) || !j==length(runs)) 
+                        readline("Press return for next plot ")
+                }
+            }
+            
+            #create list object
+            z<-list(z1,z2)
+            names(z)<-c('Disturbance Area Trajectory','Disturbance Area Summary')
+            
+            #output tables to file
+            if(outfile==TRUE){
+                for(i in 1:length(z1)){
+                    write.table(z1[[i]],file=paste(path,dist.levels[i],'_darea_trajectory.csv',sep=''),
+                                quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
+                    write.table(z2[[i]],file=paste(path,dist.levels[i],'_darea_summary.csv',sep=''),
+                                quote=FALSE,row.names=FALSE,sep=',',append=TRUE)
+                }
+            }
+        }
+        
+        par(old.par)
+        invisible(z)
+    }

@@ -375,7 +375,7 @@ fragland.plot.future(
     scenarios='ccsm1',
     covcondlist='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/covcondlist_100ts.csv',
     nrun=100,
-    metrics=c('PD','ED','AREA_AM','GYRATE_AM','SHAPE_AM','CORE_AM','CWED','CONTAG','SIDI','SIEI','AI'),
+    #metrics=c('PD','ED','AREA_AM','GYRATE_AM','SHAPE_AM','CORE_AM','CWED','CONTAG','SIDI','SIEI','AI'),
     #metrics=c('PD','ED','AREA_AM'),
     start.step=1,
     stop.run=NULL,

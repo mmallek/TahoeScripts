@@ -1890,7 +1890,7 @@ else{
 	
 			#plot disturbance area trajectory
             ############## ADDED BORDER=NA ####################
-			barplot(t(y[,c(3,2)]),space=0, border="black",#NA,
+			barplot(t(y[,c(3,2)]),space=0, border=NA,
 			    #    barplot(y2,beside=TRUE,border=NA,#'black',
 			                
 				xaxs='i',yaxs='i',col=c('dark blue', 'dark green'),#col.bars,

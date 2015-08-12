@@ -135,10 +135,10 @@ fragland.boxplot <-
              metrics=NULL,
              landfiles = c('classland_pastclimate_20150723.land', 'classland_ccsm1_20150723.land',
                            'classland_ccsm2_20150723.land','classland_ccsm3_20150723.land',
-                           'classland_ccsm4_20150723.land','classland_ccsm4_20150723.land',
+                           'classland_ccsm4_20150723.land','classland_ccsm5_20150723.land',
                            'classland_ccsm6_20150723.land','classland_esm2m_20150723.land'),
              scenarios = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
-                                         'ccsm4','ccsm4','ccsm6','esm2m'))
+                                         'ccsm4','ccsm5','ccsm6','esm2m'))
              outfile=FALSE){
         
         #set defaults

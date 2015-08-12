@@ -1,3 +1,10 @@
+# this script contains 3 functions
+# fragstats plots for landscape metrics
+# covcond plots by each cover type, for each scenario
+# covcond plots by each cov-cond type across scenarios
+
+
+
 ### barplots showing covcond distribution across all scenarios
 ### so each individual plot should show one cover type
 ### based on fragland.barplot.future
@@ -16,16 +23,15 @@ require(ggplot2)
 fragland.boxplot <-
     function(fragpath='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/',
              infile,
-             scenarios=NULL,
              nrun=NULL, 
              covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv',
              metrics=NULL,
              landfiles = c('classland_pastclimate_20150723.land', 'classland_ccsm1_20150723.land',
                            'classland_ccsm2_20150723.land','classland_ccsm3_20150723.land',
-                           'classland_ccsm4_20150723.land','classland_ccsm4_20150723.land',
+                           'classland_ccsm4_20150723.land','classland_ccsm5_20150723.land',
                            'classland_ccsm6_20150723.land','classland_esm2m_20150723.land'),
-             scenarios = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
-                                         'ccsm4','ccsm4','ccsm6','esm2m'))
+             scenarios = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
+                         'ccsm4','ccsm5','ccsm6','esm2m'),
              outfile=FALSE){
         
         #set defaults
@@ -86,7 +92,7 @@ fragland.boxplot <-
         for(i in 1:length(metrics)){     
             p = ggplot(data=y1[y1$run!=0,], aes(x=factor(scenario), y=y1[y1$run!=0,metrics[i]] )) 
             p1 = p + 
-                stat_summary(fun.data = f, geom="boxplot", ,fill="#339900", width=0.5) +
+                stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
                 stat_summary(fun.y = o, geom="point", col="#CC3300") +
                 geom_hline(aes(yintercept=y1[y1$run==0,metrics[i]]), lwd=3, col="#333333") +
                 theme_bw() +
@@ -104,34 +110,8 @@ fragland.boxplot <-
             print(p1)
             ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
                    path="/Users/mmallek/Tahoe/RMLands/results201507/future/images/",
-                   width=15, height=5, units='in',limitsize=FALSE
-            )    
+                   width=15, height=5, units='in',limitsize=FALSE)    
         }
-        
-        
-        #put the final table together
-        z1<-z1[,c(1,2,7,27,52,77,97,102,105,103,104,106)]
-        row.names(z1)<-NULL
-        colnames(z1)<-c('landscape.metric','srv0%','srv5%','srv25%',
-                        'srv50%','srv75%','srv95%','srv100%','srv.cv',
-                        'current.value','current.%SRV','departure.index')
-        
-        
-        
-        #create list object
-        z<-list(infile,scenarios,z1,z2)
-        names(z)<-c('infile','scenario','landscape SRV',
-                    'landscape departure index (%)')
-        
-        #output tables to file
-        if(outfile==TRUE){
-            write.table(z[[3]],file=paste(paste(fragpath,sep=''),'srv.csv',sep='.'),
-                        quote=FALSE,row.names=FALSE,append=TRUE,sep=',')
-            write.table(z[[4]],file=paste(paste(fragpath,sep=''),'ldi.csv',sep='.'),
-                        quote=FALSE,row.names=FALSE,append=TRUE,sep=',')
-        }
-        
-        return(z)
     }
 
 #######################################
@@ -139,24 +119,14 @@ fragland.boxplot <-
 #########################################
 path = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
 sessions=c(6,9,8,10,13,14,20,21)
-scenario_name = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
-                                'ccsm4','ccsm4','ccsm6','esm2m'))
-cover.names='Oak-Conifer Forest and Woodland'
+scenario_name = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
+                'ccsm4','ccsm5','ccsm6','esm2m'))
+#cover.names='Oak-Conifer Forest and Woodland'
 runs=18
-    
-covcondout<-covcond(path=futurepath,
-                    sessions=21,
-                    var='srv50%',
-                    runs=c(1:100), #can pool runs
-                    start.step=1,
-                    stop.step=NULL,
-                    cell.size=30,
-                    #cover.names=c('Oak-Conifer Forest and Woodland'),
-                    cover.min.ha=1000,
-                    outfile=T)
+cover.min.ha=1000
 
-scenarios = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
-                            'ccsm4','ccsm4','ccsm6','esm2m'))
+scenarios = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
+            'ccsm4','ccsm5','ccsm6','esm2m')
 
 covcond.cover.boxplot <-
     function(path,sessions=NULL,var='srv50%',runs=NULL,start.step=1,
@@ -246,7 +216,8 @@ covcond.cover.boxplot <-
             for(i in 1:length(unique(s2$cov.name))){
                 s2[s2$cov.name==unique(s2$cov.name)[i],4] = s2[s2$cov.name==unique(s2$cov.name)[i],3] *.09/zz2[i,2]
             }
-            current = merge(zz1, s2, by.x=c("cov.cond.id",'cover.type'),by.y=c('cov.cond.id','cov.name.x'))
+            current = merge(zz1, s2)
+            current$cov.name.x=NULL
             #levels(current$condition.class) = c('Early-All Structures', 'Early-Aspen', 
             #                         'Mid-Closed', 'Mid-Moderate', 'Mid-Open',
             #                         'Mid-Aspen', "Mid-Aspen and Conifer", "Late-Conifer and Aspen", 
@@ -254,7 +225,6 @@ covcond.cover.boxplot <-
             
             #loop thru selected sessions
             for(j in 1:length(sessions)){
-                
                 #calculate SRV quantiles by covcond class
                 # extract covcond codes
                 cov.cond<-levels(as.factor(y$cov.cond.id))
@@ -286,27 +256,33 @@ covcond.cover.boxplot <-
                 # use gather on z2 data frame to get a column with the metric name, 
                 # a column with that metric's value, for all of the fragland metrics
                 data_long = gather(z2, run, proportion, -cov.cond.id, -cov.name, -cond.name)
+                #data_long$ = relevel(z$scenario, "pastclimate")
                 
                 for(i in 1:length(unique(z1$cov.name))){
-                p = ggplot(data=data_long[data_long$cov.name==unique(z1$cov.name)[i],], aes(x=cond.name, y=proportion )) 
-                p1 = p +                
-                    geom_crossbar(data=current[current$cover.type==unique(z1$cov.name)[i],], aes(x=condition.class,y=proportion, ymin=proportion, 
-                                                    ymax=proportion), lwd=2,col="#333333") +
-                    stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
-                    stat_summary(fun.y = o, geom="point", col="#CC3300") +
-                    theme_bw() +
-                    theme(axis.title.y = element_text(size=24,vjust=2),
-                          axis.title.x = element_text(size=24,vjust=-1),
-                          axis.text.x  = element_text(size=16),
-                          axis.text.y  = element_text(size=16)) +
-                    theme(legend.title=element_text(size=16)) +
-                    theme(legend.text = element_text(size = 16)) +
-                    theme(plot.title = element_text(size=24,vjust=1)) +
-                    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-                    ggtitle(paste(unique(z1$cov.name)[i], "\n", scenario_name[j])) + 
-                    xlab("Seral Stage") +
-                    ylab("Proportion of Cover Type") 
-                    print(p1)
+                    p = ggplot(data=data_long[data_long$cov.name==unique(z1$cov.name)[i],], aes(x=cond.name, y=proportion )) 
+                    p1 = p +                
+                        geom_crossbar(data=current[current$cover.type==unique(z1$cov.name)[i],], aes(x=condition.class,y=proportion, ymin=proportion, 
+                                                        ymax=proportion), lwd=2,col="#333333") +
+                        stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
+                        stat_summary(fun.y = o, geom="point", col="#CC3300") +
+                        theme_bw() +
+                        theme(axis.title.y = element_text(size=24,vjust=2),
+                              axis.title.x = element_text(size=24,vjust=-1),
+                              axis.text.x  = element_text(size=16),
+                              axis.text.y  = element_text(size=16)) +
+                        theme(legend.title=element_text(size=16)) +
+                        theme(legend.text = element_text(size = 16)) +
+                        theme(plot.title = element_text(size=24,vjust=1)) +
+                        theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+                        ggtitle(paste(unique(z1$cov.name)[i], "\n", scenario_name[j])) + 
+                        xlab("Seral Stage") +
+                        ylab("Proportion of Cover Type") 
+                        print(p1)
+                        if(saveimage==TRUE){
+                            ggsave(paste(unique(z1$cov.name)[i],scenario_name[j],"boxplots",".png",sep="-"), 
+                                   path="/Users/mmallek/Tahoe/RMLands/results201507/future/images/",
+                                   width=15, height=5, units='in',limitsize=FALSE)                
+                    }  
                 }   
                
             }
@@ -318,17 +294,37 @@ covcond.cover.boxplot <-
 
 path = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
 sessions=c(6,9,8,10,13,14,20,21)
-scenario_name = c(landfiles = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
-                                'ccsm4','ccsm4','ccsm6','esm2m'))
-cover.names='Oak-Conifer Forest and Woodland'
+scenario_name = c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m')
+#cover.names='Oak-Conifer Forest and Woodland'
 runs=18
 
+covcond.scenario.boxplot(
+    path = '/Users/mmallek/Tahoe/RMLands/results201507/future/',
+    sessions=c(6,9,8,10,13,14,20,21),
+    scenario_name = c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m'),
+    runs=18,
+    cell.size=30,
+    cover.min.ha=1000,
+    saveimage=TRUE
+    )
+
 covcond.scenario.boxplot <-
-    function(path,sessions=NULL,var='srv50%',runs=NULL,start.step=1,
-             stop.step=NULL,cell.size=30,cover.names=NULL,cover.min.ha=0,outfile=FALSE){
+    function(path,sessions=NULL,scenario_name=NULL,runs=NULL,cell.size=30,
+             cover.names=NULL,cover.min.ha=0,saveimage=FALSE){
         
         #set defaults
         options(warn=0)
+        
+        # define the summary function
+        f <- function(x) {
+            r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+            names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+            r
+        }
+        # summary function for outliers
+        o <- function(x) {
+            subset(x, x < quantile(x, probs = c(0.05, 0.95))[1] | quantile(x, probs = c(0.05, 0.95))[2] < x)
+        }
         
         #read covcond data
         y0<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
@@ -371,413 +367,123 @@ covcond.scenario.boxplot <-
         t2.cover.type<-t2$cover.type
         y<-y[y$cov.name %in% t2.cover.type,]
             
-            #set runs parameter
-            if(is.null(runs)) runs<-unique(y$run.id)
-            
-            #verify valid run ids
-            all.runs<-unique(y$run.id)
-            if(any(!runs %in% all.runs)) stop('Invalid run ids')
-            
-            # this gets you the data frame with only the final timestep (18, as run.id)
-            y<-y[y$run.id %in% runs,]
-            
-
-            
-            # delete columns not of interest
-            y1 = y
-            y1$timestep.id = NULL
-            y1$run.id = NULL
-            y1$cell.count = NULL
-            y1 = distinct(y1)
+        #set runs parameter
+        if(is.null(runs)) runs<-unique(y$run.id)
         
-            #new dataframe that's a set of unique covcond classes
-            y2<-y[order(y$cov.cond.id),]
-            y2<-y2[(y2$cov.cond.id != y2$cov.cond.id[c((1:dim(y2)[1])[-1],1)]),
-                   c('cov.cond.id','cov.name','cond.name')]
-            
-            #get current cell.count for each covcond class
-            s1<-merge(y2,t1,by='cov.cond.id',all.x=TRUE)
-            s2<-s1[,c(1,2,9)]
-            s2[is.na(s2)]<-0
-            
-            #create dataframe for covcond stats results
-            zz1<-y1
-            # not needed 
-            # colnames(zz1)<-c('cov.cond.id','cover.type','condition.class')
-            
-            #create dataframe for cover departure results
-            d1<-as.data.frame(unique(y1$cov.name)) 
-            colnames(d1)<-c('cover.type')
-            d2<-t2[,c(1,3)]
-            # this is just the cover type and its total area
-            zz2<-merge(d1,d2,by='cover.type',sort=FALSE)
-            colnames(zz2)<-c('cover.type','area.ha')
+        #verify valid run ids
+        all.runs<-unique(y$run.id)
+        if(any(!runs %in% all.runs)) stop('Invalid run ids')
         
-############## rewriting the function, start here!
-############## need to run this line by line to fix
-            # calculate current proportions
-            s2$proportion = s2$cell.count
-            for(i in 1:length(unique(s2$cov.name))){
-                s2[s2$cov.name==unique(s2$cov.name)[i],4] = s2[s2$cov.name==unique(s2$cov.name)[i],3] *.09/zz2[i,2]
-            }
-            current = merge(zz1, s2, by.x=c("cov.cond.id",'cov.name'),by.y=c('cov.cond.id','cov.name.x'))
-            
-            # maybe it will work by using the covcond id, instead of 2 loops?
-            covcond.code = sort(unique(current$cov.cond.id))
-            
-            # also maybe the rest goes in these loops....
+        # this gets you the data frame with only the final timestep (18, as run.id)
+        y<-y[y$run.id %in% runs,]
         
-            # create the empty matrix to hold the data
-            q1<-matrix(0,nrow=length(sessions),ncol=100)
-            y2 = y1
-            for(j in 1:length(covcond.code)){
-                # q2 is a subsetted matrix for one cover-condition combo
-                # and all the scenarios
-                q2<-y[y$cov.cond.id==covcond.code[j],]
-                for(k in 1:length(sessions)){
-                    rownames(q1) = scenario_name
-                    #q1[1,1] = sessions[k] # i had wanted to somehow track 
-                    q1[k,1:length(q2$cell.count[q2$session.id==sessions[k]])] = q2$cell.count[q2$session.id==sessions[k]]
-                    
-                }
-                #z1 = cbind(y1[y1$cov.cond.id==covcond.code[j],], q1)
-                y2 = bind_cols(y2[y2$cov.cond.id==covcond.code[j],], as.data.frame(q1))
-            }
-
-                
-                z1 = cbind(y1, q1)
-                
-                for(i in 1:length(unique(z1$cov.name))){
-                    z1[z1$cov.name==unique(z1$cov.name)[i],4:103] = 
-                        apply(z1[z1$cov.name==unique(z1$cov.name)[i],4:103], MARGIN=2, 
-                              FUN=function(x) x*.09/zz2[i,2])
-                }
-                #z2 = as.data.frame(z2)
-                #z2 = cbind(y1, z1)
-                z2 = merge(y1, z1)
-                z2$cond.name = factor(z2$cond.name, levels=c('Early-All Structures', 'Early-Aspen', 
-                                                             'Mid-Closed', 'Mid-Moderate', 'Mid-Open',
-                                                             'Mid-Aspen', "Mid-Aspen and Conifer", "Late-Conifer and Aspen", 
-                                                             'Late-Closed','Late-Moderate', 'Late-Open', 'Non-seral'))
-                
-                # use gather on z2 data frame to get a column with the metric name, 
-                # a column with that metric's value, for all of the fragland metrics
-                data_long = gather(z2, run, proportion, -cov.cond.id, -cov.name, -cond.name)
-                
-                for(i in 1:length(unique(z1$cov.name))){
-                    p = ggplot(data=data_long[data_long$cov.name==unique(z1$cov.name)[i],], aes(x=cond.name, y=proportion )) 
-                    p1 = p +                
-                        geom_crossbar(data=current[current$cover.type==unique(z1$cov.name)[i],], aes(x=condition.class,y=proportion, ymin=proportion, 
-                                                                                                     ymax=proportion), lwd=2,col="#333333") +
-                        stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
-                        stat_summary(fun.y = o, geom="point", col="#CC3300") +
-                        theme_bw() +
-                        theme(axis.title.y = element_text(size=24,vjust=2),
-                              axis.title.x = element_text(size=24,vjust=-1),
-                              axis.text.x  = element_text(size=16),
-                              axis.text.y  = element_text(size=16)) +
-                        theme(legend.title=element_text(size=16)) +
-                        theme(legend.text = element_text(size = 16)) +
-                        theme(plot.title = element_text(size=24,vjust=1)) +
-                        theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-                        ggtitle(paste(unique(z1$cov.name)[i], "\n", scenario_name[j])) + 
-                        xlab("Seral Stage") +
-                        ylab("Proportion of Cover Type") 
-                    print(p1)
-                }   
-                
-            }
+        # delete columns not of interest
+        y1 = y
+        y1$timestep.id = NULL
+        y1$run.id = NULL
+        y1$cell.count = NULL
+        y1 = distinct(y1) # set of unique cov-cond-scenario combinations
+    
+        #new dataframe that's a set of unique covcond classes
+        y2<-y[order(y$cov.cond.id),]
+        y2<-y2[(y2$cov.cond.id != y2$cov.cond.id[c((1:dim(y2)[1])[-1],1)]),
+               c('cov.cond.id','cov.name','cond.name')]
+        
+        #get current cell.count for each covcond class
+        s1<-merge(y2,t1,by='cov.cond.id',all.x=TRUE)
+        s2<-s1[,c(1,2,9)]
+        s2[is.na(s2)]<-0
+        
+        #create dataframe for covcond stats results
+        #zz1<-y1
+        # not needed 
+        # colnames(zz1)<-c('cov.cond.id','cover.type','condition.class')
+        
+        #create dataframe for cover departure results
+        d1<-as.data.frame(unique(y1$cov.name)) 
+        colnames(d1)<-c('cover.type')
+        d2<-t2[,c(1,3)]
+        # this is just the cover type and its total area
+        zz2<-merge(d1,d2,by='cover.type',sort=FALSE)
+        colnames(zz2)<-c('cover.type','area.ha')
+    
+        # data frame to hold current info
+        zz3 = y2
+    
+        # calculate current proportions
+        s2$proportion = s2$cell.count
+        for(i in 1:length(unique(s2$cov.name))){
+            s2[s2$cov.name==unique(s2$cov.name)[i],4] = s2[s2$cov.name==unique(s2$cov.name)[i],3] *.09/zz2[i,2]
         }
+        # maybe 
+        current = merge(zz3, s2)
+        ####### possible hard coding
+        current = current[,-4]
+        
+        # maybe it will work by using the covcond id, instead of 2 loops?
+        covcond.code = sort(unique(current$cov.cond.id))
+        # remember scenarios called by sessions or scenario_name
+        
+        # do all the rest of the work in these loops?
+        
+        # create the empty matrix to hold the data
+        q1<-matrix(0,nrow=length(sessions),ncol=100)
+        y3 = matrix(0, nrow=1, ncol=ncol(y1)+ncol(q1))
+        for(j in 1:length(covcond.code)){
+            # q2 is a subsetted matrix for one cover-condition combo
+            # and all the scenarios
+            q2<-y[y$cov.cond.id==covcond.code[j],]
+            for(k in 1:length(sessions)){
+                rownames(q1) = scenario_name #gives rows meaningful names
+                # next line stores in q1 the cell counts extracted from q2 for each covcond type
+                q1[k,1:length(q2$cell.count[q2$session.id==sessions[k]])] = 
+                    q2$cell.count[q2$session.id==sessions[k]]
+                y3 = bind_cols(y1[y1$cov.cond.id==covcond.code[j],], as.data.frame(q1))
+            }
+
+            name = unique(q2[q2$cov.cond.id==covcond.code[j],5])
+            area = zz2$area.ha[zz2$cover.type==name]
+            y3[,6:105] = 
+                apply(y3[,6:105], MARGIN=2, FUN=function(x) x*.09/area)
+            
+            # give real names to columns
+            colnames(y3)[6:105] = paste("Run",seq(1,100, 1))
+            # put scenarios in order
+            ########y3$scenario = factor(y3$scenario, levels=c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m'))
+            # gather all the proportions for plotting
+            data_long = gather(y3, run.timestep, proportion, -session.id,-cov.cond.id, -cov.name, -cond.name, -scenario)
+            
+            # make the plot
+            p = ggplot(data_long, aes(x=scenario, y=proportion )) 
+            currentvalue = current[current$cov.cond.id==covcond.code[j],]
+            p1 = p +         
+                stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
+                stat_summary(fun.y = o, geom="point", col="#CC3300") +
+                geom_hline(data=currentvalue, aes(yintercept=proportion), lwd=3, col="#333333") +                        
+                theme_bw() +
+                theme(axis.title.y = element_text(size=24,vjust=2),
+                      axis.title.x = element_text(size=24,vjust=-1),
+                      axis.text.x  = element_text(size=16),
+                      axis.text.y  = element_text(size=16)) +
+                theme(legend.title=element_text(size=16)) +
+                theme(legend.text = element_text(size = 16)) +
+                theme(plot.title = element_text(size=24,vjust=1)) +
+                theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+                ggtitle(paste(data_long$cov.name[1], "\n", data_long$cond.name[1])) + 
+                xlab("Climate Model") +
+                ylab("Proportion of Cover Type") 
+                print(p1)
+            if(saveimage==TRUE){
+                ggsave(paste(covcond.code[j],"-boxplots",".png",sep=""), 
+                       path="/Users/mmallek/Tahoe/RMLands/results201507/future/images/",
+                       width=10, height=5, units='in',limitsize=FALSE)                
+            }          
+        }
+    }
 
 
-
-
-
+            
 
 #####################################
 #######################################
 #################################
-
-covcond.plot <-
-    function(path,session=NULL,var='srv50%',runs=1,start.step=0,
-             stop.step=NULL,step.length=NULL,type='stack',cell.size=30,
-             cover.names=NULL,cover.min.ha=0,
-             col.bars=c('black','tan','brown','orange','seagreen','salmon',
-                        'green','cyan','yellow','magenta','coral','wheat',
-                        'gray','tan2','brown2','orange2','seagreen2','salmon2',
-                        'green2','cyan2','yellow2','magenta2','coral2','wheat2'),
-             col.sub='brown',cex.main=1.5,cex.sub=1.5,cex.legend=1.5,cex.lab=1.5,
-             outfile=FALSE,save.figs=FALSE,...){
-        
-        #set defaults
-        options(warn=0)
-        old.par<-par(no.readonly=TRUE)
-        
-        #read covcond data
-        y<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
-        
-        #set session parameter
-        if(is.null(session)) session<-unique(y$session.id)
-        
-        #verify valid session ids
-        all.sessions<-unique(y$session.id)
-        if(any(!session %in% all.sessions)) stop('Invalid session ids')
-        
-        #assign colors to master list of condition classes
-        temp<-subset(y,select=c(cov.cond.id,cond.name))
-        temp<-unique(temp)
-        all.conds<-as.vector(unique(y$cond.name))
-        if(length(col.bars)>length(all.conds)) col.bars<-col.bars[1:length(all.conds)]
-        cond.colors<-as.data.frame(cbind(cond.name=all.conds,colors=col.bars))
-        cond.colors<-merge(temp,cond.colors)
-        
-        #clustered bar charts for multiple sessions
-        if(length(session)>1){
-            
-            #create covcond stats for plot
-            y<-covcond(path=path,sessions=session,var=var,runs=runs,start.step=start.step,
-                       stop.step=stop.step,cell.size=cell.size,cover.names=cover.names,
-                       cover.min.ha=cover.min.ha)[[5]]
-            
-            #create list object
-            cov.levels<-unique(y$cover.type)
-            z<-vector("list", length(cov.levels))
-            names(z)<-cov.levels
-            
-            #loop thru cover types
-            for(i in 1:length(cov.levels)){ 
-                
-                #subset data based on cov.id
-                x<-y[y$cover.type==cov.levels[i],]
-                
-                #get condition classes
-                cond.levels<-x[,c(1,3)]
-                names(cond.levels)<-c('cov.cond.id','cond.name')
-                cond.levels<-cond.levels[order(cond.levels$cov.cond.id),]
-                n<-nrow(cond.levels)
-                
-                #assign colors
-                col.bars<-merge(cond.levels,cond.colors)
-                col.bars<-as.character(col.bars$colors)
-                
-                #save results to list object
-                z[[i]]<-x
-                print(z[[i]])
-                x<-as.matrix(x[,-c(1:3)])
-                
-                #plot to file
-                if(save.figs==TRUE){
-                    bitmap(file=paste(cov.levels[i],'.png',sep=''),
-                           height=6,width=8,res=300,...) 
-                }
-                
-                #create clustered bar chart
-                #barplot(x,beside=TRUE,border='dark gray',
-                barplot(x,beside=TRUE,
-                        xaxs='i',yaxs='i',col=col.bars,cex.lab=cex.lab,
-                        axis.lty=1,...)
-                
-                #add legend
-                cond.levels<-as.vector(cond.levels[,2])				
-                legend(x='topright',inset=c(0.02,0.02),
-                       legend=cond.levels,fill=col.bars,cex=cex.legend)
-                
-                #add plot title				
-                if(var=='srv.cv'){
-                    title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
-                          ylab='Coefficient of Variation',xlab='Scenario/Session',
-                          cex.main=cex.main,...)
-                }
-                else{title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
-                           ylab='Percentage of Cover Type',xlab='Scenario/Session',
-                           cex.main=cex.main,...)
-                }
-                
-                #add subtitle: dist.type and cov.type
-                mtext(side=3,col=col.sub,cex=cex.sub,text=cov.levels[i],line=1,...)
-                
-                if(save.figs==TRUE) dev.off()
-                
-                if(save.figs==FALSE & !i==length(cov.levels))
-                    readline("Press return for next plot ")
-            }
-            
-            #output tables to file
-            if(outfile==TRUE){
-                for(i in 1:length(z)){
-                    write.table(z[[i]],file=paste(path,cov.levels[i],' Summary.csv',sep=''),
-                                quote=FALSE,row.names=FALSE,sep=',',append=FALSE)
-                }
-            }
-            
-        }
-        
-        #covcond trajectory plots for single session	
-        else{
-            
-            #subset data based on session and dynamic cover types
-            y<-y[y$session.id==session & y$cond.name != 'Non-seral' &
-                     y$cond.name != 'Non-seral cover types',]
-            
-            #verify valid run.ids
-            if(is.null(runs)) runs<-unique(y$run.id)
-            else{
-                all.runs<-unique(y$run.id)
-                if(!runs %in% all.runs) stop('Invalid run ids')
-            }
-            
-            #set start.step and stop.step
-            if(start.step>max(y$timestep.id)) stop('Start.step exceeds maximum timestep')
-            if(is.null(stop.step)) stop.step<-max(y$timestep.id)
-            else{
-                if(stop.step>max(y$timestep.id)) warning('Stop.step exceeds maximum timestep and was set to the maximum')
-                stop.step<-min(stop.step,max(y$timestep.id))
-            }
-            
-            #select subset of cover types
-            if(!is.null(cover.names)){
-                cov.levels<-levels(y$cov.name)
-                if(any(!cover.names %in% cov.levels)) stop('Invalid cover names')
-                y<-y[y$cov.name %in% cover.names,] 
-            }
-            
-            #calculate total area by cover type for min area cover types
-            t1<-y[y$run.id==1 & y$timestep.id==0,]
-            t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
-            colnames(t2)<-c('cover.type','cov.count')
-            t2$area.ha<-round(t2$cov.count*cell.size^2/10000,0)
-            t2<-t2[t2$area.ha>cover.min.ha,]
-            t2.cover.type<-t2$cover.type
-            
-            #subset data based on run, start.step, stop.step and min area
-            y<-y[y$run.id %in% runs & y$timestep.id>=start.step & y$timestep.id<=stop.step & 
-                     y$cov.name %in% t2.cover.type,]
-            
-            #create timestep variable
-            timestep<-seq(start.step,stop.step,1)
-            timestep<-as.data.frame(timestep)
-            
-            #create list object
-            cov.levels<-unique(y$cov.name)
-            z<-vector("list", length(cov.levels))
-            names(z)<-cov.levels
-            
-            #loop thru cover types
-            for(i in 1:length(cov.levels)){ 
-                
-                #subset data based on cov.id
-                x<-y[y$cov.name==cov.levels[i],c(2,3,4,6,7)]
-                names(x)<-c('run.id','timestep','cov.cond.id','cond.name','cell.count')
-                
-                #create list objects
-                z.run<-vector("list",length(runs))
-                names(z.run)<-runs
-                
-                #loop thru runs
-                for(j in 1:length(runs)){
-                    
-                    #subset data based on run.id
-                    q<-x[x$run.id==runs[j],-1]
-                    
-                    #get condition classes
-                    cond.levels<-as.data.frame(unique(q[,2:3]))
-                    cond.levels<-cond.levels[order(cond.levels$cov.cond.id),]
-                    n<-nrow(cond.levels)
-                    
-                    #assign colors
-                    col.bars<-merge(cond.levels,cond.colors)
-                    col.bars<-as.character(col.bars$colors)
-                    
-                    #fill out complete dataset
-                    x2<-merge(timestep,cond.levels)
-                    x2<-merge(x2,q,by=c('timestep','cov.cond.id','cond.name'),
-                              all.x=TRUE,sort=TRUE)
-                    x2[is.na.data.frame(x2)]<-0
-                    
-                    #restructure dataset for plotting
-                    t1<-timestep
-                    for(k in 1:n){
-                        x3<-x2[x2$cov.cond.id==cond.levels[k,1],c(1,4)]
-                        names(x3)[2]<-as.vector(cond.levels[k,2])
-                        t1<-merge(t1,x3,by='timestep',all.x=TRUE)
-                    }
-                    
-                    #convert cell.count to proportion of cover
-                    t1[,2:(n+1)]<-t1[,2:(n+1)]/apply(t1[,-1],1,sum)
-                    
-                    #save results to list object		
-                    z.run[[j]]<-round(t1,3)
-                    print(z.run[[j]])
-                    
-                    #plot to file
-                    if(save.figs==TRUE){
-                        bitmap(file=paste(cov.levels[i],runs[j],'.png',sep=''),
-                               height=6,width=8,res=300,...) 
-                    }      
-                    
-                    #plot disturbance area trajectory as 100% stacked bar chart
-                    if(type=='stack'){
-                        
-                        #create 100% stacked bar chart
-                        #print(round(t1,2))
-                        barplot(t(t1[,-1]),space=0,border=NA,
-                                axs='s',yaxs='i',col=col.bars,
-                                #xaxs='i',yaxs='i',col=col.bars,
-                                axis.lty=1,names=t1$timestep,cex.lab=cex.lab,...)
-                        
-                        #add legend
-                        cond.levels<-as.vector(cond.levels[,2])				
-                        legend(x='topright',inset=c(0.02,0.02),
-                               legend=cond.levels,fill=col.bars,cex=cex.legend)
-                    }
-                    
-                    #plot disturbance area trajectory as lines
-                    else{
-                        
-                        #create line chart
-                        #print(round(t1,2))
-                        matplot(t1[,1]*10,t1[,2:ncol(t1)],type='l',
-                                ylab='',xlab='',lty=1,col=col.bars,cex.lab=cex.lab,...)
-                        
-                        #add legend
-                        cond.levels<-as.vector(cond.levels[,2])				
-                        legend(x='topright',inset=c(0.02,0.02),
-                               legend=cond.levels,lty=1,col=col.bars,cex=cex.legend,lwd=1.5)
-                    }
-                    abline(v=40)
-                    
-                    #add plot title	
-                    if(is.null(step.length)) xlab='Timestep'
-                    else xlab=paste('Timestep (x',step.length,' yrs)')
-                    title(main='Cover-Condition Dynamics',line=2.5,
-                          ylab='Proportion of Cover Type',xlab=xlab,cex.main=cex.main,...)
-                    
-                    #add subtitle: dist.type and cov.type
-                    mtext(side=3,col=col.sub,cex=cex.sub,
-                          text=paste(cov.levels[i],': Run #',runs[j],sep=''),line=1,...)
-                    
-                    if(save.figs==TRUE) dev.off()
-                    
-                    if(save.figs==FALSE & (!i==length(cov.levels) | !j==length(runs)))
-                        readline("Press return for next plot ")
-                    
-                } #end loop thru runs
-                
-                z[[i]]<-z.run
-                
-                
-            } #end loop thru cover types
-            
-            #output tables to file
-            if(outfile==TRUE){
-                for(i in 1:length(z)){
-                    write.table(z[[i]],file=paste(path,cov.levels[i],' dynamics.csv',sep=''),
-                                quote=FALSE,row.names=FALSE,sep=',',append=FALSE)
-                }
-            }
-            
-        }
-        
-        par(old.par)
-        invisible(z)
-    }
