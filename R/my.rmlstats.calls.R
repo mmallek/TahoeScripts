@@ -6,7 +6,7 @@ setwd('/Users/mmallek/Tahoe/RMLands/results201507/hrv')
 setwd('/Users/mmallek/Tahoe/R/Rplots/November2014')
 hrvpath='/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
 futurepath='/Users/mmallek/Tahoe/RMLands/results201507/future/'
-#sessions = 3 for the hrv
+# sessions = 3 for the hrv
 # for future:
 # ID6 = hrvclimate, forward 100 years
 # ID9 = ccsm1
@@ -31,12 +31,12 @@ for(i in 1:length(covtypes)){
 dareaout = darea(
   #path=hrvpath,
   path=futurepath,
-  session=21,
+  #session=3,
   # all future sessions
-  #sessions=c(6,9,8,10,13,14,20,21),
+  sessions=c(9,8,10,13,14,20,21),
   var='mean',
   runs=c(1:100),
-  start.step=1,
+  start.step=14,
   stop.step=NULL,
   step.length=5,
   #covtype="Mixed Evergreen - Mesic",
@@ -54,7 +54,7 @@ dareaout = darea(
   col.sub='brown',
   #cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
   cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
-  outfile=T)
+  outfile=F)
 
 # calculate number of fires per timestep
 numfire = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv', header=TRUE)
@@ -97,10 +97,10 @@ out<-tarea(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/'
   outfile=FALSE)
 
 out<-dsize(path=futurepath,
-  session=6,
+  session=6, # only takes a single session
   runs=c(1:100),
   pool.runs=T,
-  start.step=1,
+  start.step=18,
   stop.step=NULL,
   cell.size=30,
   log.size=FALSE,
