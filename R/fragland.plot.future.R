@@ -222,3 +222,102 @@ fragland.boxplot <-
         }
 
     }
+
+
+###############################################
+###############################################
+### Moved from covcond.future.R
+
+fragland.boxplot <-
+    function(fragpath='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/',
+             infile,
+             nrun=NULL, 
+             covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv',
+             metrics=NULL,
+             landfiles = c('classland_pastclimate_20150723.land', 'classland_ccsm1_20150723.land',
+                           'classland_ccsm2_20150723.land','classland_ccsm3_20150723.land',
+                           'classland_ccsm4_20150723.land','classland_ccsm5_20150723.land',
+                           'classland_ccsm6_20150723.land','classland_esm2m_20150723.land'),
+             scenarios = c('pastclimate', 'ccsm1','ccsm2','ccsm3',
+                           'ccsm4','ccsm5','ccsm6','esm2m'),
+             outfile=FALSE){
+        
+        #set defaults
+        options(warn=0)
+        
+        z<-read.csv(paste(fragpath,landfiles[1],sep=''),strip.white=TRUE,header=TRUE)
+        z$scenario = scenarios[1]
+        
+        #read fragstats data if there's more than the initial dataframe
+        if(length(landfiles>1)){
+            for(i in 1:length(landfiles)){
+                w<-read.csv(paste(fragpath,landfiles[i],sep=''),strip.white=TRUE,header=TRUE)
+                w$scenario = scenarios[i]
+                z = bind_rows(z,w)
+            }
+        }
+        
+        z$scenario = as.factor(z$scenario)
+        z$scenario = relevel(z$scenario, "pastclimate")
+        
+        # read covcond list
+        w = read.csv(covcondlist, header=F)
+        #create runs variable so that each final timestep is associated with a run
+        w$run = seq(0,nrun,1)
+        colnames(w)[1:2] = c("file","run")
+        
+        z$LID = NULL
+        y = cbind(w,z)
+        
+        # set metrics parameter
+        # this allows you to include only a subset of the metrics
+        all.metrics<-colnames(y)[-c(1:2,25)]
+        if(is.null(metrics)) metrics<-all.metrics
+        if(any(!metrics %in% all.metrics)) stop('Invalid metrics selected')
+        
+        #select columns matching metrics from previous steps
+        y.metrics<-subset(y,select=metrics)
+        y.head<-y[,c(1:2,25)]
+        y1<-cbind(y.head,y.metrics)
+        
+        # make a box and whisker plot
+        
+        # use gather on y1 data frame to get a column with the metric name, 
+        # a column with that metric's value, for all of the fragland metrics
+        # data_long = gather(y1, metric, value, PD:AI)
+        
+        # define the summary function
+        f <- function(x) {
+            r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+            names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+            r
+        }
+        # summary function for outliers
+        o <- function(x) {
+            subset(x, x < quantile(x, probs = c(0.05, 0.95))[1] | quantile(x, probs = c(0.05, 0.95))[2] < x)
+        }
+        
+        for(i in 1:length(metrics)){     
+            p = ggplot(data=y1[y1$run!=0,], aes(x=factor(scenario), y=y1[y1$run!=0,metrics[i]] )) 
+            p1 = p + 
+                stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
+                stat_summary(fun.y = o, geom="point", col="#CC3300") +
+                geom_hline(aes(yintercept=y1[y1$run==0,metrics[i]]), lwd=3, col="#333333") +
+                theme_bw() +
+                theme(axis.title.y = element_text(size=24,vjust=1),
+                      axis.title.x = element_text(size=24,vjust=-1),
+                      axis.text.x  = element_text(size=16),
+                      axis.text.y  = element_text(size=16)) +
+                theme(legend.title=element_text(size=16)) +
+                theme(legend.text = element_text(size = 16)) +
+                theme(plot.title = element_text(size=24,vjust=1)) +
+                theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+                ggtitle(paste("Landscape Metric: ", metrics[i], sep='')) + 
+                xlab("Climate Scenario") +
+                ylab("Metric Value") 
+            print(p1)
+            ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
+                   path="/Users/mmallek/Tahoe/RMLands/results201507/future/images/",
+                   width=15, height=5, units='in',limitsize=FALSE)    
+        }
+    }

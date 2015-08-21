@@ -699,6 +699,9 @@ function(path,sessions=NULL,runs=NULL,pool.runs=TRUE,
   y<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
   x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
   
+  # remove water and barren!
+  y = y[y$cov.name!='Barren' & y$cov.name!='Water',]
+  
   #create covcond list
   covcond.list<-as.data.frame(unique(subset(y,select=c('cov.name','cond.name'))))
   covcond.list<-covcond.list[order(covcond.list$cov.name,covcond.list$cond.name),]

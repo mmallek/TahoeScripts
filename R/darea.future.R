@@ -85,7 +85,7 @@ darea.future <-
                 theme(axis.ticks.x = element_blank()) +
                 theme(legend.title = element_text(size=16)) +
                 theme(legend.text = element_text(size = 16)) +
-                theme(legend.position = c(0.1,.93)) +
+                theme(legend.position = c(0.1,.92)) +
                 theme(plot.title = element_text(size=24,vjust=1)) +
                 theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
                 theme(panel.grid.minor.x = element_blank(),
@@ -102,6 +102,8 @@ darea.future <-
 # Kevin's just calculates for many individual runs.
 
 
+sessions=c(9,8,10,13,14,20,21)
+sessionnames = c('CCSM-2','CCSM-1','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
 
 #read darea data
 x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
@@ -113,6 +115,7 @@ x$mort.high<-x$mort.high*((cell.size^2)/10000)
 x$mort.low<-x$mort.low*((cell.size^2)/10000)
 x$mort.any<-x$mort.any*((cell.size^2)/10000)
 
+df = data.frame(summary_stat=factor(), mort_level = factor(), value = numeric(), session=integer())
 for(i in 1:length(sessions)){
     
     # for now let's assume 1 session is specified
@@ -165,9 +168,10 @@ for(i in 1:length(sessions)){
     temp[4,2:4]<-round(apply(y2[,3:5],2,mean),3)
     
     temp = as.data.frame(temp)
-    colnames(temp)<-c('summary statistic','mort.low','mort.high','mort.any')
+    colnames(temp)<-c('summary_stat','mort.low','mort.high','mort.any')
     temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
                 'median darea/timestep','mean darea/timestep')
+    temp$summary_stat = as.factor(temp$summary_stat)
         
     #isolate row of info you want to plot
     if(variable=='min') temp = temp[1,]
@@ -176,28 +180,32 @@ for(i in 1:length(sessions)){
     if(variable=='mean') temp = temp[4,]
     
     temp2 = gather(temp, mort_level, value, 2:4)
+    temp2$session = sessions[i]
     
-    pl = ggplot(temp2, aes(mort_level, value, fill=mort_level))
-    pl + geom_bar(stat="identity") + theme_bw()
-
+    df = bind_rows(df, temp2)
+}
+    ### end building individual tables
+ 
+# now plot all scenarios together
+    pl = ggplot(df, aes(as.factor(session), value)) 
+    pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
+         theme_bw() + scale_x_discrete(labels=sessionnames) +
         theme(axis.title.y = element_text(size=24,vjust=2),
               axis.title.x = element_text(size=24,vjust=-1),
-              axis.text.x  = element_blank(),#element_text(size=16),
+              axis.text.x  = element_text(size=16),
               axis.text.y  = element_text(size=16)) +
         theme(axis.ticks.x = element_blank()) +
         theme(legend.title = element_text(size=16)) +
         theme(legend.text = element_text(size = 16)) +
-        theme(legend.position = c(0.1,.93)) +
+        #theme(legend.position = c(0.1,.93)) +
         theme(plot.title = element_text(size=24,vjust=1)) +
         theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-        theme(panel.grid.minor.x = element_blank(),
-              panel.grid.major.x = element_blank(),
-              panel.grid.minor.y = element_blank()) +
-        ggtitle(paste("Area Burned by Wildfire", sessionnames[i])) + 
+        #theme(panel.grid.minor.x = element_blank(),
+        #      panel.grid.major.x = element_blank(),
+        #      panel.grid.minor.y = element_blank()) +
+        ggtitle(paste("Area Burned by Wildfire")) + 
         ylab("Percent of Landscape Burned") +
-        xlab("Timesteps 14-18, Runs 1-500") +
-        labs(fill='') 
-    print(pl1)
+        xlab("Climate Model") 
 }
         
 #####        ########################

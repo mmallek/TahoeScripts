@@ -156,8 +156,79 @@ propdiff2
 #  ccsm4_pdsi1  ccsm4_pdsi2  ccsm4_pdsi3  ccsm4_pdsi4  ccsm4_pdsi5  ccsm4_pdsi6  esm2m_pdsi1 
 # -0.007038995  0.269075444  0.338506693  0.094716869  0.130904185  0.272385767  0.604192545 
 
-dareaout[1]
-#           ccsm4_pdsi2     ccsm4_pdsi1    ccsm4_pdsi3    ccsm4_pdsi4    ccsm4_pdsi5    ccsm4_pdsi6    esm2m_pdsi1
-#low.mort   7.58            12.88           14.46           10.79           8.53         10.08          7.92
-#high.mort  4.87            3.92            12.48           6.53            2.90         5.01           6.52
-#any.mort  12.45            16.80           26.94           17.33           11.44        15.09          14.44
+# historical darea data
+hrvrun = dareaout[[2]]$`Wildfire disturbance summary (percent)`$`run number 1`
+hrvrun$mort.low = as.numeric(as.character(hrvrun$mort.low))
+hrvrun$mort.high = as.numeric(as.character(hrvrun$mort.high))
+hrvrun$mort.any = as.numeric(as.character(hrvrun$mort.any))
+#summary statistic mort.low mort.high mort.any
+#1 minimum darea/timestep     0.09      0.01      0.1
+#2 maximum darea/timestep    49.33     25.98    70.09
+#3  median darea/timestep     9.54       4.4    13.72
+#4    mean darea/timestep    12.31       5.7    18.01
+
+# expected mean darea/timestep
+
+expmean = data.frame(model = character(), mort.low = numeric(), mort.high = numeric(), mort.any = numeric(), stringsAsFactors=F)
+for(i in length(propdiff2)){
+    #expmean[i,1] = as.factor(names(propdiff2)[i])
+    expmean[i,1] = names(propdiff2)[i]
+    expmean[i,2:4] = hrvrun[4,2:4] * (1 + propdiff2[i])
+    
+}
+
+
+
+# pooled output data for each scenario
+as.data.frame(df)
+# mean darea/timestep
+mort_level  value session
+mort.low 10.582       9
+mort.high  3.524       9
+mort.any 14.106       9
+mort.low 12.894       8
+mort.high  6.653       8
+mort.any 19.548       8
+mort.low 12.365      10
+mort.high  6.775      10
+mort.any 19.140      10
+mort.low 11.756      13
+mort.high  5.377      13
+mort.any 17.132      13
+mort.low 10.373      14
+mort.high  3.760      14
+mort.any 14.133      14
+mort.low 12.523      20
+mort.high  6.174      20
+mort.any 18.697      20
+mort.low 12.559      21
+mort.high  8.995      21
+mort.any 21.554      21
+
+df2 = spread(df, mort_level, value)
+df2 = as.data.frame(df2)
+
+
+model       mort.low mort.high mort.any
+1 ccsm4_pdsi1 12.22335  5.659878 17.88323
+2 ccsm4_pdsi2 15.62232  7.233730 22.85605
+3 ccsm4_pdsi3 16.47702  7.629488 24.10651
+4 ccsm4_pdsi4 13.47596  6.239886 19.71585
+5 ccsm4_pdsi5 13.92143  6.446154 20.36758
+6 ccsm4_pdsi6 15.66307  7.252599 22.91567
+7 esm2m_pdsi1 19.74761  9.143898 28.89151
+
+summary_stat            session mort.any mort.high mort.low
+1 mean darea/timestep       8   19.548     6.653   12.894
+2 mean darea/timestep       9   14.106     3.524   10.582
+3 mean darea/timestep      10   19.140     6.775   12.365
+4 mean darea/timestep      13   17.132     5.377   11.756
+5 mean darea/timestep      14   14.133     3.760   10.373
+6 mean darea/timestep      20   18.697     6.174   12.523
+7 mean darea/timestep      21   21.554     8.995   12.559
+
+
+# need a line plot to show increase in darea
+
+pl = ggplot(expmean, aes(factor(model), mort.any))
+pl + geom_point(col='red') + geom_point(propdiff, aes(factor(names(propdiff)),as.vector(propdiff)))

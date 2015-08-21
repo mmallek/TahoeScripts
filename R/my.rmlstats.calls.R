@@ -29,14 +29,16 @@ for(i in 1:length(covtypes)){
 # use covtype argument if you want results for a single cover type, or set of cover types
 
 dareaout = darea(
-  #path=hrvpath,
-  path=futurepath,
-  #session=3,
+  path=hrvpath,
+  #path=futurepath,
+  session=3,
   # all future sessions
-  sessions=c(9,8,10,13,14,20,21),
+  #sessions=c(9,8,10,13,14,20,21),
   var='mean',
-  runs=c(1:100),
-  start.step=14,
+  #runs=c(1:100),
+  #start.step=14,
+  runs = 1,
+  start.step=40,
   stop.step=NULL,
   step.length=5,
   #covtype="Mixed Evergreen - Mesic",
@@ -97,10 +99,10 @@ out<-tarea(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/'
   outfile=FALSE)
 
 out<-dsize(path=futurepath,
-  session=6, # only takes a single session
+  session=9, # only takes a single session
   runs=c(1:100),
   pool.runs=T,
-  start.step=18,
+  start.step=14,
   stop.step=NULL,
   cell.size=30,
   log.size=FALSE,
@@ -108,21 +110,24 @@ out<-dsize(path=futurepath,
   target='firehist_ha.csv',
   col.bars=c('blue','red'),
   col.sub='brown',
-  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=2)
+  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=1.2)
 
 x<-read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/dsize.csv',header=TRUE)
 x = x[,session.id==20]
 
-out<-rotation(path=futurepath,
-  session=c(6,9,8,10,13,14,20,21),
-  runs=c(1:100),
+out<-rotation(path=hrvpath,#futurepath,
+  #session=21,
+  #runs=c(1:100),
+  session=3,
+  runs=1,
   pool.runs=TRUE,
   var='high.mort',
-  start.step=1,
+  #start.step=14,
+  start.step=40,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
-  outfile=T)
+  outfile=F)
     
 
 out<-preturn(path=futurepath,
