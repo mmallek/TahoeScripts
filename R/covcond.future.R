@@ -41,7 +41,7 @@ scenarios = c('hrv', 'ccsm1','ccsm2','ccsm3',
 
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_bycover_withoutliers/"
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_bycover_nooutliers/"
-
+imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_byscenario_nooutliers/"
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_byscenario_withoutliers/"
 
 hrvsession = 3
@@ -306,6 +306,37 @@ stop.step=18
 runs = c(1:100)
 cover.min.ha=1000
 
+require(tidyr)
+require(dplyr)
+require(ggplot2)
+
+
+
+futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
+histpath = '/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
+#sessions=c(6,9,8,10,13,14,20,21)
+sessions=c(3, 9,8,10,13,14,20,21)
+sessions=c(9,8,10,13,14,20,21)
+#scenario_name = c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m'))
+scenario_name = c('hrv','ccsm1','ccsm2','ccsm3', 'ccsm4','ccsm5','ccsm6','esm2m')
+#cover.names='Oak-Conifer Forest and Woodland'
+fstart.step=14
+fstop.step=18
+hstart.step = 40
+hstop.step = 500
+runs = c(1:100)
+cover.min.ha=1000
+
+scenarios = c('hrv', 'ccsm1','ccsm2','ccsm3',
+              'ccsm4','ccsm5','ccsm6','esm2m')
+
+imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_bycover_withoutliers/"
+imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_bycover_nooutliers/"
+imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_byscenario_nooutliers/"
+imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_byscenario_withoutliers/"
+
+hrvsession = 3
+
 covcond.scenario.boxplot(
     path = '/Users/mmallek/Tahoe/RMLands/results201507/future/',
     sessions=c(6,9,8,10,13,14,20,21),
@@ -319,9 +350,7 @@ covcond.scenario.boxplot(
 covcond.scenario.boxplot <-
     function(path,sessions=NULL,scenario_name=NULL,runs=NULL,cell.size=30,
              cover.names=NULL,cover.min.ha=0,saveimage=FALSE){
-        
-        #set defaults
-        options(warn=0)
+
         
         # define the summary function
         f <- function(x) {
@@ -335,28 +364,22 @@ covcond.scenario.boxplot <-
         }
         
         #read covcond data
-        y0<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
+        y0<-read.csv(paste(futurepath,'covcond.csv',sep=''),header=TRUE)
+        y00 = read.csv(paste(histpath,'covcond.csv',sep=''),header=TRUE)
         
         # limit y0 to sessions of interest
         y0 = y0[y0$session.id %in% sessions,]
-        # switch timestep and run IDs
-        # only want final run ID (18) for RV of future
-        # each timestep actually a run, but we want all of them
-        colnames(y0)[2:3] = c("timestep.id","run.id") # now run.id gives current
+        y00 = y00[y00$session.id==3,]
+
         # careful with this line - it is basically hard coded so sessions and scenario_name object
         # better be in the right order and of the same length
         for(i in 1:length(sessions)){
             y0$scenario[y0$session.id==sessions[i]] = scenario_name[i]
         }
         
+        y00$scenario = '1hrv'
+        
         y = y0
-        
-        #set session parameter
-        if(is.null(sessions)) sessions<-unique(y$session.id)
-        
-        #verify valid session ids
-        all.sessions<-unique(y$session.id)
-        if(any(!sessions %in% all.sessions)) stop('Invalid session ids')
         
         #select subset of cover types
         if(!is.null(cover.names)){
@@ -367,6 +390,7 @@ covcond.scenario.boxplot <-
         
         # get rid of non-seral types
         y = y[y$cond.name != 'Non-seral',]
+        y00 = y00[y00$cond.name != 'Non-seral',]
         
         #get cover type area and select cover types with min area
         # calculate area in each cover type
@@ -378,24 +402,18 @@ covcond.scenario.boxplot <-
         t2$area.ha<-round(t2$cov.count*cell.size^2/10000,0)
         t2<-t2[t2$area.ha>cover.min.ha,]
         t2.cover.type<-t2$cover.type
+        
         y<-y[y$cov.name %in% t2.cover.type,]
+        y00<-y00[y00$cov.name %in% t2.cover.type,]
             
-        #set runs parameter
-        if(is.null(runs)) runs<-unique(y$run.id)
-        
-        #verify valid run ids
-        all.runs<-unique(y$run.id)
-        if(any(!runs %in% all.runs)) stop('Invalid run ids')
-        
-        # this gets you the data frame with only the final timestep (18, as run.id)
-        #y<-y[y$run.id %in% runs,]
         
         # this gets you the data frame with only the timesteps of interest [14-18]
-        y = y[y$timestep.id %in% c(start.step:stop.step),]
+        y = y[y$timestep.id %in% c(fstart.step:fstop.step),]
+        y00 = y00[y00$timestep.id %in% c(hstart.step:hstop.step),]
         
         # delete columns not of interest
-        y1 = y
-        y1$timestep.id = NULL
+        y1 = y 
+        #y1$timestep.id = NULL
         y1$run.id = NULL
         y1$cell.count = NULL
         y1 = distinct(y1) # set of unique cov-cond-scenario combinations
@@ -418,10 +436,6 @@ covcond.scenario.boxplot <-
         current = merge(zz1, s2)
         current$cov.name.x=NULL
         
-        #create dataframe for covcond stats results
-        #zz1<-y1
-        # not needed 
-        # colnames(zz1)<-c('cov.cond.id','cover.type','condition.class')
         
         #create dataframe for cover departure results
         d1<-as.data.frame(unique(y1$cov.name)) 
@@ -431,18 +445,22 @@ covcond.scenario.boxplot <-
         zz2<-merge(d1,d2,by='cover.type',sort=FALSE)
         colnames(zz2)<-c('cover.type','area.ha')
     
-        # data frame to hold current info
-        zz3 = y2
-    
-        # calculate current proportions
-        s2$proportion = s2$cell.count
-        for(i in 1:length(unique(s2$cov.name))){
-            s2[s2$cov.name==unique(s2$cov.name)[i],4] = s2[s2$cov.name==unique(s2$cov.name)[i],3] *.09/zz2[i,2]
-        }
-        # maybe 
-        current = merge(zz3, s2)
-        ####### possible hard coding
-        current = current[,-4]
+        
+                ### this might be unnecessary code
+                # data frame to hold current info
+                zz3 = y2
+            
+                # calculate current proportions
+                s2$proportion = s2$cell.count
+                for(i in 1:length(unique(s2$cov.name))){
+                    s2[s2$cov.name==unique(s2$cov.name)[i],4] = s2[s2$cov.name==unique(s2$cov.name)[i],3] *.09/zz2[i,2]
+                }
+                # maybe 
+                current = merge(zz3, s2)
+                ####### possible hard coding
+                current = current[,-4]
+                
+                ### end unnecessary code
         
         # maybe it will work by using the covcond id, instead of 2 loops?
         covcond.code = sort(unique(current$cov.cond.id))
@@ -450,39 +468,87 @@ covcond.scenario.boxplot <-
         
         # do all the rest of the work in these loops?
         
+        # when only doing last timestep, y1 has 441 obs of 6 variables
+        # and y had 43771 obs of 8 variables
+        
         # create the empty matrix to hold the data
-        q1<-matrix(0,nrow=length(sessions),ncol=500)
+        
+        # first q1 code only made 1 entry per session, but we need 5
+        # q1<-matrix(0,nrow=length(sessions),ncol=500)
+        
+        ### bring in hrv data again
+        
+        
+        y01 = y00
+        #y01$session.id = NULL
+        #y01$run.id = NULL
+        y01$proportion = 0
+        
+        # calculate proportion for each timestep
+        for(i in 1:nrow(t2)){ # unique cover types
+            y01[y01$cov.name == t2$cover.type[i],9] = # matches cover type, goes in proportion column
+                y01[y01$cov.name == t2$cover.type[i],7] *.09/t2$area.ha[i]
+                # maybe I don't need apply since it's just one cell?
+                #apply(y01[y01$cov.name == t2$cover.type[i],5], MARGIN=1, FUN=function(x) x*.09/t2$area.ha[i])
+        }
+        
+        y01$cell.count = NULL
+        
+        y02 = y01[,c(1,3,4,5,6,7,8)]
+        
+        # hrv data already in long format
+        #hrvdata_long = gather(y01, timestep.id, proportion,  -cov.cond.id, -cov.name, -cond.name, -scenario )
+        
+        # hard coding in no. timesteps
+        # not sure what 500 columns are for - buffer?
+        q1 = matrix(0, nrow=length(sessions)*5, ncol=100) 
+        rownames(q1) = rep(scenario_name,5) #gives rows meaningful names
         y3 = matrix(0, nrow=1, ncol=ncol(y1)+ncol(q1))
         for(j in 1:length(covcond.code)){
             # q2 is a subsetted matrix for one cover-condition combo
             # and all the scenarios
-            q2<-y[y$cov.cond.id==covcond.code[j],]
+            q2<-y[y$cov.cond.id==covcond.code[j],] # has 700 obs of 8 variables for 7 sessions with 100 obs each; 3500 obs when we include all the timesteps
+            num = 1
+            
+            # limit hrv dataset to only the correct covcond combo
+            hrvdata = y02[y02$cov.cond.id==covcond.code[j],]
+            
             for(k in 1:length(sessions)){
-                rownames(q1) = scenario_name #gives rows meaningful names
-                # next line stores in q1 the cell counts extracted from q2 for each covcond type
-                q1[k,1:length(q2$cell.count[q2$session.id==sessions[k]])] = 
-                    q2$cell.count[q2$session.id==sessions[k]]
-                y3 = bind_cols(y1[y1$cov.cond.id==covcond.code[j],], as.data.frame(q1))
+                #q3 = q2[q2$session.id==k]
+                for(m in 14:18){
+                    # next line stores in q1 the cell counts extracted from q2 for each covcond type
+                    q1[num,1:length(q2$cell.count[q2$session.id==sessions[k] & q2$timestep.id==m])] = 
+                        q2$cell.count[q2$session.id==sessions[k] & q2$timestep.id==m]
+                    y3 = bind_cols(y1[y1$cov.cond.id==covcond.code[j],], as.data.frame(q1))
+                    num = num + 1
+                }
             }
 
             name = unique(q2[q2$cov.cond.id==covcond.code[j],5])
             area = zz2$area.ha[zz2$cover.type==name]
-            y3[,6:ncol(y3)] = 
-                apply(y3[,6:ncol(y3)], MARGIN=2, FUN=function(x) x*.09/area)
+            y3[,7:ncol(y3)] = 
+                apply(y3[,7:ncol(y3)], MARGIN=2, FUN=function(x) x*.09/area)
             
-            # give real names to columns
-            colnames(y3)[6:ncol(y3)] = paste( paste("Run",seq(1,100, 1)),  paste("Timestep",seq(14,18, 1)), sep='-')
+            # give real names to columns (thanks Lee!)            
+            colnames(y3)[7:ncol(y3)] = paste(rep(paste("Run",      seq(100)),    each=5), paste("Timestep", seq(14, 18)), sep='-')
+            # but broken with new strategy - just ignore column for now
+            
             # put scenarios in order
             ########y3$scenario = factor(y3$scenario, levels=c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m'))
             # gather all the proportions for plotting
-            data_long = gather(y3, run.timestep, proportion, -session.id,-cov.cond.id, -cov.name, -cond.name, -scenario)
+            data_long = gather(y3, colname, proportion, -session.id, -timestep.id, -cov.cond.id, -cov.name, -cond.name, -scenario)
+            data_long$colname = NULL
+            
+            full_data_long = bind_rows(hrvdata, data_long)
             
             # make the plot
-            p = ggplot(data_long, aes(x=scenario, y=proportion )) 
-            currentvalue = current[current$cov.cond.id==covcond.code[j],]
+            p = ggplot(full_data_long, aes(x=scenario, y=proportion )) 
+            currentvalue = current[current$cov.cond.id==covcond.code[j],] #added 5 to grab proportion
             p1 = p +         
-                stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
-                stat_summary(fun.y = o, geom="point", col="#CC3300") +
+                stat_summary(fun.data = f, geom="boxplot", ,fill=c('#0099CC', 
+                        "#339900","#339900","#339900","#339900","#339900",
+                        "#339900","#339900")) +
+                #stat_summary(fun.y = o, geom="point", col="#CC3300") +
                 geom_hline(data=currentvalue, aes(yintercept=proportion), lwd=3, col="#333333") +                        
                 theme_bw() +
                 theme(axis.title.y = element_text(size=24,vjust=2),
