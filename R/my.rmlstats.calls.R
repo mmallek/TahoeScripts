@@ -58,48 +58,9 @@ dareaout = darea(
   cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
   outfile=F)
 
-# calculate number of fires per timestep
-numfire = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv', header=TRUE)
-numfire = filter(numfire, session.id==20)
-numfire1 = table(numfire$timestep.id)
-numfire2 = as.data.frame(c(rep(0, 1), table(numfire$timestep.id)))
-
-tahoedata = cbind(tahoedata, numfire2)
-tahoedata = rename(tahoedata,c('c(rep(0, 1), table(numfire$timestep.id))'='num_fires'))
-tahoedata = rename(tahoedata,c('num_fires'='numfires'))
-
-# session 16 used for HRV analysis
-#
-
-out<-dinit(path=futurepath,
-   sessions=6,
-   var='median',
-   runs=c(1:100),
-   start.step=1,
-   stop.step=NULL,
-   step.length=5,
-   col.line='blue',
-   col.sub='brown',
-   cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
-   outfile=FALSE)
-
-#not ready for this one
-out<-tarea(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
-  session=19,
-  var='mean',
-  runs=001,
-  start.step=40,
-  stop.step=NULL,
-  step.length=5,
-  cell.size=30,
-  y.scale='ha',
-  col.bar=c('yellow','pink','blue','green','orange','red'),
-  col.text='brown',
-  cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
-  outfile=FALSE)
 
 out<-dsize(path=futurepath,
-  session=9, # only takes a single session
+  session=21, # only takes a single session
   runs=c(1:100),
   pool.runs=T,
   start.step=14,
@@ -112,18 +73,16 @@ out<-dsize(path=futurepath,
   col.sub='brown',
   cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=1.2)
 
-x<-read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/dsize.csv',header=TRUE)
-x = x[,session.id==20]
 
-out<-rotation(path=hrvpath,#futurepath,
-  #session=21,
-  #runs=c(1:100),
-  session=3,
-  runs=1,
+out<-rotation(path=futurepath,
+  session=21,
+  runs=c(1:100),
+  #session=3,
+  #runs=1,
   pool.runs=TRUE,
   var='high.mort',
-  #start.step=14,
-  start.step=40,
+  start.step=14,
+  #start.step=40,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
@@ -398,3 +357,40 @@ fragland,future(
          covcondlist = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/covcondlist_100ts.csv',
          metrics = c('PD','ED','AREA_AM','GYRATE_AM','SHAPE_AM','CORE_AM','CWED','CONTAG','SIDI','SIEI','AI'),
          outfile=T)
+
+out<-dinit(path=futurepath,
+           sessions=6,
+           var='median',
+           runs=c(1:100),
+           start.step=1,
+           stop.step=NULL,
+           step.length=5,
+           col.line='blue',
+           col.sub='brown',
+           cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
+           outfile=FALSE)
+
+#not ready for this one
+out<-tarea(path='/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/',
+           session=19,
+           var='mean',
+           runs=001,
+           start.step=40,
+           stop.step=NULL,
+           step.length=5,
+           cell.size=30,
+           y.scale='ha',
+           col.bar=c('yellow','pink','blue','green','orange','red'),
+           col.text='brown',
+           cex.main=1.5,cex.sub=1.25,cex.legend=0.75,cex.lab=1.25,
+           outfile=FALSE)
+
+# calculate number of fires per timestep
+numfire = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv', header=TRUE)
+numfire = filter(numfire, session.id==20)
+numfire1 = table(numfire$timestep.id)
+numfire2 = as.data.frame(c(rep(0, 1), table(numfire$timestep.id)))
+
+tahoedata = cbind(tahoedata, numfire2)
+tahoedata = rename(tahoedata,c('c(rep(0, 1), table(numfire$timestep.id))'='num_fires'))
+tahoedata = rename(tahoedata,c('num_fires'='numfires'))

@@ -1,7 +1,13 @@
 #### New darea function for future data
+require(tidyr)
+require(dplyr)
+require(ggplot2)
+require(grid)
 
 sessions=c(9,8,10,13,14,20,21)
 sessionnames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
+start.step = 14
 
 darea.future <-
     function(path,sessions=,var='mean',runs=,start.step=,
@@ -11,7 +17,7 @@ darea.future <-
         
         
         #read darea data
-        x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
+        x<-read.csv(paste(futurepath,'darea.csv',sep=''),header=TRUE)
         
         # if cover type specified, subset data frame (x) here
         if (!is.null(covtype)){
@@ -35,7 +41,7 @@ darea.future <-
             # we want all the runs, so ignore that
             # also only have 1 type of disturbance, so no need to separate by that
             # now we want to limit by timesteps
-            y = y[y$timestep.id > start.step,]
+            y = y[y$timestep.id >= start.step,]
             
             #y = x
             
@@ -96,11 +102,25 @@ darea.future <-
                 xlab("Timesteps 14-18, Runs 1-500") +
                 labs(fill='') 
                 print(pl1)
+            
+            
+            # get min, max, median, mean for each scenario
+            y2_2 = full_join(y2, y.any, by=c('timestep','run'))
+            
+            temp<-matrix(0,nrow=4,ncol=4)    	
+            colnames(temp)<-c(sessionnames[i],'mort.low','mort.high','mort.any')
+            temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
+                        'median darea/timestep','mean darea/timestep')
+            temp[1,2:4]<-round(apply(y2_2[,3:5],2,min),2)
+            temp[2,2:4]<-round(apply(y2_2[,3:5],2,max),2)
+            temp[3,2:4]<-round(apply(y2_2[,3:5],2,median),2)
+            temp[4,2:4]<-round(apply(y2_2[,3:5],2,mean),2)
+            print(temp)
         }
-        
-#### NEED A FUNCTION TO CALCULATE AVERAGE LOW, HIGH , ANY MORT FOR POOLED RUNS
-# Kevin's just calculates for many individual runs.
 
+        
+
+######## code to build a clustered bar chart
 
 sessions=c(9,8,10,13,14,20,21)
 sessionnames = c('CCSM-2','CCSM-1','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
@@ -124,7 +144,7 @@ for(i in 1:length(sessions)){
     # we want all the runs, so ignore that
     # also only have 1 type of disturbance, so no need to separate by that
     # now we want to limit by timesteps
-    y = y[y$timestep.id > start.step,]
+    y = y[y$timestep.id >= start.step,]
     
     #y = x
     
@@ -208,6 +228,140 @@ for(i in 1:length(sessions)){
         xlab("Climate Model") 
 }
         
+
+
+
+
+
+####################################
+###################################
+### code to show results aggregated across future scenarios
+
+fsessions=c(9,8,10,13,14,20,21)
+hsession = 6
+fsessionnames = c('CCSM-2','CCSM-1','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+hsessionname = 'HRV'
+variable = 'mean'
+futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
+histpath = '/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
+
+
+#read darea data
+x<-read.csv(paste(futurepath,'darea.csv',sep=''),header=TRUE)
+
+# no cover type specification for this one
+
+#rescale cell counts
+x$mort.high<-x$mort.high*((cell.size^2)/10000)
+x$mort.low<-x$mort.low*((cell.size^2)/10000)
+x$mort.any<-x$mort.any*((cell.size^2)/10000)
+
+
+df = data.frame(summary_stat=factor(), mort_level = factor(), value = numeric(), session=factor())
+
+# separate future from hrv
+x2 = x[x$session.id %in% fsessions,]
+w = x[x$session.id %in% hsession,]
+
+# limit to only final timesteps
+x2 = x2[x2$timestep.id >= fstart.step,]
+w = w[w$timestep.id >= hstart.step,]
+
+
+# now x is a data frame with all the cover types, runs, and timesteps
+# if we want to aggregate across all of that, we can just do the calculations on what we have now
+
+if(y.scale=='percent'){
+    x2[,9:11]<-round((x2[,9:11]/174830.1)*100,3)
+    w[,9:11]<-round((w[,9:11]/174830.1)*100,3)
+}
+
+temp<-matrix(0,nrow=4,ncol=4)        
+
+temp[1,2:4]<-round(apply(x2[,9:11],2,min),3)
+temp[2,2:4]<-round(apply(x2[,9:11],2,max),3)
+temp[3,2:4]<-round(apply(x2[,9:11],2,median),3)
+temp[4,2:4]<-round(apply(x2[,9:11],2,mean),3)
+
+temp2<-matrix(0,nrow=4,ncol=4)        
+
+temp2[1,2:4]<-round(apply(w[,9:11],2,min),3)
+temp2[2,2:4]<-round(apply(w[,9:11],2,max),3)
+temp2[3,2:4]<-round(apply(w[,9:11],2,median),3)
+temp2[4,2:4]<-round(apply(w[,9:11],2,mean),3)
+
+temp = as.data.frame(temp)
+colnames(temp)<-c('summary_stat','mort.low','mort.high','mort.any')
+temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
+            'median darea/timestep','mean darea/timestep')
+temp$summary_stat = as.factor(temp$summary_stat)
+
+temp2 = as.data.frame(temp2)
+colnames(temp2)<-c('summary_stat','mort.low','mort.high','mort.any')
+temp2[,1]<-c('minimum darea/timestep','maximum darea/timestep',
+            'median darea/timestep','mean darea/timestep')
+temp2$summary_stat = as.factor(temp2$summary_stat)
+
+#isolate row of info you want to plot
+if(variable=='min') temp = temp[1,]
+if(variable=='max') temp = temp[2,]
+if(variable=='median') temp = temp[3,]
+if(variable=='mean') temp = temp[4,]
+
+#isolate row of info you want to plot
+if(variable=='min') temp2 = temp2[1,]
+if(variable=='max') temp2 = temp2[2,]
+if(variable=='median') temp2 = temp2[3,]
+if(variable=='mean') temp2 = temp2[4,]
+
+tempg = gather(temp, mort_level, value, 2:4)
+tempg$session = 'future'
+temp2g = gather(temp, mort_level, value, 2:4)
+temp2g$session = 'hrv'
+
+# combine the future and hrv data
+df = bind_rows(df, tempg)
+df = bind_rows(df, temp2g)
+
+# clustered bar plots of future vs. hrv
+pl = ggplot(df, aes(as.factor(session), value)) 
+pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
+    theme_bw() + scale_x_discrete(labels=c('Future', 'HRV')) +
+    theme(axis.title.y = element_text(size=24,vjust=2),
+          axis.title.x = element_text(size=24,vjust=-1),
+          axis.text.x  = element_text(size=16),
+          axis.text.y  = element_text(size=16)) +
+    theme(axis.ticks.x = element_blank()) +
+    theme(legend.title = element_text(size=16)) +
+    theme(legend.text = element_text(size = 16)) +
+    #theme(legend.position = c(0.1,.93)) +
+    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    #theme(panel.grid.minor.x = element_blank(),
+    #      panel.grid.major.x = element_blank(),
+    #      panel.grid.minor.y = element_blank()) +
+    ggtitle(paste("Area Burned by Wildfire")) + 
+    ylab("Percent of Landscape Burned") +
+    xlab("Climate Model") 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #####        ########################
         
         #clustered bar charts for multiple sessions
