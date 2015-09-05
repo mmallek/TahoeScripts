@@ -560,17 +560,21 @@ hsessionname = 'HRV'
 all_scenario_names = c('hrv','ccsm1','ccsm2','ccsm3', 'ccsm4','ccsm5','ccsm6','esm2m')
 #cover.names='Oak-Conifer Forest and Woodland'
 fstart.step=14
-hstart.step = 40
+fstop.step = 18
+hstart.step = 2 # for testing
+hstop.step = 18 # for testing
 cover.min.ha=1000
 
 require(tidyr)
 require(dplyr)
 require(ggplot2)
+require(grid)
 
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_bycover_withoutliers/"
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_bycover_nooutliers/"
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_byscenario_nooutliers/"
 imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_byscenario_withoutliers/"
+imagepath = "/Users/mmallek/Tahoe/RMLands/results201507/future/covcondboxplots_compfrvhrv/"
 
 
 covcond.agg.scenario.boxplot <-
@@ -583,26 +587,34 @@ covcond.agg.scenario.boxplot <-
             names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
             r
         }
-        # summary function for outliers
-        o <- function(x) {
-            subset(x, x < quantile(x, probs = c(0.05, 0.95))[1] | quantile(x, probs = c(0.05, 0.95))[2] < x)
+        
+        fhrv <- function(x) {
+            x = x[x$scenario=='hrv',]
+            r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+            names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+            r
+        }
+        
+        ffuture <- function(x) {
+            x = x[x$scenario=='future',]
+            r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+            names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+            r
         }
         
         #read covcond data
         y0<-read.csv(paste(futurepath,'covcond.csv',sep=''),header=TRUE)
-        y00 = read.csv(paste(histpath,'covcond.csv',sep=''),header=TRUE)
         
         # limit y0 to sessions of interest
         y0 = y0[y0$session.id %in% allsessions,]
-        y00 = y00[y00$session.id==3,]
         
-        # careful with this line - it is basically hard coded so sessions and scenario_name object
-        # better be in the right order and of the same length
-        for(i in 1:length(allsessions)){
-            y0$scenario[y0$session.id==allsessions[i]] = all_scenario_names[i]
-        }
         
-        y00$scenario = '1hrv'
+        # assign scenario column
+        y0$scenario=''
+        
+        y0[y0$session.id %in% fsessions,8] = 'future'
+        y0[y0$session.id == hrvsession,8] = 'hrv'
+
         
         y = y0
         
@@ -615,7 +627,6 @@ covcond.agg.scenario.boxplot <-
         
         # get rid of non-seral types
         y = y[y$cond.name != 'Non-seral',]
-        y00 = y00[y00$cond.name != 'Non-seral',]
         
         #get cover type area and select cover types with min area
         # calculate area in each cover type
@@ -629,15 +640,12 @@ covcond.agg.scenario.boxplot <-
         t2.cover.type<-t2$cover.type
         
         y<-y[y$cov.name %in% t2.cover.type,]
-        y00<-y00[y00$cov.name %in% t2.cover.type,]
         
         
         # this gets you the data frame with only the timesteps of interest [14-18]
         yy = y[y$session.id %in% fsessions & y$timestep.id %in% c(fstart.step:fstop.step) | 
-                  y$session.id %in% hsession & y$timestep.id %in% c(hstart.step:hstop.step),]
-        #y00 = y00[y00$timestep.id %in% c(hstart.step:hstop.step),]
-        
-        
+                  y$session.id %in% hrvsession & y$timestep.id %in% c(hstart.step:hstop.step),]
+                
         # delete columns not of interest
         y1 = yy 
         y1$timestep.id = NULL
@@ -646,7 +654,7 @@ covcond.agg.scenario.boxplot <-
         y1 = distinct(y1) # set of unique cov-cond-scenario combinations
         
         #new dataframe that's a set of unique covcond classes
-        y2<-y[order(yy$cov.cond.id),]
+        y2<-yy[order(yy$cov.cond.id),]
         y2<-y2[(y2$cov.cond.id != y2$cov.cond.id[c((1:dim(y2)[1])[-1],1)]),
                c('cov.cond.id','cov.name','cond.name')]
         
@@ -660,6 +668,7 @@ covcond.agg.scenario.boxplot <-
         d1<-as.data.frame(unique(y1$cov.name)) 
         colnames(d1)<-c('cover.type')
         d2<-t2[,c(1,3)]
+        
         # this is just the cover type and its total area
         zz2<-merge(d1,d2,by='cover.type',sort=FALSE)
         colnames(zz2)<-c('cover.type','area.ha')
@@ -675,107 +684,55 @@ covcond.agg.scenario.boxplot <-
         # maybe it will work by using the covcond id, instead of 2 loops?
         covcond.code = sort(unique(current$cov.cond.id))
         
-# at this point y is the main data frame and has both hrv and future info ####
+        # at this point y is the main data frame and has both hrv and future info
         
-        
-        ### bring in hrv data again
-        
-        y01 = y00
-        
-        y01$proportion = 0
+        # calculate proportions
         yy$proportion = 0
-        
-        # calculate proportion for each timestep
-        #for(i in 1:nrow(t2)){ # unique cover types
-        #    y01[y01$cov.name == t2$cover.type[i],9] = # matches cover type, goes in proportion column
-        #        y01[y01$cov.name == t2$cover.type[i],7] *.09/t2$area.ha[i]
-        #    # maybe I don't need apply since it's just one cell?
-        #    #apply(y01[y01$cov.name == t2$cover.type[i],5], MARGIN=1, FUN=function(x) x*.09/t2$area.ha[i])
-        #}
+
         
         for(i in 1:nrow(t2)){ # unique cover types
             yy[yy$cov.name == t2$cover.type[i],9] = # matches cover type, goes in proportion column
                 yy[yy$cov.name == t2$cover.type[i],7] *.09/t2$area.ha[i]
         }
 
-        ####
-        ####
-        #### I think after this I have to separate the two things? or at least run stuff separately.
+                
+        # plots I want to make will be boxplots for each cover type, 
+        # with clustered box plots for each set of scenarios (future and hrv)
+        # so may as well eliminate columns not needed to make the gather work easier
+        y3 = yy
+        y3$session.id = NULL
+        y3$run.id = NULL
+        y3$timestep.id = NULL
+        y3$cell.count = NULL
+        y3$scenario = as.factor(y3$scenario)
         
-        y01$cell.count = NULL
-        
-        y02 = y01[,c(1,3,4,5,6,7,8)]
-        
-        # hrv data already in long format
-        
-        # hard coding in no. timesteps
-        # not sure what 500 columns are for - buffer?
-        q1 = matrix(0, nrow=length(sessions)*5, ncol=100) 
-        rownames(q1) = rep(scenario_name,5) #gives rows meaningful names
-        y3 = matrix(0, nrow=1, ncol=ncol(y1)+ncol(q1))
-        for(j in 1:length(covcond.code)){
-            # q2 is a subsetted matrix for one cover-condition combo
-            # and all the scenarios
-            q2<-y[y$cov.cond.id==covcond.code[j],] # has 700 obs of 8 variables for 7 sessions with 100 obs each; 3500 obs when we include all the timesteps
-            num = 1
-            
-            # limit hrv dataset to only the correct covcond combo
-            hrvdata = y02[y02$cov.cond.id==covcond.code[j],]
-            
-            for(k in 1:length(sessions)){
-                #q3 = q2[q2$session.id==k]
-                for(m in 14:18){
-                    # next line stores in q1 the cell counts extracted from q2 for each covcond type
-                    q1[num,1:length(q2$cell.count[q2$session.id==sessions[k] & q2$timestep.id==m])] = 
-                        q2$cell.count[q2$session.id==sessions[k] & q2$timestep.id==m]
-                    y3 = bind_cols(y1[y1$cov.cond.id==covcond.code[j],], as.data.frame(q1))
-                    num = num + 1
-                }
-            }
-            
-            name = unique(q2[q2$cov.cond.id==covcond.code[j],5])
-            area = zz2$area.ha[zz2$cover.type==name]
-            y3[,7:ncol(y3)] = 
-                apply(y3[,7:ncol(y3)], MARGIN=2, FUN=function(x) x*.09/area)
-            
-            # give real names to columns (thanks Lee!)            
-            colnames(y3)[7:ncol(y3)] = paste(rep(paste("Run", seq(100)), each=5), paste("Timestep", seq(14, 18)), sep='-')
-            # but broken with new strategy - just ignore column for now
-            
-            # put scenarios in order
-            ########y3$scenario = factor(y3$scenario, levels=c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m'))
-            # gather all the proportions for plotting
-            data_long = gather(y3, colname, proportion, -session.id, -timestep.id, -cov.cond.id, -cov.name, -cond.name, -scenario)
-            data_long$colname = NULL
-            
-            full_data_long = bind_rows(hrvdata, data_long)
-            
-            # make the plot
-            p = ggplot(full_data_long, aes(x=scenario, y=proportion )) 
-            currentvalue = current[current$cov.cond.id==covcond.code[j],] #added 5 to grab proportion
-            p1 = p +         
-                stat_summary(fun.data = f, geom="boxplot", ,fill=c('#0099CC', 
-                                                                   "#339900","#339900","#339900","#339900","#339900",
-                                                                   "#339900","#339900")) +
-                #stat_summary(fun.y = o, geom="point", col="#CC3300") +
-                geom_hline(data=currentvalue, aes(yintercept=proportion), lwd=3, col="#333333") +                        
+        for(i in 1:length(unique(z1$cov.name))){
+            dat = y3[y3$cov.name==unique(z1$cov.name)[i],]            
+            p = ggplot(data=dat, aes(x=cond.name, y=proportion, fill=scenario)) 
+            pl = p +
+                stat_summary(fun.data = f, geom="boxplot", position = position_dodge(0.95)) +
+                scale_fill_manual('',values = c("#333333","#669900","#0099CC"), labels = c('Current','Future','HRV')) +
+                geom_crossbar(data=current[current$cov.name==unique(z1$cov.name)[i],], 
+                              aes(x=cond.name,y=proportion, ymin=proportion, 
+                                  ymax=proportion), lwd=2, show_guide=F) +
                 theme_bw() +
                 theme(axis.title.y = element_text(size=24,vjust=2),
-                      axis.title.x = element_text(size=24,vjust=-1),
-                      axis.text.x  = element_text(size=16),
+                      axis.title.x = element_text(size=24,vjust=-0.1),
+                      axis.text.x  = element_text(size=16, angle = 20),
                       axis.text.y  = element_text(size=16)) +
                 theme(legend.title=element_text(size=16)) +
                 theme(legend.text = element_text(size = 16)) +
-                theme(plot.title = element_text(size=24,vjust=1)) +
+                theme(plot.title = element_text(size=24,vjust=2)) +
                 theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-                ggtitle(paste(data_long$cov.name[1], "\n", data_long$cond.name[1])) + 
-                xlab("Climate Model") +
+                guides(shape = guide_legend(override.aes = list(size = 5, shape=c(22,24)))) +
+                ggtitle(paste(unique(z1$cov.name)[i])) + 
+                xlab("Seral Stage") +
                 ylab("Proportion of Cover Type") 
             print(p1)
             if(saveimage==TRUE){
-                ggsave(paste(covcond.code[j],"-boxplots",".png",sep=""), 
+                ggsave(paste(unique(z1$cov.name)[i],"-frvhrv-boxplots.png",sep=""), 
                        path=imagepath,
-                       width=10, height=5, units='in',limitsize=FALSE)                
+                       width=12, height=7, units='in',limitsize=FALSE)                
             }          
         }
     }

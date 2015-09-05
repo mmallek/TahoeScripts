@@ -141,16 +141,9 @@ for(i in 1:length(sessions)){
     # for now let's assume 1 session is specified
     y<-x[x$session.id == sessions[i],]
     
-    # we want all the runs, so ignore that
-    # also only have 1 type of disturbance, so no need to separate by that
     # now we want to limit by timesteps
     y = y[y$timestep.id >= start.step,]
-    
-    #y = x
-    
-    # what we eventually want to create here is a plot that shows the darea
-    # for the last 5 timesteps of each run. So it will be the same size as
-    # the hrv version but with the 5 timesteps lined up sequentially
+
     
     # aggregate: The first argument is the column of which the values are going to be grouped, 
     # and then sent to the function (mean in this case). The second argument is a list of which 
@@ -203,7 +196,7 @@ for(i in 1:length(sessions)){
     temp2$session = sessions[i]
     
     df = bind_rows(df, temp2)
-}
+
     ### end building individual tables
  
 # now plot all scenarios together
