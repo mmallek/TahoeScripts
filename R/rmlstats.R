@@ -1622,7 +1622,7 @@ par(old.par)
 return(z)
 }
 darea <-
-function(path,sessions=NULL,var='mean',runs=NULL,start.step=1,
+function(path,sessions=NULL,var='mean',runs=NULL,start.step=1, legendloc=NULL,
 	stop.step=NULL,step.length=NULL, covtype=NULL, cell.size=30,y.scale='percent',
 	col.bars=c('blue','light blue','turquoise'),col.sub='brown',
   cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
@@ -1777,7 +1777,7 @@ if(length(sessions)>1){
         text=paste('Run #',runs[j],sep=''),...)
 	
 			#add legend				
-			legend(x='bottomright',#inset=c(0.05,0.05),
+			legend(x=legendloc,#inset=c(0.05,0.05),
 				legend=c('Low mort','High mort','Any mort'),
         fill=col.bars,cex=cex.legend)
 		
@@ -1920,7 +1920,7 @@ else{
             #####################################################
             ### I CHANGED A LINE HERE
             #######################################################
-			legend(x='topright',#inset=c(0.05,0.05),
+			legend(x=legendloc,#inset=c(0.05,0.05),
 				#legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
 			    legend=c('High mort','Low mort'),fill=c('dark blue','dark green'),cex=cex.legend)
 			if(!i==length(dist.levels) || !j==length(runs)) 

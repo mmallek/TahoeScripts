@@ -6,16 +6,16 @@ setwd('/Users/mmallek/Tahoe/RMLands/results201507/hrv')
 setwd('/Users/mmallek/Tahoe/R/Rplots/November2014')
 hrvpath='/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
 futurepath='/Users/mmallek/Tahoe/RMLands/results201507/future/'
-# sessions = 3 for the hrv
+path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
+# sessions = 30 for the hrv
 # for future:
-# ID6 = hrvclimate, forward 100 years
-# ID9 = ccsm1
-# ID8 = ccsm2
-# ID10 = ccsm3
-# ID13 = ccsm4
-# ID14 = ccsm5
-# ID20 = ccsm6
-# ID21 = esm2m
+# ID34 = ccsm1
+# ID35 = ccsm2
+# ID36 = ccsm3
+# ID38 = ccsm4
+# ID39 = ccsm5
+# ID43 = ccsm6
+# ID44 = esm2m
 
 #must source the rmlstats library
 source('/Users/mmallek/Tahoe/Scripts/R/rmlstats.R')
@@ -29,18 +29,18 @@ for(i in 1:length(covtypes)){
 # use covtype argument if you want results for a single cover type, or set of cover types
 
 dareaout = darea(
-  path=hrvpath,
-  #path=futurepath,
-  session=3,
+  path=path,
+  #session=30,
   # all future sessions
-  #sessions=c(9,8,10,13,14,20,21),
+  #sessions=c(34,35,36,38,39,43,44),
   var='mean',
-  #runs=c(1:100),
-  #start.step=14,
-  runs = 1,
-  start.step=40,
+  runs=c(1:100),
+  start.step=14,
+  #runs = 1,
+  #start.step=40,
   stop.step=NULL,
   step.length=5,
+  legendloc='topright',
   #covtype="Mixed Evergreen - Mesic",
   #covtype="Mixed Evergreen - Xeric",
   #covtype="Oak-Conifer Forest and Woodland",
@@ -54,14 +54,14 @@ dareaout = darea(
   y.scale='percent',
   col.bar=c('dark green','dark blue','brown'),
   col.sub='brown',
-  #cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
   cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
   outfile=F)
 
+#sessions=c(34,35,36,38,39,43,44),
 
-out<-dsize(path=futurepath,
-  session=21, # only takes a single session
-  runs=c(1:100),
+out<-dsize(path=path,
+  session=44, # only takes a single session
+  #runs=c(1:100),
   pool.runs=T,
   start.step=14,
   stop.step=NULL,
@@ -73,9 +73,10 @@ out<-dsize(path=futurepath,
   col.sub='brown',
   cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=1.2)
 
+#sessions=c(34,35,36,38,39,43,44),
 
-out<-rotation(path=futurepath,
-  session=21,
+out<-rotation(path=path,
+  session=44,
   runs=c(1:100),
   #session=3,
   #runs=1,
@@ -89,9 +90,9 @@ out<-rotation(path=futurepath,
   outfile=F)
     
 
-out<-preturn(path=futurepath,
-  session=21,
-  runs=c(1:100),
+out<-preturn(path=path,
+  session=30,
+  #runs=c(1:100),
   pool.runs=TRUE,
   stop.step=NULL,
   step.length=5,
@@ -102,7 +103,7 @@ out<-preturn(path=futurepath,
   col.bars=c('yellow','green','blue'),
   col.sub='brown',
   cex.main=1.5,cex.sub=1.25,cex.legend=1.25,cex.lab=1.25,
-  legendlocale='topleft',
+  legendlocale='top',
   outfile=F)
   
 covcondout<-covcond(path=futurepath,
