@@ -6,13 +6,18 @@ require(dplyr)
 require(RColorBrewer)
 require(grid)
 
+fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+
 # 18 timesteps long climate parameter file
 pdsi = read.csv("/Users/mmallek/Documents/Thesis/GISData/pdsivalues_allruns.csv")
-pdsi2 = gather(pdsi, model, pdsival, -timestep)
+pdsi = pdsi[,-9]
+colnames(pdsi) = c('Timestep','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+pdsi2 = gather(pdsi, model, pdsival, -Timestep)
 
 # plot all models plus hrv
-p1 = ggplot(pdsi2, aes(x=timestep, y=pdsival))
-p1 + geom_line(aes(color=factor(pdsi2$model)))
+p1 = ggplot(pdsi2, aes(x=Timestep, y=pdsival))
+p1 + geom_line(aes(color=model))
 
 # remove hrv from future climate params
 pdsi3 = pdsi2[pdsi2$model!='hrv',]
@@ -22,15 +27,15 @@ hrvpdsi = read.csv('/Users/mmallek/Tahoe/RMLands/parameters/climate_mean_5yr.csv
 hrvpdsi$model = 'hrv'
 hrvpdsi$pdsival = hrvpdsi$Climate.Modifier
 hrvpdsi$Climate.Modifier = NULL
-colnames(hrvpdsi)[1] = 'timestep'
+colnames(hrvpdsi)[1] = 'Timestep'
 hrvpdsi = hrvpdsi[1:500,]
 
 # add hrv to future pdsi thing
-pdsi3.1 = bind_rows(pdsi3,hrvpdsi)
+pdsi2.1 = bind_rows(pdsi2,hrvpdsi)
 
 
 
-# calculate average pdsi value for each model run
+# calculate average pdsi value for each model run 
 avg = apply(pdsi[,2:8], 2, mean)
 avg
 mean(hrvpdsi$pdsival)
@@ -40,30 +45,25 @@ pdsi_ordered = pdsi[,order(avg)+1]
 
 # make data frame for reordered columns
 pdsi4 = cbind(pdsi[,1],pdsi_ordered)
-colnames(pdsi4)[1] = "timestep"
+colnames(pdsi4)[1] = "Timestep"
 
 # gather for plotting
-pdsi4 = gather(pdsi4, model, pdsival, -timestep)
+pdsi4 = gather(pdsi4, model, pdsival, -Timestep)
 
 # add hrv to future pdsi thing
 pdsi4.1 = bind_rows(pdsi4,hrvpdsi)
 
 # create the plot
-p2 = ggplot(pdsi4, aes(x=timestep, y=pdsival))
-p2 + geom_line(aes(color=factor(pdsi4$model)))
+p2 = ggplot(pdsi4, aes(x=Timestep, y=pdsival))
+p2 + geom_line(aes(color=model))
 
 # generate color palette for this plot
-#mycols = brewer.pal(8, "RdYlGn")
-#mycols = rev(mycols)
+
 mycols = brewer.pal(7, "Dark2")
-#mycols = append(mycols,"#000000", after=1)
 
-# make hrv black
-#mycols[2] = "#000000"
-#colnames(pdsi3)[3] = "pdsival"
 
-# plot of full 18 timesteps
-p2 = ggplot(pdsi4, aes(x=timestep, y=pdsival))
+# plot of full 18 timesteps ####
+p2 = ggplot(pdsi4, aes(x=Timestep, y=pdsival))
 p2 + geom_line(aes(col=pdsi4$model),size=1.5) + 
     scale_colour_manual(values=mycols, name="Climate Model") +
     theme_bw() +
@@ -79,10 +79,10 @@ p2 + geom_line(aes(col=pdsi4$model),size=1.5) +
     xlab("Timestep") +
     ylab("Climate Parameter Value") 
 
-### only look at final 5 timesteps
+### only look at final 5 timesteps ####
 # with line for hrv mean (~1)
-pdsi4_end = pdsi4[pdsi4$timestep > 13 & pdsi4$model!='hrv',]
-p4 = ggplot(pdsi4_end, aes(x=timestep, y=pdsival))
+pdsi4_end = pdsi4[pdsi4$Timestep > 13 & pdsi4$model!='hrv',]
+p4 = ggplot(pdsi4_end, aes(x=Timestep, y=pdsival))
 p4 + geom_line(aes(col=pdsi3_end$model),size=1.5) + 
     geom_hline(aes(yintercept=1)) +
     scale_colour_manual(values=brewer.pal(7,'Dark2'), name="Climate Model") +
@@ -101,7 +101,7 @@ p4 + geom_line(aes(col=pdsi3_end$model),size=1.5) +
 
 
 
-# boxplots of climate variable values
+# boxplots of climate variable values ####
 p3 = ggplot(pdsi4, aes(x=model, y=pdsival))
 p3 + geom_boxplot(fill=c("#339900","#339900","#339900","#339900","#339900","#339900","#339900")) + #,"#E69F00")) + 
     theme_bw() +
@@ -117,13 +117,15 @@ p3 + geom_boxplot(fill=c("#339900","#339900","#339900","#339900","#339900","#339
     xlab("Climate Scenario") +
     ylab("Climate Parameter Value") 
 
-# boxplots of climate variable values using full hrv parameter range
+# boxplots of climate variable values using full hrv parameter range ####
+allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+
 pdsi4.2 = pdsi4.1
-pdsi4.2$model = factor(pdsi4.2$model, levels=c("hrv", "ccsm4_pdsi1", "ccsm4_pdsi4", "ccsm4_pdsi5",
-                                  "ccsm4_pdsi2", "ccsm4_pdsi6", "ccsm4_pdsi3", "esm2m_pdsi1"),
+pdsi4.2$model = factor(pdsi4.2$model, levels=c("hrv", "CCSM-1", "CCSM-4", "CCSM-5",
+                                  "CCSM-2", "CCSM-6", "CCSM-3", "ESM2M"),
                                   ordered=T)
 p5 = ggplot(pdsi4.2, aes(x=model, y=pdsival))
-p5 + geom_boxplot(fill=c("#E69F00","#339900","#339900","#339900","#339900","#339900","#339900","#339900")) + 
+p5 + geom_boxplot(fill=c("#0099CC","#339900","#339900","#339900","#339900","#339900","#339900","#339900")) + 
     theme_bw() +
     theme(axis.title.y = element_text(size=24,vjust=1),
           axis.title.x = element_text(size=24,vjust=-1),
@@ -137,11 +139,46 @@ p5 + geom_boxplot(fill=c("#E69F00","#339900","#339900","#339900","#339900","#339
     xlab("Climate Scenario") +
     ylab("Climate Parameter Value") 
 
+# boxplots of full hrv vs. all future ####
+pdsi4.3 = pdsi4.1
+pdsi4.3[pdsi4.3$model!='hrv',2] = 'future'
+p7 = ggplot(pdsi4.3, aes(x=model, y=pdsival))
+p7 + geom_boxplot(fill=c("#0099CC","#339900")) + 
+    theme_bw() +
+    theme(axis.title.y = element_text(size=24,vjust=1),
+          axis.title.x = element_text(size=24,vjust=-1),
+          axis.text.x  = element_text(size=16),
+          axis.text.y  = element_text(size=16)) +
+    theme(legend.title=element_text(size=16)) +
+    theme(legend.text = element_text(size = 16)) +
+    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    ggtitle("Differences in Climate Parameter Value Between Historical and Future Scenarios") + 
+    xlab("Climate Scenario") +
+    ylab("Climate Parameter Value") 
 
+
+# Trend line for PDSI ####
+p6 = ggplot(pdsi4, aes(x=Timestep, y=pdsival,col=model))
+p6 + geom_line(size=1, alpha=0.6) + 
+    geom_smooth(method= 'lm', se=F, size=1.5, linetype=2) +
+    scale_colour_manual(values=mycols, name="Climate Model") +
+    theme_bw() +
+    theme(axis.title.y = element_text(size=24,vjust=1),
+          axis.title.x = element_text(size=24,vjust=-1),
+          axis.text.x  = element_text(size=16),
+          axis.text.y  = element_text(size=16)) +
+    theme(legend.title=element_text(size=16)) +
+    theme(legend.text = element_text(size = 16)) +
+    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    ggtitle("Climate Parameter Trajectory") + 
+    xlab("Timestep") +
+    ylab("Climate Parameter Value") 
 
 ##############################################################
 ##############################################################
-#### Stats on PDSI
+#### Stats on PDSI ####
 
 (avg = apply(pdsi[,2:8], 2, mean))
 (median = apply(pdsi[,2:8], 2, median))
@@ -149,14 +186,20 @@ p5 + geom_boxplot(fill=c("#E69F00","#339900","#339900","#339900","#339900","#339
 hrvmean = mean(hrvpdsi$pdsival)
 hrvmedian = median(hrvpdsi$pdsival)
 
+# proportional difference of mean ####
 (propdiff = avg/hrvmean)
-propdiff2 = propdiff - 1
-propdiff2
+#propdiff2 = propdiff - 1
+propdiff2 = propdiff
 
 #  ccsm4_pdsi1  ccsm4_pdsi2  ccsm4_pdsi3  ccsm4_pdsi4  ccsm4_pdsi5  ccsm4_pdsi6  esm2m_pdsi1 
 # -0.007038995  0.269075444  0.338506693  0.094716869  0.130904185  0.272385767  0.604192545 
 
-# historical darea data
+# proportional difference of median ####
+(propdiff = avg/hrvmedian)
+#propdiff3 = propdiff - 1
+propdiff3 = propdiff
+
+# historical darea data #### 
 hrvrun = dareaout[[2]]$`Wildfire disturbance summary (percent)`$`run number 1`
 hrvrun$mort.low = as.numeric(as.character(hrvrun$mort.low))
 hrvrun$mort.high = as.numeric(as.character(hrvrun$mort.high))
@@ -167,17 +210,24 @@ hrvrun$mort.any = as.numeric(as.character(hrvrun$mort.any))
 #3  median darea/timestep     9.54       4.4    13.72
 #4    mean darea/timestep    12.31       5.7    18.01
 
-# expected mean darea/timestep
-
+# expected mean darea/timestep ####
 expmean = data.frame(model = character(), mort.low = numeric(), mort.high = numeric(), mort.any = numeric(), stringsAsFactors=F)
-for(i in length(propdiff2)){
-    #expmean[i,1] = as.factor(names(propdiff2)[i])
+for(i in 1:length(propdiff2)){
     expmean[i,1] = names(propdiff2)[i]
-    expmean[i,2:4] = hrvrun[4,2:4] * (1 + propdiff2[i])
+    expmean[i,2:4] = hrvrun[4,2:4] * (propdiff2[i])
     
 }
+expmean
 
+# expected median darea/timestep ####
+expmedian = data.frame(model = character(), mort.low = numeric(), mort.high = numeric(), mort.any = numeric(), stringsAsFactors=F)
+for(i in 1:length(propdiff3)){
+    expmedian[i,1] = names(propdiff3)[i]
+    expmedian[i,2:4] = hrvrun[3,2:4] * (propdiff3[i])    
+}
+expmedian
 
+##############################
 
 # pooled output data for each scenario
 as.data.frame(df)

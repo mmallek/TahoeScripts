@@ -15,17 +15,32 @@ require(dplyr)
 require(ggplot2)
 require(grid)
 
+all_sessions=c(30,34,35,36,38,39,43,44)
+hrvsession = 30
+fsessions = c(34,35,36,38,39,43,44)
+fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+allscenarionames= c('.HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
+fstart.step=14
+fstop.step=18
+hstart.step = 40
+hstop.step = 500
+cover.min.ha=1000
+imagepath = "/Users/mmallek/Tahoe/Plots/fragland-bymetrics"
+covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 
-futurefragpath = '/Users/mmallek/Tahoe/Fragstats/fragstats20150815/'
-covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv'
-histfragpath = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session000/'
-futurelandfiles = c('classland_ccsm1_20150815.land',
-                    'classland_ccsm2_20150815.land','classland_ccsm3_20150815.land',
-                    'classland_ccsm4_20150815.land','classland_ccsm5_20150815.land',
-                    'classland_ccsm6_20150815.land','classland_esm2m_20150815.land')
-histlandfile = 'classland_session000_20150620.land'
-scenarios = c('ccsm1','ccsm2','ccsm3', 'ccsm4','ccsm5','ccsm6','esm2m')
-imagepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fraglandboxplots_nooutliers/'
+fragpath = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/'
+all_landfiles = c('fragresults_hrv_20150831.land', 'fragresults_ccsm1_20150831.land',
+                  'fragresults_ccsm2_20150901.land','fragresults_ccsm3_20150901.land',
+                  'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
+                  'fragresults_ccsm6_20150903.land','fragresults_esm2m_20150903.land')
+futurelandfiles = c('fragresults_ccsm1_20150831.land',
+                    'fragresults_ccsm2_20150901.land','fragresults_ccsm3_20150901.land',
+                    'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
+                    'fragresults_ccsm6_20150903.land','fragresults_esm2m_20150903.land')
+histlandfile = 'fragresults_hrv_20150831.land'
+imagepath = '/Users/mmallek/Tahoe/Plots/fraglandboxplots/'
+hrvcovcondlist = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/hrv_covcondlist.csv', header=F)
 
 fragland.boxplot <-
     function(fragpath='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/',
@@ -44,14 +59,14 @@ fragland.boxplot <-
         
         ### code to prepare future fragland metrics data for plotting
         
-        z<-read.csv(paste(futurefragpath,futurelandfiles[1],sep=''),strip.white=TRUE,header=TRUE)
-        z$scenario = scenarios[1]
+        z<-read.csv(paste(fragpath,all_landfiles[1],sep=''),strip.white=TRUE,header=TRUE)
+        z$scenario = allscenarionames[1]
         
         #read fragstats data if there's more than the initial dataframe
         if(length(landfiles>1)){
-            for(i in 2:length(futurelandfiles)){
-                w<-read.csv(paste(futurefragpath,futurelandfiles[i],sep=''),strip.white=TRUE,header=TRUE)
-                w$scenario = scenarios[i]
+            for(i in 2:length(landfiles)){
+                w<-read.csv(paste(fragpath,all_landfiles[i],sep=''),strip.white=TRUE,header=TRUE)
+                w$scenario = allscenarionames[i]
                 z = bind_rows(z,w)
             }
         }
@@ -61,13 +76,22 @@ fragland.boxplot <-
         z1 = z
         
         # pull out grid name
-        z1$LID = gsub('.*?_finalgrids\\\\(.*)_res_clip.tif', '\\1', z1$LID)
-        z1$LID = gsub('.*?_grp00\\\\(.*)res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-1\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-2\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-3\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-4\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-5\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-6\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?esm2m\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?covcond\\\\(.*)res_clip.tif', '\\1', z1$LID)
         
         
         y = z1
         # reorder to put grid name and scenario first
         y = y[,c(ncol(y),1:(ncol(y)-1))]
+        
+        # remove hrv timesteps not being considered
+        y = y[y$LID %in% hrvcovcondlist$V1 | y$scenario %in% fscenarionames,]
         
         # set metrics parameter
         # this allows you to include only a subset of the metrics
@@ -80,24 +104,8 @@ fragland.boxplot <-
         y.head<-y[,c(1:2)]
         y1<-cbind(y.head,y.metrics)
         
-        ### code to prepare hrv data for plotting
-        
-        w<-read.csv(paste(histfragpath,histlandfile,sep=''),strip.white=TRUE,header=TRUE)
-        w$scenario = '1hrv'
-        w$scenario = as.factor(w$scenario)
-        w$LID = gsub('.*?_grp.*\\\\(.*)res_clip.tif', '\\1', w$LID)
-        w = w[,c(ncol(w),1:(ncol(w)-1))]
-        
-        
-        ### put hrv and future stuff together 
-        v = as.data.frame(bind_rows(w,y1))
-        v$scenario = as.factor(v$scenario)
         
         # make a box and whisker plot
-        
-        # use gather on y1 data frame to get a column with the metric name, 
-        # a column with that metric's value, for all of the fragland metrics
-        # data_long = gather(y1, metric, value, PD:AI)
         
         # define the summary function
         f <- function(x) {
@@ -106,7 +114,7 @@ fragland.boxplot <-
             r
         }
         
-        y1 = v # for testing
+        v = y1 # for testing
         for(i in 1:length(metrics)){     
             #p = ggplot(data=y1[y1$LID!='covcond000',], aes(x=factor(scenario), y=y1[y1$LID!='covcond000',metrics[i]] )) 
             #p = ggplot(data=y1, aes(x=factor(scenario), y=y1[,metrics[i]])) 
@@ -156,19 +164,33 @@ require(dplyr)
 require(ggplot2)
 require(grid)
 
+all_sessions=c(30,34,35,36,38,39,43,44)
+hrvsession = 30
+fsessions = c(34,35,36,38,39,43,44)
+fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+allscenarionames= c('.HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+hrvscenario = c('.HRV')
+path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
+fstart.step=14
+fstop.step=18
+hstart.step = 40
+hstop.step = 500
+cover.min.ha=1000
+imagepath = "/Users/mmallek/Tahoe/Plots/covcond-bycover"
+covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 
-futurefragpath = '/Users/mmallek/Tahoe/Fragstats/fragstats20150815/'
-covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv'
-histfragpath = '/Users/mmallek/Tahoe/Fragstats/Fragoutput_historic_session000/'
-futurelandfiles = c('classland_ccsm1_20150815.land',
-                    'classland_ccsm2_20150815.land','classland_ccsm3_20150815.land',
-                    'classland_ccsm4_20150815.land','classland_ccsm5_20150815.land',
-                    'classland_ccsm6_20150815.land','classland_esm2m_20150815.land')
-histlandfile = 'classland_session000_20150620.land'
-all_scenarios = c('ccsm1','ccsm2','ccsm3', 'ccsm4','ccsm5','ccsm6','esm2m')
-fscenarios = c('ccsm2','ccsm3', 'ccsm4','ccsm5','ccsm6','esm2m')
-hrvscenario = 'ccsm1'
-imagepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fraglandboxplots_frvhrv/'
+fragpath = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/'
+all_landfiles = c('fragresults_hrv_20150831.land', 'fragresults_ccsm1_20150831.land',
+                  'fragresults_ccsm2_20150901.land','fragresults_ccsm3_20150901.land',
+                  'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
+                  'fragresults_ccsm6_20150903.land','fragresults_esm2m_20150903.land')
+futurelandfiles = c('fragresults_ccsm1_20150831.land',
+                    'fragresults_ccsm2_20150901.land','fragresults_ccsm3_20150901.land',
+                    'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
+                    'fragresults_ccsm6_20150903.land','fragresults_esm2m_20150903.land')
+histlandfile = 'fragresults_hrv_20150831.land'
+imagepath = '/Users/mmallek/Tahoe/Plots/fragland-frvhrv/'
+hrvcovcondlist = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/hrv_covcondlist.csv', header=F)
 
 fragland.boxplot <-
     function(fragpath='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/',
@@ -186,14 +208,14 @@ fragland.boxplot <-
         
         ### code to prepare future fragland metrics data for plotting
         
-        z<-read.csv(paste(futurefragpath,futurelandfiles[1],sep=''),strip.white=TRUE,header=TRUE)
-        z$scenario = all_scenarios[1]
+        z<-read.csv(paste(fragpath,all_landfiles[1],sep=''),strip.white=TRUE,header=TRUE)
+        z$scenario = allscenarionames[1]
         
         #read fragstats data if there's more than the initial dataframe
         if(length(landfiles>1)){
             for(i in 2:length(futurelandfiles)){
-                w<-read.csv(paste(futurefragpath,futurelandfiles[i],sep=''),strip.white=TRUE,header=TRUE)
-                w$scenario = all_scenarios[i]
+                w<-read.csv(paste(fragpath,all_landfiles[i],sep=''),strip.white=TRUE,header=TRUE)
+                w$scenario = allscenarionames[i]
                 z = bind_rows(z,w)
             }
         }
@@ -201,21 +223,27 @@ fragland.boxplot <-
         z$scenario = as.factor(z$scenario)
         
         z$scentype = ''
-        z[z$scenario %in% fscenarios,25] = 'future'
-        z[z$scenario %in% hrvscenario, 25] = 'hrv'
+        z[z$scenario %in% fscenarionames,25] = 'Future'
+        z[z$scenario %in% hrvscenario, 25] = 'HRV'
         
         z1 = z
         
         # pull out grid name
-        z1$LID = gsub('.*?_finalgrids\\\\(.*)_res_clip.tif', '\\1', z1$LID)
-        z1$LID = gsub('.*?_grp00\\\\(.*)res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-1\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-2\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-3\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-4\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-5\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?ccsm-6\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?esm2m\\\\(.*)_res_clip.tif', '\\1', z1$LID)
+        z1$LID = gsub('.*?covcond\\\\(.*)res_clip.tif', '\\1', z1$LID)
         
         
         y = z1
         # reorder to put grid name and scenario first
         y = y[,c(ncol(y)-1,ncol(y),1:(ncol(y)-2))]
         
-        
+        y = y[y$LID %in% hrvcovcondlist$V1 | y$scenario %in% fscenarionames,]
         
         # set metrics parameter
         # this allows you to include only a subset of the metrics
@@ -228,18 +256,18 @@ fragland.boxplot <-
         y.head<-y[,c(1:3)]
         y1<-cbind(y.head,y.metrics)
         
-        ### code to prepare hrv data for plotting
-        
-        w<-read.csv(paste(histfragpath,histlandfile,sep=''),strip.white=TRUE,header=TRUE)
-        w$scenario = '1hrv'
-        w$scenario = as.factor(w$scenario)
-        w$LID = gsub('.*?_grp.*\\\\(.*)res_clip.tif', '\\1', w$LID)
-        w = w[,c(ncol(w),1:(ncol(w)-1))]
-        
-        
-        ### put hrv and future stuff together 
-        v = as.data.frame(bind_rows(w,y1))
-        v$scenario = as.factor(v$scenario)
+            ### code to prepare hrv data for plotting
+            
+            w<-read.csv(paste(histfragpath,histlandfile,sep=''),strip.white=TRUE,header=TRUE)
+            w$scenario = '1hrv'
+            w$scenario = as.factor(w$scenario)
+            w$LID = gsub('.*?_grp.*\\\\(.*)res_clip.tif', '\\1', w$LID)
+            w = w[,c(ncol(w),1:(ncol(w)-1))]
+            
+            
+            ### put hrv and future stuff together 
+            v = as.data.frame(bind_rows(w,y1))
+            v$scenario = as.factor(v$scenario)
         
         # make a box and whisker plot
         

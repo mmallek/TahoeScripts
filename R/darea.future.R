@@ -1,4 +1,7 @@
 #### New darea function for future data
+
+#### Main point of this function is to plot a darea from rmlstats copy ####
+#### and generate the output statistics ####
 require(tidyr)
 require(dplyr)
 require(ggplot2)
@@ -10,11 +13,11 @@ path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 start.step = 14
 
 
-darea.future <-
-    function(path,sessions=,var='mean',runs=,start.step=,
-            step.length=5, covtype=NULL, cell.size=30,y.scale='percent',
-             col.bars=c('blue','light blue','turquoise'),col.sub='brown',
-             cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
+#darea.future <-
+#    function(path,sessions=,var='mean',runs=,start.step=,
+#            step.length=5, covtype=NULL, cell.size=30,y.scale='percent',
+#             col.bars=c('blue','light blue','turquoise'),col.sub='brown',
+#             cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
         
         
         #read darea data
@@ -108,6 +111,10 @@ darea.future <-
             # get min, max, median, mean for each scenario
             y2_2 = full_join(y2, y.any, by=c('timestep','run'))
             
+            if(y.scale=='percent'){
+                y2_2[,5]<-round((y2_2[,5]/174830.1)*100,3)
+            }
+            
             temp<-matrix(0,nrow=4,ncol=4)    	
             colnames(temp)<-c(sessionnames[i],'mort.low','mort.high','mort.any')
             temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
@@ -128,11 +135,15 @@ fsessions=c(34,35,36,38,39,43,44)
 sessionnames = c('HRV', 'CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
 hsession = 30
 hstart.step = 40
+start.step = 14
+covtype = 'Sierran Mixed Conifer - Xeric'
 
 #read darea data
 x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
 
-# no cover type specification for this one
+if (!is.null(covtype)){
+    x<-x[x$cov.name==covtype,]
+}
 
 #rescale cell counts
 x$mort.high<-x$mort.high*((cell.size^2)/10000)
@@ -148,8 +159,7 @@ for(i in 1:length(fsessions)){
     
     # now we want to limit by timesteps
     y = y[y$timestep.id >= start.step,]
-
-    
+        
     # aggregate: The first argument is the column of which the values are going to be grouped, 
     # and then sent to the function (mean in this case). The second argument is a list of which 
     # variables to group by. It can be named to make the output cleaner. 
@@ -197,6 +207,7 @@ for(i in 1:length(fsessions)){
     
     temp2 = gather(temp, mort_level, value, 2:4)
     temp2$session = fsessions[i]
+    temp2$scenario = sessionnames[i+1]
     
     df = bind_rows(df, temp2)
 }
@@ -242,15 +253,18 @@ if(variable=='mean') temp = temp[4,]
 
 temp2 = gather(temp, mort_level, value, 2:4)
 temp2$session = hsession
+temp2$scenario = 'HRV'
 
 df = bind_rows(df, temp2)
 
+df$scenario = factor(df$scenario, levels=c("HRV", "CCSM-1", "CCSM-4", "CCSM-5",
+                                           "CCSM-2", "CCSM-6", "CCSM-3", "ESM2M"), ordered=T)
 
 ###############
 # now plot all scenarios together
-    pl = ggplot(df, aes(as.factor(session), value)) 
+    pl = ggplot(df, aes(scenario, value)) 
     pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
-         theme_bw() + scale_x_discrete(labels=sessionnames) +
+         theme_bw() + scale_x_discrete() +
         theme(axis.title.y = element_text(size=24,vjust=2),
               axis.title.x = element_text(size=24,vjust=-1),
               axis.text.x  = element_text(size=16),
@@ -264,7 +278,7 @@ df = bind_rows(df, temp2)
         #theme(panel.grid.minor.x = element_blank(),
         #      panel.grid.major.x = element_blank(),
         #      panel.grid.minor.y = element_blank()) +
-        ggtitle(paste("Area Burned by Wildfire \n Sierran Mixed Conifer - Mesic")) + 
+        ggtitle(paste("Area Burned by Wildfire \n Sierran Mixed Conifer - Xeric")) + 
         ylab("Percent of Landscape Burned") +
         xlab("Climate Model") 
 
