@@ -8,7 +8,7 @@ require(ggplot2)
 require(grid)
 
 sessions=c(34,35,36,38,39,43,44)
-sessionnames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+sessionnames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 start.step = 14
 
@@ -132,7 +132,7 @@ start.step = 14
 
 asessions=c(30, 34,35,36,38,39,43,44)
 fsessions=c(34,35,36,38,39,43,44)
-sessionnames = c('HRV', 'CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+sessionnames = c('HRV', 'CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
 hsession = 30
 hstart.step = 40
 start.step = 14
@@ -278,7 +278,7 @@ df$scenario = factor(df$scenario, levels=c("HRV", "CCSM-1", "CCSM-4", "CCSM-5",
         #theme(panel.grid.minor.x = element_blank(),
         #      panel.grid.major.x = element_blank(),
         #      panel.grid.minor.y = element_blank()) +
-        ggtitle(paste("Area Burned by Wildfire \n Sierran Mixed Conifer - Xeric")) + 
+        ggtitle(paste("Area Burned by Wildfire")) + 
         ylab("Percent of Landscape Burned") +
         xlab("Climate Model") 
 
@@ -290,7 +290,7 @@ df$scenario = factor(df$scenario, levels=c("HRV", "CCSM-1", "CCSM-4", "CCSM-5",
 
 fsessions=c(9,8,10,13,14,20,21)
 hsession = 6
-fsessionnames = c('CCSM-2','CCSM-1','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+fsessionnames = c('CCSM-2','CCSM-1','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
 hsessionname = 'HRV'
 variable = 'mean'
 futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/'
