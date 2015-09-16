@@ -30,6 +30,7 @@ imagepath = "/Users/mmallek/Tahoe/Plots/fragland-bymetrics"
 covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 
 fragpath = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/'
+fragpath = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150909/'
 all_landfiles = c('fragresults_hrv_20150831.land', 'fragresults_ccsm1_20150831.land',
                   'fragresults_ccsm2_20150901.land','fragresults_ccsm3_20150901.land',
                   'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
@@ -39,7 +40,7 @@ futurelandfiles = c('fragresults_ccsm1_20150831.land',
                     'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
                     'fragresults_ccsm6_20150903.land','fragresults_esm2m_20150903.land')
 histlandfile = 'fragresults_hrv_20150831.land'
-imagepath = '/Users/mmallek/Tahoe/Plots/fraglandboxplots/'
+imagepath = '/Users/mmallek/Tahoe/Plots/fraglandboxplots_wf/'
 hrvcovcondlist = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/hrv_covcondlist.csv', header=F)
 
 fragland.boxplot <-
@@ -63,8 +64,8 @@ fragland.boxplot <-
         z$scenario = allscenarionames[1]
         
         #read fragstats data if there's more than the initial dataframe
-        if(length(landfiles>1)){
-            for(i in 2:length(landfiles)){
+        if(length(all_landfiles>1)){
+            for(i in 2:length(all_landfiles)){
                 w<-read.csv(paste(fragpath,all_landfiles[i],sep=''),strip.white=TRUE,header=TRUE)
                 w$scenario = allscenarionames[i]
                 z = bind_rows(z,w)
@@ -118,10 +119,11 @@ fragland.boxplot <-
         for(i in 1:length(metrics)){     
             #p = ggplot(data=y1[y1$LID!='covcond000',], aes(x=factor(scenario), y=y1[y1$LID!='covcond000',metrics[i]] )) 
             #p = ggplot(data=y1, aes(x=factor(scenario), y=y1[,metrics[i]])) 
-            p = ggplot(data=v[v$LID!='covcond000',], aes(x=factor(scenario), y=v[v$LID!='covcond000',metrics[i]] )) 
+            p = ggplot(data=v[v$LID!='covcond000',], aes(x=scenario, y=v[v$LID!='covcond000',metrics[i]] )) 
             p1 = p + 
-                stat_summary(fun.data = f, geom="boxplot", ,fill=c("#0099CC","#339900","#339900","#339900","#339900",
-                                                                   "#339900","#339900","#339900")) +
+                #stat_summary(fun.data = f, geom="boxplot", ,fill=c("#0099CC","#339900","#339900","#339900","#339900",
+                #                                                   "#339900","#339900","#339900")) +
+                stat_summary(fun.data = f, geom="boxplot", ,fill=c("#0099CC","#339900")) +
                 # comment out funy.y = o to now show 0-5% and 95-100%
                 #stat_summary(fun.y = o, geom="point", col="#CC3300") +
                 #geom_hline(aes(yintercept=y1[y1$LID == 'covcond000',metrics[i]]), lwd=3, col="#333333") +
@@ -140,10 +142,10 @@ fragland.boxplot <-
                 xlab("Climate Scenario") +
                 ylab("Metric Value") 
             print(p1)
-            ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
-                   path=imagepath,
-                   width=15, height=5, units='in',limitsize=FALSE
-            )    
+            #ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
+            #       path=imagepath,
+            #       width=15, height=5, units='in',limitsize=FALSE
+            #)    
         }
         
     }
@@ -548,4 +550,113 @@ fragland.boxplot <-
                    path="/Users/mmallek/Tahoe/RMLands/results201507/future/images/",
                    width=15, height=5, units='in',limitsize=FALSE)    
         }
+    }
+
+
+#### Fragstats analysis for wfmort files ####
+# with separate boxplot for each scenario
+
+#fragpath should be path to fragstats.land file
+#scenario should be name of model and run value, e.g. ccsm2_run1
+#nrun is the number of runs completed for the scenario
+#stop.run is the number of runs to analyze
+#LID.path is path up to tif file
+#covcondlist is path to csv with list of covcond files
+
+require(tidyr)
+require(dplyr)
+require(ggplot2)
+require(grid)
+
+
+allscenarionames = c('ESM2M','.HRV')
+fragpath = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150909/'
+all_landfiles = c('fragresults_esm2m2_20150910.land','fragresults_hrv2_20150910.land')
+futurelandfiles = c('fragresults_esm2m2_20150910.land')
+histlandfile = 'fragresults_hrv2_20150910.land'
+imagepath = '/Users/mmallek/Documents/Thesis/Plots/fragland-wf/'
+hrvcovcondlist = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/hrv_covcondlist.csv', header=F)
+
+fragland.boxplot <-
+    function(fragpath='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/',
+             infile,
+             scenarios=NULL,
+             nrun=NULL, 
+             covcondlist='/Users/mmallek/Tahoe/RMLands/upload_20150529/covcondlist_500ts.csv',
+             metrics=NULL,
+             landfiles = NULL,
+             scenarios = NULL,
+             outfile=FALSE){
+        
+        ### code to prepare future fragland metrics data for plotting
+        
+        z<-read.csv(paste(fragpath,all_landfiles[1],sep=''),strip.white=TRUE,header=TRUE)
+        z$scenario = allscenarionames[1]
+        
+        #read fragstats data if there's more than the initial dataframe
+        if(length(all_landfiles>1)){
+            for(i in 2:length(all_landfiles)){
+                w<-read.csv(paste(fragpath,all_landfiles[i],sep=''),strip.white=TRUE,header=TRUE)
+                w$scenario = allscenarionames[i]
+                z = bind_rows(z,w)
+            }
+        }
+        
+        z$scenario = as.factor(z$scenario)
+        
+        z1 = z
+        
+        # pull out grid name
+        z1$LID = gsub('.*?wfmorts\\\\(.*)_.*', '\\1', z1$LID)
+        
+        y = z1
+        # reorder to put grid name and scenario first
+        y = y[,c(ncol(y),1:(ncol(y)-1))]
+        
+        # set metrics parameter
+        # this allows you to include only a subset of the metrics
+        all.metrics<-colnames(y)[-c(1:2)]
+        if(is.null(metrics)) metrics<-all.metrics
+        if(any(!metrics %in% all.metrics)) stop('Invalid metrics selected')
+        
+        #select columns matching metrics from previous steps
+        y.metrics<-subset(y,select=metrics)
+        y.head<-y[,c(1:2)]
+        y1<-cbind(y.head,y.metrics)
+        
+        
+        # make a box and whisker plot
+        
+        # define the summary function
+        f <- function(x) {
+            r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+            names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+            r
+        }
+        
+        v = y1 # for testing
+        for(i in 1:length(metrics)){     
+            p = ggplot(data=v, aes(x=scenario, y=v[,metrics[i]])) 
+            p1 = p + 
+                #stat_summary(fun.data = f, geom="boxplot", ,fill=c("#0099CC","#339900","#339900","#339900","#339900",
+                #                                                   "#339900","#339900","#339900")) +
+                stat_summary(fun.data = f, geom="boxplot", ,fill=c("#0099CC","#339900")) +
+                theme_bw() +
+                theme(axis.title.y = element_text(size=24,vjust=1),
+                      axis.title.x = element_text(size=24,vjust=-1),
+                      axis.text.x  = element_text(size=16),
+                      axis.text.y  = element_text(size=16)) +
+                theme(legend.title=element_text(size=16)) +
+                theme(legend.text = element_text(size = 16)) +
+                theme(plot.title = element_text(size=24,vjust=1)) +
+                theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+                ggtitle(paste("Landscape Metric: ", metrics[i], sep='')) + 
+                xlab("Climate Scenario") +
+                ylab("Metric Value") 
+            print(p1)
+            ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
+                   path=imagepath,
+                   width=10, height=7, units='in',limitsize=FALSE)    
+        }
+        
     }

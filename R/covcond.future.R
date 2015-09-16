@@ -25,8 +25,8 @@ require(grid)
 all_sessions=c(30,34,35,36,38,39,43,44)
 hrvsession = 30
 fsessions = c(34,35,36,38,39,43,44)
-fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
-allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
+allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 fstart.step=14
 fstop.step=18
@@ -274,8 +274,8 @@ require(grid)
 all_sessions=c(30,34,35,36,38,39,43,44)
 hrvsession = 30
 fsessions = c(34,35,36,38,39,43,44)
-fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
-allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
+allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 fstart.step=14
 fstop.step=18
@@ -287,16 +287,6 @@ covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 
 
 
-
-covcond.scenario.boxplot(
-    path = '/Users/mmallek/Tahoe/RMLands/results201507/future/',
-    sessions=c(6,9,8,10,13,14,20,21),
-    scenario_name = c('pastclimate', 'ccsm1','ccsm2','ccsm3','ccsm4','ccsm5','ccsm6','esm2m'),
-    runs=18,
-    cell.size=30,
-    cover.min.ha=1000,
-    saveimage=TRUE
-    )
 
 covcond.scenario.boxplot <-
     function(path,sessions=NULL,scenario_name=NULL,runs=NULL,cell.size=30,

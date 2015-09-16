@@ -1,5 +1,5 @@
 #### PDSI Plots
-### need to show pdsi curves for all future scenarios
+### need to show pdsi curves for all future scenarios ####
 require(ggplot2)
 require(tidyr)
 require(dplyr)
@@ -282,3 +282,30 @@ summary_stat            session mort.any mort.high mort.low
 
 pl = ggplot(expmean, aes(factor(model), mort.any))
 pl + geom_point(col='red') + geom_point(propdiff, aes(factor(names(propdiff)),as.vector(propdiff)))
+
+
+#### Plot HRV PDSI Values ####
+# no more excel!
+
+require(ggplot2)
+require(tidyr)
+require(dplyr)
+require(RColorBrewer)
+require(grid)
+
+pdsi = read.csv('/Users/mmallek/Tahoe/RMLands/parameters/climate_mean_5yr.csv')
+pdsi = pdsi[1:60,]
+
+ggplot(pdsi, aes(x=Time.Step, y=Climate.Modifier)) + geom_line(col='blue', size=1.2) +
+    theme_bw() +
+    theme(axis.title.y = element_text(size=24,vjust=1),
+          axis.title.x = element_text(size=24,vjust=-1),
+          axis.text.x  = element_text(size=16),
+          axis.text.y  = element_text(size=16)) +
+    theme(legend.title=element_text(size=16)) +
+    theme(legend.text = element_text(size = 16)) +
+    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    ggtitle("Climate Parameter Trajectory") + 
+    xlab("Timestep") +
+    ylab("Climate Parameter Value") 

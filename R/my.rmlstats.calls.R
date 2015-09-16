@@ -30,14 +30,14 @@ for(i in 1:length(covtypes)){
 
 dareaout = darea(
   path=path,
-  #session=30,
+  session=30,
   # all future sessions
   #sessions=c(34,35,36,38,39,43,44),
   var='mean',
-  runs=c(1:100),
-  start.step=14,
-  #runs = 1,
-  #start.step=40,
+  #runs=c(1:100),
+  #start.step=14,
+  runs = 1,
+  start.step=40,
   stop.step=NULL,
   step.length=5,
   legendloc='topright',
@@ -51,11 +51,11 @@ dareaout = darea(
   #covtype="Sierran Mixed Conifer - Ultramafic",
   #covtype="Sierran Mixed Conifer - Xeric",
   cell.size=30,
-  y.scale='percent',
+  y.scale='nope',
   col.bar=c('dark green','dark blue','brown'),
   col.sub='brown',
   cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
-  outfile=F)
+  outfile=T)
 
 #sessions=c(34,35,36,38,39,43,44),
 
@@ -97,7 +97,7 @@ out<-preturn(path=path,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
-  #cover.names=c('Red Fir - Xeric'),
+  cover.names=c('Red Fir - Xeric'),
   cover.min.ha=1000,
   y.scale='percent',
   col.bars=c('yellow','green','blue'),
@@ -106,11 +106,13 @@ out<-preturn(path=path,
   legendlocale='top',
   outfile=F)
   
+
 covcondout<-covcond(path=futurepath,
-  sessions=21,
+  sessions=30,
   var='srv50%',
-  runs=c(1:100), #can pool runs
-  start.step=1,
+  #runs=c(1:100), #can pool runs
+  runs = 1,
+  start.step=40,
   stop.step=NULL,
   cell.size=30,
   #cover.names=c('Oak-Conifer Forest and Woodland'),
@@ -132,16 +134,17 @@ for(i in 1:nrow(covcondtab)){
 newcovcondtab = aggregate(covcondtab, by=stage.name, FUN=sum)
 
                        
-covcondout<-covcond.plot(path=futurepath,
-  session=6,
+covcondout<-covcond.plot(path=path,
+  session=30,
   var='srv50%',
-  runs=c(1:10),
-  start.step=1,
+  #runs=c(1:10),
+  runs = 1,
+  start.step=40,
   stop.step=NULL,
   step.length=5,
   type='stack',
   cell.size=30,
-  cover.names=c('Mixed Evergreen - Xeric'),
+  #cover.names=c('Mixed Evergreen - Xeric'),
   cover.min.ha=1000,
   col.bars=c('black','tan','green','orange','brown','lightsalmon',
     'darkgreen','lightgreen','yellow','yellow3','yellow4','wheat'),
@@ -155,30 +158,30 @@ futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/'
 # LID Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
 # LID Z:\Working\maritza\future\ccsm-2_s002_finalgrids\covcond090(1)_res_clip.tif
 
-fraglandout = fragland(path=futurepath,
+fraglandout = fragland(path='/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/',
   #infile='classland_session016_res.land',
-  infile='classland_pastclimate_20150723.land',
+  infile='fragresults_hrv_20150831.land',
   #Z:\Working\maritza\hrv\session000\run001\ts_grp00\covcond000res_clip.tif 
   LID.path='Z:\\Working\\maritza\\',
-  scenarios='future',
-  sessions=NULL,
-  sessions.name=NULL,
-  runs=NULL,
-  runs.name='ccsm-2_s002_finalgrids',
+  scenarios='hrv',
+  sessions=1,
+  sessions.name='covcond',
+  runs=1,
+  runs.name='run',
   #metrics=c('PD','AI'),
   #var='srv50%',
-  start.step=1,
+  start.step=40,
   stop.step=NULL,
   outfile=F)
 
 
-fragland.plot(path=fraghrv001,#'/Users/mmallek/Tahoe/Fragstats/Fragoutput_201505/', #/Users/mmallek/Tahoe/Fragstats/',
-  infile='classland_session001_20150624.land', #classland_session016_res.land',
+fragland.plot(path='/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/', #/Users/mmallek/Tahoe/Fragstats/',
+  infile='fragresults_hrv_20150831.land', #classland_session016_res.land',
   LID.path='Z:\\Working\\maritza\\',
   scenarios='hrv',#'maritza',
-  sessions=001,#NULL,
-  sessions.name='session',#'ccsm2_run1_finalgrids',
-  runs=NULL,
+  sessions=1,
+  sessions.name='covcond',#'ccsm2_run1_finalgrids',
+  runs=1,
   runs.name='run',#'classland_session016_res.land',
   #metrics=c('PD','AI'),
   start.step=40,

@@ -13,7 +13,7 @@ Histogram of percent of landscape disturbed by wildfire during the simulation.
 
 ```{r}
 theme_set(theme_bw())
-darea = read.csv('/Users/mmallek/Tahoe/RMLands/results/hrv/Wildfire_darea_trajectory.csv', header=TRUE)
+darea = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/darea-hrv/HRV-Wildfire_darea_trajectory.csv', header=TRUE)
 
 darea = darea[,4]
 # ocfw row 463:923
@@ -27,7 +27,6 @@ climate = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s2
 climate = climate[2]
 climate = climate[1:500,]
 climate = climate[40:500]
-require(ggplot2)
 
 climdarea = as.data.frame(climate)
 climdarea = cbind(climdarea, darea)
@@ -78,7 +77,7 @@ p3 = ggplot() + theme_gray() + geom_line(data=climdarea, aes(timestep, climate))
     geom_rect(data=rect1,aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax), alpha=0.1,fill="blue")+
     geom_rect(data=rect2,aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax),alpha=0.1,fill="blue")+
     theme(plot.margin = unit(c(-1,0.5,0.5,0.5), "lines")) +
-    theme(axis.title.x = element_text(size=30, vjust=0), 
+    theme(axis.title.x = element_text(size=20, vjust=0), 
            axis.title.y = element_text(size=20, vjust=1.5), 
            #plot.title = element_text(size=30, vjust=2), 
            axis.text.y = element_text(size=15), 
@@ -196,8 +195,8 @@ p2
 histograms of disturbed area by cover type
 ```{r}
 #ndarea = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/darea.csv')
-ndarea = read.csv(paste(hrv000path,'darea.csv',sep=''))
-ndarea = subset(ndarea, session.id==2 & timestep.id >= 40)     
+ndarea = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/darea.csv')
+ndarea = subset(ndarea, session.id==30 & timestep.id >= 40)     
 covers = c(9,11,14,15,17,19,24,25,26)
 
 darea.df = data.frame(matrix(NA, nrow=4149, ncol=3)) #4149 is 461 * 9, or timesteps * number of cover types
