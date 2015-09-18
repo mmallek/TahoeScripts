@@ -71,7 +71,31 @@ pl = ggplot(data4, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
           plot.margin = unit(c(1,1,1,1), "cm")) 
     
 # each cover type separately (facet)
-pl + facet_wrap(~covname, ncol= 3) + geom_smooth(method='lm', col="black") +
+pl + facet_wrap(~covertypes, ncol= 3) + geom_smooth(method='lm', col="black") +
+    ylab("Canopy Cover Average") + xlab("Topographic Position Index Value") + theme_bw() +
+     theme(axis.title.x = element_text(size=20, vjust=-1), 
+          axis.title.y = element_text(size=20, vjust=2), 
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          plot.title = element_text(size=20, vjust=2),
+          plot.margin = unit(c(1,1,1,1), "cm"))  +
+    theme(strip.text.x = element_text(size = 20))
+
+# facet but only for smcm and smcx
+
+data5 = data2[data2$cover %in% c(24,26)==TRUE,]
+# subset the data for regressions
+pl = ggplot(data5, aes(x=tpi, y=ccavg)) + geom_point(alpha=0.5, col="blue") +
+    ggtitle(paste("Average Canopy Cover of Focal Cover Types")) +
+        theme(axis.title.x = element_text(size=20, vjust=-1), 
+          axis.title.y = element_text(size=20, vjust=2), 
+          axis.text.x = element_text(size=16),
+          axis.text.y = element_text(size=16),
+          plot.title = element_text(size=20, vjust=2),
+          plot.margin = unit(c(1,1,1,1), "cm")) 
+    
+# each cover type separately (facet)
+pl + facet_wrap(~covertypes, ncol= 3) + geom_smooth(method='lm', col="black") +
     ylab("Canopy Cover Average") + xlab("Topographic Position Index Value") + theme_bw() +
      theme(axis.title.x = element_text(size=20, vjust=-1), 
           axis.title.y = element_text(size=20, vjust=2), 

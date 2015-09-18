@@ -314,17 +314,44 @@ else{
     }
   
   #calculate SRV departure index for each class
-  z1[,13]<-as.numeric(z1[,13])
-  for(i in 1:nrow(z1)){ 		
-    if(is.na(z1[i,13])) z1[i,14]<-'NA'
-    else{
-      if(z1[i,13]==50) z1[i,14]<-0
-      else if(z1[i,13]<50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
-      else if(z1[i,13]>50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
-      }
-    }
-  z1[,14]<-as.numeric(z1[,14])
+  # original index
+      z1[,13]<-as.numeric(z1[,13])
+      for(i in 1:nrow(z1)){ 		
+        if(is.na(z1[i,13])) z1[i,14]<-'NA'
+        else{
+          if(z1[i,13]==50) z1[i,14]<-0
+          else if(z1[i,13]<50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
+          else if(z1[i,13]>50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
+          }
+        }
+      z1[,14]<-as.numeric(z1[,14])
+      format(z1,big.mark=',')
+  
+##### my modified index
+  # column 5 is 5th percentile
+  # column 7 is 50th
+  # column 9 is 95th
+  # column 12 is current
+#  for(i in 1:nrow(z1)){     	
+#      #if(is.na(z1[i,104])) z1[i,106]<-'NA'  # may not need this line
+#      #else{
+#          if(z1[i,12]<50) z1[i,14]<-round( 
+#              (z1[i,12] - z1[i,7])/ # actual minus the median
+#                  #(z1[i,52] - z1[i,2]) * 100, # median minus 0
+#                  (z1[i,7] - z1[i,5]) * 100, # median minus 5 - we want 5th as the range right?
+#              0)
+#          else if(z1[i,12]>50)
+#              z1[i,14]<-round( 
+#                  (z1[i,12] - z1[i,7])/ # actual minus the median
+#                      #(z1[i,102] - z1[i,52]) * 100, # 100th minus median 
+#                      (z1[i,9] - z1[i,7]) * 100, # 95th minus median 
+#                  0)
+#          else z1[i,106]<-0
+#      #}
+#  }
   format(z1,big.mark=',')
+  
+  ##### end of inserted code
     
   #rescale cell counts; convert SRV percentiles to percentages
   z1[,c(4:10,12)]<-round((z1[,c(4:10,12)]/z1$cov.count)*100,2)
@@ -2681,41 +2708,46 @@ for(j in 1:nrow(t0)){
 		}
 
 	#compute departure index
-#	t1<-rep(0,nrow(z1))
-#	z1<-cbind(z1,t1)
-#	z1[,104]<-as.numeric(z1[,104])
-#	for(i in 1:nrow(z1)){ 		
-#		if(is.na(z1[i,104])) z1[i,106]<-'NA'
-#		else{
-#		    if(z1[i,104]<50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
-#			else if(z1[i,104]>50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
-#			else z1[i,106]<-0
-#			}
-#		}
-#	z1[,106]<-as.numeric(z1[,106])
-#	z2<-mean(abs(z1[,106]),na.rm=TRUE)
-#	z2<-round(z2,0)
+	t1<-rep(0,nrow(z1))
+	z1<-cbind(z1,t1)
+	z1[,104]<-as.numeric(z1[,104])
+	for(i in 1:nrow(z1)){ 		
+		if(is.na(z1[i,104])) z1[i,106]<-'NA'
+		else{
+		    if     (z1[i,104]!=50) z1[i,106]<-round((z1[i,104]-50)/50*100,0) # column 104 is current value, column 106 is departure index
+			#else if(z1[i,104]>50) z1[i,106]<-round((z1[i,104]-50)/50*100,0)
+			else z1[i,106]<-0
+			}
+		}
+	z1[,106]<-as.numeric(z1[,106])
+	z2<-mean(abs(z1[,106]),na.rm=TRUE)
+	z2<-round(z2,0)
     
     # my departure index
     # if the percentile value is less than 50
-  t1<-rep(0,nrow(z1))
-  z1<-cbind(z1,t1)
-  z1[,104]<-as.numeric(z1[,104])
-  for(i in 1:nrow(z1)){ 		
-      if(is.na(z1[i,104])) z1[i,106]<-'NA'
-      else{
-        if(z1[i,104]<50) z1[i,106]<-round( 
-        (z1[i,103] - z1[i,52])/ # actual minus the median
-         (z1[i,52] - z1[i,2]) * 100, # median minus 0
-          0)
-      else if(z1[i,104]>50)
-        z1[i,106]<-round( 
-            (z1[i,103] - z1[i,52])/ # actual minus the median
-                (z1[i,102] - z1[i,52]) * 100, # 100th minus median 
-            0)
-      else z1[i,106]<-0
-            }
-        }
+    # column 2 is 0th percentile; column 102 is 100th percentile
+    # column 52 is 50th percentile
+    # column 7 is 5th, column 97 is 95th
+#  t1<-rep(0,nrow(z1))
+#  z1<-cbind(z1,t1)
+#  z1[,104]<-as.numeric(z1[,104])
+#  for(i in 1:nrow(z1)){ 		
+#      if(is.na(z1[i,104])) z1[i,106]<-'NA'
+#      else{
+#        if(z1[i,104]<50) z1[i,106]<-round( 
+#        (z1[i,103] - z1[i,52])/ # actual minus the median
+#         #(z1[i,52] - z1[i,2]) * 100, # median minus 0
+#         (z1[i,52] - z1[i,7]) * 100, # median minus 5 - we want 5th as the range right?
+#          0)
+#      else if(z1[i,104]>50)
+#        z1[i,106]<-round( 
+#            (z1[i,103] - z1[i,52])/ # actual minus the median
+#                #(z1[i,102] - z1[i,52]) * 100, # 100th minus median 
+#                (z1[i,97] - z1[i,52]) * 100, # 95th minus median 
+#            0)
+#      else z1[i,106]<-0
+#            }
+#        }
     z1[,106]<-as.numeric(z1[,106])
 	z2<-mean(abs(z1[,106]),na.rm=TRUE)
 	z2<-round(z2,0)
