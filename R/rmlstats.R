@@ -320,8 +320,8 @@ else{
         if(is.na(z1[i,13])) z1[i,14]<-'NA'
         else{
           if(z1[i,13]==50) z1[i,14]<-0
-          else if(z1[i,13]<50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
-          else if(z1[i,13]>50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
+          else if(z1[i,13]<50) z1[i,14]<-round((z1[i,13]-50)/50*100,0) # 13 is current %srv
+          #else if(z1[i,13]>50) z1[i,14]<-round((z1[i,13]-50)/50*100,0)
           }
         }
       z1[,14]<-as.numeric(z1[,14])

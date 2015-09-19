@@ -97,7 +97,7 @@ out<-preturn(path=path,
   stop.step=NULL,
   step.length=5,
   cell.size=30,
-  cover.names=c('Red Fir - Xeric'),
+  cover.names=c('Sierran Mixed Conifer - Mesic'),
   cover.min.ha=1000,
   y.scale='percent',
   col.bars=c('yellow','green','blue'),
@@ -107,7 +107,7 @@ out<-preturn(path=path,
   outfile=F)
   
 
-covcondout<-covcond(path=futurepath,
+covcondout<-covcond(path=path,
   sessions=30,
   var='srv50%',
   #runs=c(1:100), #can pool runs
@@ -117,7 +117,7 @@ covcondout<-covcond(path=futurepath,
   cell.size=30,
   #cover.names=c('Oak-Conifer Forest and Woodland'),
   cover.min.ha=1000,
-  outfile=T)
+  outfile=F)
 
 covcondtab = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/covcond.csv')
 covcondtab = subset(covcondtab, session.id==20)

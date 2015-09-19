@@ -33,7 +33,7 @@ fstop.step=18
 hstart.step = 40
 hstop.step = 500
 cover.min.ha=1000
-imagepath = "/Users/mmallek/Tahoe/Plots/covcond-bycover"
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/covcond-bycover"
 covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 
 covcond.cover.boxplot <-
@@ -130,8 +130,8 @@ covcond.cover.boxplot <-
         #w = bind_rows(y00, y)
         #yf = y[y$session.id %in% fsessions,]
         
-        #loop thru selected sessions
-        for(j in 1:length(all_sessions)){ ##
+        #loop thru selected future sessions
+        for(j in 1:length(fsessions)){ ##
             #calculate SRV quantiles by covcond class
             # extract covcond codes
             cov.cond<-levels(as.factor(y$cov.cond.id))
@@ -191,6 +191,70 @@ covcond.cover.boxplot <-
                         ggsave(paste(covlabel[i],allscenarionames[j],"boxplots",".png",sep="-"), 
                                path=imagepath,
                                width=15, height=5, units='in',limitsize=FALSE)                
+                }  
+            } 
+        }
+            # same thing but for hrv
+        
+            #calculate SRV quantiles by covcond class
+            # extract covcond codes
+            cov.cond<-levels(as.factor(y$cov.cond.id))
+            q1<-matrix(0,nrow=length(cov.cond),ncol=461)
+            
+            # this produces a matrix where the rows across go
+            # run 1, timesteps 14-18, run 2, timesteps 14-18, etc.
+            for(i in 1:length(cov.cond)){ 
+                # q2 isolates a single session, all the  timesteps
+                q2<-y[y$session.id==hrvsession & y$cov.cond.id==cov.cond[i],]  ##
+                # don't need to calculate quantiles for boxplots
+                q1[i,1:nrow(q2)] = q2$cell.count
+            }
+            
+            z1 = cbind(y1, q1)
+            
+            for(i in 1:length(unique(z1$cov.name))){
+                z1[z1$cov.name==unique(z1$cov.name)[i],4:ncol(z1)] = 
+                    apply(z1[z1$cov.name==unique(z1$cov.name)[i],4:ncol(z1)], MARGIN=2, 
+                          FUN=function(x) x*.09/zz2[i,2])
+            }
+            
+            z2 = z1
+            z2$cond.name = factor(z2$cond.name, levels=c('Early-All Structures', 'Early-Aspen', 
+                                                         'Mid-Closed', 'Mid-Moderate', 'Mid-Open',
+                                                         'Mid-Aspen', "Mid-Aspen and Conifer", "Late-Conifer and Aspen", 
+                                                         'Late-Closed','Late-Moderate', 'Late-Open'))
+            
+            # use gather on z2 data frame to get a column with the metric name, 
+            # a column with that metric's value, for all of the fragland metrics
+            data_long = gather(z2, run_ts, proportion, -cov.cond.id, -cov.name, -cond.name)
+            #data_long$ = relevel(z$scenario, "pastclimate")
+            
+            
+            for(i in 1:length(unique(z1$cov.name))){
+                p = ggplot(data=data_long[data_long$cov.name==unique(z1$cov.name)[i],], aes(x=cond.name, y=proportion )) 
+                p1 = p +                
+                    stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
+                    geom_crossbar(data=current[current$cover.type==unique(z1$cov.name)[i],], 
+                                  aes(x=condition.class,y=proportion, ymin=proportion, 
+                                      ymax=proportion), lwd=2,col="#333333") +
+                    #stat_summary(fun.y = o, geom="point", col="#CC3300") +
+                    theme_bw() +
+                    theme(axis.title.y = element_text(size=24,vjust=2),
+                          axis.title.x = element_text(size=24,vjust=-1),
+                          axis.text.x  = element_text(size=16),
+                          axis.text.y  = element_text(size=16)) +
+                    theme(legend.title=element_text(size=16)) +
+                    theme(legend.text = element_text(size = 16)) +
+                    theme(plot.title = element_text(size=24,vjust=1)) +
+                    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+                    ggtitle(paste(unique(z1$cov.name)[i], "\n", allscenarionames[j])) + 
+                    xlab("Seral Stage") +
+                    ylab("Proportion of Cover Type") 
+                print(p1)
+                if(saveimage==TRUE){
+                    ggsave(paste(covlabel[i],allscenarionames[j],"boxplots",".png",sep="-"), 
+                           path=imagepath,
+                           width=15, height=5, units='in',limitsize=FALSE)                
                 }  
             } 
         }
