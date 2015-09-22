@@ -298,13 +298,13 @@ pdsi = pdsi[1:60,]
 
 ggplot(pdsi, aes(x=Time.Step, y=Climate.Modifier)) + geom_line(col='blue', size=1.2) +
     theme_bw() +
-    theme(axis.title.y = element_text(size=24,vjust=1),
-          axis.title.x = element_text(size=24,vjust=-1),
-          axis.text.x  = element_text(size=16),
-          axis.text.y  = element_text(size=16)) +
-    theme(legend.title=element_text(size=16)) +
-    theme(legend.text = element_text(size = 16)) +
-    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(axis.title.y = element_text(size=36,vjust=1),
+          axis.title.x = element_text(size=36,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    #theme(legend.title=element_text(size=16)) +
+    #theme(legend.text = element_text(size = 16)) +
+    theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
     ggtitle("Climate Parameter Trajectory") + 
     xlab("Timestep") +

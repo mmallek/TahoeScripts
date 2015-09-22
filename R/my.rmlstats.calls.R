@@ -61,10 +61,10 @@ dareaout = darea(
 #sessions=c(34,35,36,38,39,43,44),
 # dsize ####
 out<-dsize(path=path,
-  session=44, # only takes a single session
+  session=30, # only takes a single session
   #runs=c(1:100),
   pool.runs=T,
-  start.step=14,
+  start.step=40,
   stop.step=NULL,
   cell.size=30,
   log.size=FALSE,
@@ -72,7 +72,22 @@ out<-dsize(path=path,
   target='firehist_ha.csv',
   col.bars=c('blue','red'),
   col.sub='brown',
-  cex.main=2.5,cex.sub=1.25,cex.legend=1.75,cex.lab=1.2)
+  cex.main=3,cex.sub=1.25,cex.legend=3,cex.lab=3)
+
+dsize.new(path=path,
+      session=30, # only takes a single session
+      #runs=c(1:100),
+      pool.runs=T,
+      start.step=40,
+      stop.step=NULL,
+      cell.size=30,
+      log.size=FALSE,
+      breaks=c(0,5,25,125,625,3125,15625,78125),
+      target='firehist_ha.csv',
+      #col.bars=c('blue','red'),
+      #col.sub='brown',
+      #cex.main=3,cex.sub=1.25,cex.legend=3,cex.lab=3
+      )
 
 #sessions=c(34,35,36,38,39,43,44),
 # rotation ####
@@ -237,8 +252,8 @@ fragclassout = fragclass(path='/Users/mmallek/Tahoe/RMLands/results/results20150
       #classes=c('RFR_M_EARLY_ALL','RFR_M_MID_CL','RFR_M_MID_MOD','RFR_M_MID_OP','RFR_M_LATE_CL','RFR_M_LATE_MOD','RFR_M_LATE_OP'),
       #classes=c('RFR_X_EARLY_ALL','RFR_X_MID_CL','RFR_X_MID_MOD','RFR_X_MID_OP','RFR_X_LATE_CL','RFR_X_LATE_MOD','RFR_X_LATE_OP'),
       #classes=c('SMC_M_EARLY_ALL','SMC_M_MID_CL','SMC_M_MID_MOD','SMC_M_MID_OP','SMC_M_LATE_CL','SMC_M_LATE_MOD','SMC_M_LATE_OP'),
-      classes=c('SMC_X_EARLY_ALL','SMC_X_MID_CL','SMC_X_MID_MOD','SMC_X_MID_OP','SMC_X_LATE_CL','SMC_X_LATE_MOD','SMC_X_LATE_OP'),
-      #classes=c('SMC_U_EARLY_ALL','SMC_U_MID_CL','SMC_U_MID_MOD','SMC_U_MID_OP','SMC_U_LATE_CL','SMC_U_LATE_MOD','SMC_U_LATE_OP'),
+      #classes=c('SMC_X_EARLY_ALL','SMC_X_MID_CL','SMC_X_MID_MOD','SMC_X_MID_OP','SMC_X_LATE_CL','SMC_X_LATE_MOD','SMC_X_LATE_OP'),
+      classes=c('SMC_U_EARLY_ALL','SMC_U_MID_CL','SMC_U_MID_MOD','SMC_U_MID_OP','SMC_U_LATE_CL','SMC_U_LATE_MOD','SMC_U_LATE_OP'),
       #metrics=c('AREA_AM','SHAPE_AM','CORE_AM','CLUMPY','GYRATE_AM'),
       var='srv50%',
       start.step=40,

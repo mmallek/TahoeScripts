@@ -301,7 +301,7 @@ fragland.boxplot <-
                       axis.title.x = element_text(size=24,vjust=-1),
                       axis.text.x  = element_text(size=16),
                       axis.text.y  = element_text(size=16)) +
-                theme(legend.title=element_text(size=16)) +
+                theme(legend.title=element_blank(size=16)) +
                 theme(legend.text = element_text(size = 16)) +
                 theme(plot.title = element_text(size=24,vjust=1)) +
                 theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +

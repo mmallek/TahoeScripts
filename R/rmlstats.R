@@ -1973,6 +1973,8 @@ else{
 par(old.par)
 invisible(z)
 }
+
+
 dinit <-
 function(path,sessions=NULL,var='mean',runs=NULL,start.step=1,
 	stop.step=NULL,step.length=NULL,col.line='blue',
@@ -3919,14 +3921,15 @@ for(i in 1:length(s1)){
 		for(k in 1:nrow(z1)){ 		
 			if(is.na(z1[k,104])) z1[k,106]<-'NA'
 			else{
-				if(z1[k,104]<50) z1[k,106]<-round((z1[k,104]-50)/50*100,0)
-				else if(z1[k,104]>50) z1[k,106]<-round((z1[k,104]-50)/50*100,0)
+				if(z1[k,104]!=50) z1[k,106]<-round((z1[k,104]-50)/50*100,0) # column 104 is current value, column 106 is departure index				
+				#else if(z1[k,104]>50) z1[k,106]<-round((z1[k,104]-50)/50*100,0) # I removed this
 				else z1[k,106]<-0
 				}
 			}
 		z1[,106]<-as.numeric(z1[,106])
 		z2<-mean(abs(z1[,106]),na.rm=TRUE)
 		z2<-round(z2,0)
+		
 		
 		#put the final table together
 		z1<-z1[,c(1,2,7,27,52,77,97,102,105,103,104,106)]
@@ -5331,3 +5334,230 @@ cat(a,file=outfile,append=TRUE)
 write.table(z,file=outfile,quote=FALSE,col.names=FALSE,row.names=FALSE,sep=',',append=TRUE)
 
 }
+
+dsize.new <-
+    function(path,session=NULL,runs=NULL,pool.runs=TRUE,
+             start.step=1,stop.step=NULL,cell.size=30,log.size=TRUE,
+             breaks=c(0,1,10,100,1000,10000,100000),target=NULL,
+             col.bars='blue',col.sub='brown',cex.main=1.5,cex.sub=1.5,
+             cex.legend=1.5,...){
+        
+        #set defaults
+        options(warn=0,scipen=999)
+        old.par<-par(no.readonly=TRUE)
+        
+        #read dsize data
+        x<-read.csv(paste(path,'dsize.csv',sep=''),header=TRUE)
+        
+        #read target dsize data
+        if(!is.null(target)){
+            x2<-read.csv(paste(path,target,sep=''),header=FALSE)
+            x2<-as.vector(x2[,1])
+            x2<-na.omit(x2)
+        }
+        
+        #set session parameter
+        if(is.null(session)) session<-unique(x$session.id)
+        if(length(session)>1) stop('Enter single session id')
+        
+        #verify valid session ids
+        all.sessions<-unique(x$session.id)
+        if(any(!session %in% all.sessions)) stop('Invalid session id')
+        
+        #set runs parameter
+        if(is.null(runs)) runs<-unique(x$run.id)
+        
+        #verify valid run ids
+        all.runs<-unique(x$run.id)
+        if(any(!runs %in% all.runs)) stop('Invalid run ids')
+        
+        #set start.step and stop.step parameters
+        if(is.null(stop.step)) stop.step<-max(x$timestep.id)
+        else{
+            if(stop.step>max(x$timestep.id)) 
+                warning('Stop.step exceeds maximum timestep and was set to the maximum')
+            stop.step<-min(stop.step,max(x$timestep.id))
+        }
+        
+        #subset data based on session.id, runs, start.step and stop.step
+        x<-x[x$session.id==session & x$run.id %in% runs & 
+                 x$timestep.id>=start.step & x$timestep.id<=stop.step,]
+        
+        #rescale dist size
+        if(log.size==TRUE) x$size.obs<-log((x$size.obs*((cell.size^2)/10000))+1)
+        else x$size.obs<-x$size.obs*((cell.size^2)/10000)
+        
+        #set breaks for barplot
+        if(max(breaks)<max(x$size.obs)) breaks<-ceiling(c(breaks,max(x$size.obs)))
+        
+        #create looping vector for dist.type
+        dist.levels<-levels(x$dist.type)
+        
+        #create empty list
+        z<-vector("list", length(dist.levels)) 
+        names(z)<-paste(dist.levels,' disturbance size',sep='')
+        
+        #loop thru dist.types
+        for(i in 1:length(dist.levels)){ 
+            y<-x[x$dist.type==dist.levels[i],]
+            
+            #create list objects for results
+            z[[i]]<-vector("list",length(runs))
+            names(z[[i]])<-paste('run number ',runs,sep='')
+            
+            #for pooled runs
+            if(pool.runs==TRUE){
+                
+                #create data for barplot
+                bins<-as.data.frame(as.factor(seq(1,length(breaks)-1)))
+                names(bins)<-'bin.id'
+                bin.id<-cut(y$size.obs,breaks=breaks,labels=FALSE) 
+                temp<-as.data.frame(table(bin.id))
+                temp<-merge(temp,bins,all=TRUE)
+                temp$Freq[is.na(temp$Freq)]<-0
+                temp$bin.id<-breaks[-1]
+                temp$Proportion<-temp$Freq/sum(temp$Freq)
+                names(temp)<-c('bin','obs.freq','obs.proportion')
+                
+                if(is.null(target)) z[[i]]<-temp
+                
+                #summarize target data 
+                else{
+                    bin.id<-cut(x2,breaks=breaks,labels=FALSE) 
+                    temp2<-as.data.frame(table(bin.id))
+                    temp2<-merge(temp2,bins,all=TRUE)
+                    temp2$Freq[is.na(temp2$Freq)]<-0
+                    temp2$bin.id<-breaks[-1]
+                    temp2$proportion<-temp2$Freq/sum(temp2$Freq)    
+                    names(temp2)<-c('bin','target.freq','target.proportion')
+                    temp<-as.matrix(merge(temp,temp2))
+                    z[[i]]<-temp
+                    temp2 = as.data.frame(temp[,1:3])
+                    temp2$type = as.factor('Observed')
+                    names(temp2)[2:3] = c('Frequency', 'Proportion')
+                    temp3 = as.data.frame(temp[,c(1,4,5)])
+                    temp3$type = as.factor('Target')
+                    names(temp3)[2:3] = c('Frequency', 'Proportion')
+                    temp4 = rbind(temp2, temp3)
+                }
+                
+                #plot barplot
+                if(is.null(target)){
+                    barplot(temp$obs.proportion,names.arg=temp$bin,col=col.bars,...)
+                }
+                else{
+                    ggplot(temp4, aes(x=factor(bin), y=Proportion, fill=type)) + 
+                        geom_bar(stat="identity", position = 'dodge') +
+                        theme_bw() + 
+                        theme(axis.title.y = element_text(size=32,vjust=2),
+                              axis.title.x = element_text(size=32,vjust=-1),
+                              axis.text.x  = element_text(size=24),
+                              axis.text.y  = element_text(size=24)) +
+                        theme(legend.title=element_blank()) +
+                        theme(legend.text = element_text(size = 24)) +
+                        theme(plot.title = element_text(size=40,vjust=1)) +
+                        theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+                        ggtitle('Disturbance Size Distribution') + 
+                        xlab("Disturbance Size (ha)") +
+                        ylab("Proportion") 
+                    #barplot(t(temp[,c(3,5)]),beside=TRUE,names.arg=temp[,1],
+                    #        col=col.bars,...)
+                }
+                
+                if(log.size==TRUE){
+                    title(main='Disturbance Size Distribution',cex.main=cex.main,
+                          ylab='Proportion',xlab='Log(Disturbance Size (ha) + 1)',...)
+                }
+                else{
+                    title(main='Disturbance Size Distribution',cex.main=cex.main,
+                          ylab='Proportion',xlab='Disturbance Size (ha)',...)
+                }
+                #####################################################
+                # comment out below items to remove "Wildfire Run #" from plot
+                #mtext(side=3,col=col.sub,cex=cex.sub,
+                #  text=dist.levels[i],...)
+                
+                if(!is.null(target)){
+                    legend('topright',inset=c(0.1,0.1),legend=c('Observed','Target'),
+                           fill=col.bars,cex=cex.legend,bty='n')
+                }
+                
+                if(!i==length(dist.levels)) 
+                    readline("Press return for next plot ")
+            }
+            
+            #for separate runs
+            else{
+                
+                #create target summary table
+                if(!is.null(target)){
+                    bins<-as.data.frame(as.factor(seq(1,length(breaks)-1)))
+                    names(bins)<-'bin.id'
+                    bin.id<-cut(x2,breaks=breaks,labels=FALSE) 
+                    target.temp<-as.data.frame(table(bin.id))
+                    target.temp<-merge(target.temp,bins,all=TRUE)
+                    target.temp$Freq[is.na(target.temp$Freq)]<-0
+                    target.temp$bin.id<-breaks[-1]
+                    target.temp$proportion<-target.temp$Freq/sum(target.temp$Freq)    
+                    names(target.temp)<-c('bin','target.freq','target.proportion')
+                }
+                
+                #loop thru runs
+                for(j in 1:length(runs)){
+                    
+                    #select data for run
+                    q<-x[x$run.id==runs[j],]
+                    
+                    #create data for barplot
+                    bin.id<-cut(q$size.obs,breaks=breaks,labels=FALSE) 
+                    temp<-as.data.frame(table(bin.id))
+                    temp<-merge(temp,bins,all=TRUE)
+                    temp$Freq[is.na(temp$Freq)]<-0
+                    temp$bin.id<-breaks[-1]
+                    temp$Proportion<-temp$Freq/sum(temp$Freq)
+                    names(temp)<-c('bin','obs.freq','obs.proportion')
+                    
+                    if(is.null(target)) z[[i]][[j]]<-temp
+                    
+                    else{
+                        temp<-as.matrix(merge(temp,target.temp))
+                        z[[i]][[j]]<-temp
+                    }
+                    
+                    #plot barplot
+                    if(is.null(target)){
+                        barplot(temp$obs.proportion,names.arg=temp$bin,col=col.bars,...)
+                    }
+                    else{
+                        barplot(t(temp[,c(3,5)]),beside=TRUE,names.arg=temp[,1],
+                                col=col.bars,...)
+                    }
+                    
+                    if(log.size==TRUE){
+                        title(main='Disturbance Size Distribution',cex.main=cex.main,
+                              ylab='Proportion',xlab='Log(Disturbance Size (ha) + 1)',...)
+                    }
+                    else{
+                        title(main='Disturbance Size Distribution',cex.main=cex.main,
+                              ylab='Proportion',xlab='Disturbance Size (ha)',...)
+                    }
+                    
+                    #####################################################
+                    # comment out below items to remove "Wildfire Run #" from plot
+                    #mtext(side=3,col=col.sub,cex=cex.sub,
+                    #    text=paste(dist.levels[i],' Run #',runs[j],sep=''),...)
+                    
+                    if(!is.null(target)){
+                        legend('topright',inset=c(0.1,0.1),legend=c('Observed','Target'),
+                               fill=col.bars,cex=cex.legend,bty='n')
+                    }
+                    
+                    if(!i==length(dist.levels) || !j==length(runs)) 
+                        readline("Press return for next plot ")
+                }
+            }
+        }
+        
+        par(old.par)
+        return(z)
+    }
