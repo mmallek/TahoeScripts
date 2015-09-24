@@ -115,7 +115,6 @@ fragland.boxplot <-
             r
         }
         
-        v = y1 # for testing
         for(i in 1:length(metrics)){     
             #p = ggplot(data=y1[y1$LID!='covcond000',], aes(x=factor(scenario), y=y1[y1$LID!='covcond000',metrics[i]] )) 
             #p = ggplot(data=y1, aes(x=factor(scenario), y=y1[,metrics[i]])) 
@@ -142,10 +141,10 @@ fragland.boxplot <-
                 xlab("Climate Scenario") +
                 ylab("Metric Value") 
             print(p1)
-            #ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
-            #       path=imagepath,
-            #       width=15, height=5, units='in',limitsize=FALSE
-            #)    
+            ggsave(paste(metrics[i], "-boxplots",".png",sep=""), 
+                   path=imagepath,
+                   width=15, height=5, units='in',limitsize=FALSE
+            )    
         }
         
     }
@@ -170,8 +169,8 @@ all_sessions=c(30,34,35,36,38,39,43,44)
 hrvsession = 30
 fsessions = c(34,35,36,38,39,43,44)
 fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
-allscenarionames= c('.HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
-hrvscenario = c('.HRV')
+allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+hrvscenario = c('HRV')
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 fstart.step=14
 fstop.step=18
@@ -191,8 +190,11 @@ futurelandfiles = c('fragresults_ccsm1_20150831.land',
                     'fragresults_ccsm4_20150902.land','fragresults_ccsm5_20150902.land',
                     'fragresults_ccsm6_20150903.land','fragresults_esm2m_20150903.land')
 histlandfile = 'fragresults_hrv_20150831.land'
-imagepath = '/Users/mmallek/Tahoe/Plots/fragland-frvhrv/'
+imagepath = '/Users/mmallek/Documents/Thesis/Plots/fragland-frvhrv/hrv-frv-current/'
 hrvcovcondlist = read.csv('/Users/mmallek/Tahoe/RMLands/results/results20150904/hrv_covcondlist.csv', header=F)
+
+scenario.levels = c("HRV", "CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")
+
 
 fragland.boxplot <-
     function(fragpath='/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/',
@@ -260,16 +262,20 @@ fragland.boxplot <-
         
             ### code to prepare hrv data for plotting
             
-            w<-read.csv(paste(histfragpath,histlandfile,sep=''),strip.white=TRUE,header=TRUE)
-            w$scenario = '1hrv'
+            w<-read.csv(paste(fragpath,histlandfile,sep=''),strip.white=TRUE,header=TRUE)
+            w$scentype = 'HRV'
+            w$scenario = 'HRV'
             w$scenario = as.factor(w$scenario)
-            w$LID = gsub('.*?_grp.*\\\\(.*)res_clip.tif', '\\1', w$LID)
-            w = w[,c(ncol(w),1:(ncol(w)-1))]
+            w$scentype = as.factor(w$scentype)
+            w$LID = gsub('.*?run1\\\\(.*)res_clip.tif', '\\1', w$LID)
+            w = w[-c(2:40),]
+            w = w[,c(ncol(w), ncol(w)-1,1:(ncol(w)-2))]
             
             
             ### put hrv and future stuff together 
             v = as.data.frame(bind_rows(w,y1))
             v$scenario = as.factor(v$scenario)
+            v$scentype = as.factor(v$scentype)
         
         # make a box and whisker plot
         
@@ -284,29 +290,23 @@ fragland.boxplot <-
             r
         }
         
-        v = y1 # for testing
+        #v = y1 # for testing
         for(i in 1:length(metrics)){     
-            #p = ggplot(data=y1[y1$LID!='covcond000',], aes(x=factor(scenario), y=y1[y1$LID!='covcond000',metrics[i]] )) 
-            #p = ggplot(data=y1, aes(x=factor(scenario), y=y1[,metrics[i]])) 
-            p = ggplot(data=v[v$LID!='covcond000',], aes(x=factor(scentype), y=v[v$LID!='covcond000',metrics[i]] )) 
+            p = ggplot(data=v[v$LID!='covcond000',], aes(x=scentype, y=v[v$LID!='covcond000',metrics[i]] )) 
             p1 = p + 
-                stat_summary(fun.data = f, geom="boxplot", ,fill=c("#0099CC","#339900")) +
-                # comment out funy.y = o to now show 0-5% and 95-100%
-                #stat_summary(fun.y = o, geom="point", col="#CC3300") +
-                #geom_hline(aes(yintercept=y1[y1$LID == 'covcond000',metrics[i]]), lwd=3, col="#333333") +
-                #geom_hline(aes(yintercept=y1[1,metrics[i]]), lwd=3, col="#333333") +
-                geom_hline(aes(yintercept=v[1,metrics[i]]), lwd=3, col="#333333") +
+                stat_summary(fun.data = f, geom="boxplot",fill=c("#0099CC","#339900")) +
+                geom_hline(aes(yintercept=v[1,metrics[i]]), lty='longdash',lwd=3, col="#333333") +
                 theme_bw() +
-                theme(axis.title.y = element_text(size=24,vjust=2),
-                      axis.title.x = element_text(size=24,vjust=-1),
-                      axis.text.x  = element_text(size=16),
-                      axis.text.y  = element_text(size=16)) +
-                theme(legend.title=element_blank(size=16)) +
-                theme(legend.text = element_text(size = 16)) +
-                theme(plot.title = element_text(size=24,vjust=1)) +
+                theme(axis.title.y = element_text(size=32,vjust=2),
+                      axis.title.x = element_text(size=32,vjust=-1),
+                      axis.text.x  = element_text(size=24),
+                      axis.text.y  = element_text(size=24)) +
+                theme(legend.title=element_text(size=24)) +
+                theme(legend.text = element_text(size = 24)) +
+                theme(plot.title = element_text(size=32,vjust=1)) +
                 theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
                 ggtitle(paste("Landscape Metric: ", metrics[i], sep='')) + 
-                xlab("Climate Scenario") +
+                #xlab("Climate Scenario") +
                 ylab("Metric Value") 
             print(p1)
             ggsave(paste(metrics[i], "-frvhrv-boxplots",".png",sep=""), 

@@ -8,19 +8,22 @@ require(grid)
 
 fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
 allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
+fscenario.levels = c("CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")
+
 
 # 18 timesteps long climate parameter file
 pdsi = read.csv("/Users/mmallek/Documents/Thesis/GISData/pdsivalues_allruns.csv")
 pdsi = pdsi[,-9]
 colnames(pdsi) = c('Timestep','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
-pdsi2 = gather(pdsi, model, pdsival, -Timestep)
+pdsi2 = gather(pdsi, model, pdsival, -Timestep) # future only
+gmean = median(pdsi2$pdsival)
 
 # plot all models plus hrv
 p1 = ggplot(pdsi2, aes(x=Timestep, y=pdsival))
 p1 + geom_line(aes(color=model))
 
 # remove hrv from future climate params
-pdsi3 = pdsi2[pdsi2$model!='hrv',]
+#pdsi3 = pdsi2[pdsi2$model!='hrv',]
 
 # 500 timesteps long climate parameter file (hrv)
 hrvpdsi = read.csv('/Users/mmallek/Tahoe/RMLands/parameters/climate_mean_5yr.csv')
@@ -29,29 +32,29 @@ hrvpdsi$pdsival = hrvpdsi$Climate.Modifier
 hrvpdsi$Climate.Modifier = NULL
 colnames(hrvpdsi)[1] = 'Timestep'
 hrvpdsi = hrvpdsi[1:500,]
+med.hrv = median(hrvpdsi$pdsival)
 
 # add hrv to future pdsi thing
 pdsi2.1 = bind_rows(pdsi2,hrvpdsi)
 
-
-
 # calculate average pdsi value for each model run 
-avg = apply(pdsi[,2:8], 2, mean)
-avg
-mean(hrvpdsi$pdsival)
-order(avg)
+    avg = apply(pdsi[,2:8], 2, mean)
+    avg
+    mean(hrvpdsi$pdsival)
+    order(avg)
+    pdsi_ordered = pdsi[,order(avg)+1]
 
-pdsi_ordered = pdsi[,order(avg)+1]
+# calculate median pdsi value for each model run
+    med = apply(pdsi[,2:8], 2, median)
+    med
+    order(med)
+    reorder = c(names(med)[order(med)[1]], names(med)[order(med)[2]],names(med)[order(med)[3]],names(med)[order(med)[4]],names(med)[order(med)[5]],
+                names(med)[order(med)[6]],names(med)[order(med)[7]])
+    
+    # this DOES NOT WORK. can't figure out why
+    #psdi_ordered = pdsi[,-1]
+    #psdi_ordered = pdsi_ordered[,order(med)]
 
-# make data frame for reordered columns
-pdsi4 = cbind(pdsi[,1],pdsi_ordered)
-colnames(pdsi4)[1] = "Timestep"
-
-# gather for plotting
-pdsi4 = gather(pdsi4, model, pdsival, -Timestep)
-
-# add hrv to future pdsi thing
-pdsi4.1 = bind_rows(pdsi4,hrvpdsi)
 
 # create the plot
 p2 = ggplot(pdsi4, aes(x=Timestep, y=pdsival))
@@ -61,19 +64,22 @@ p2 + geom_line(aes(color=model))
 
 mycols = brewer.pal(7, "Dark2")
 
+# make factor and set in order by medians
+pdsi4 = pdsi2
+pdsi4$model = factor(pdsi4$model, levels=fscenario.levels, ordered=T)
 
 # plot of full 18 timesteps ####
 p2 = ggplot(pdsi4, aes(x=Timestep, y=pdsival))
 p2 + geom_line(aes(col=pdsi4$model),size=1.5) + 
     scale_colour_manual(values=mycols, name="Climate Model") +
     theme_bw() +
-    theme(axis.title.y = element_text(size=24,vjust=1),
-          axis.title.x = element_text(size=24,vjust=-1),
-          axis.text.x  = element_text(size=16),
-          axis.text.y  = element_text(size=16)) +
-    theme(legend.title=element_text(size=16)) +
-    theme(legend.text = element_text(size = 16)) +
-    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(axis.title.y = element_text(size=32,vjust=1),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    theme(legend.title=element_text(size=24)) +
+    theme(legend.text = element_text(size = 24)) +
+    theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
     ggtitle("Climate Parameter Trajectory") + 
     xlab("Timestep") +
@@ -81,21 +87,22 @@ p2 + geom_line(aes(col=pdsi4$model),size=1.5) +
 
 ### only look at final 5 timesteps ####
 # with line for hrv mean (~1)
-pdsi4_end = pdsi4[pdsi4$Timestep > 13 & pdsi4$model!='hrv',]
+pdsi4_end = pdsi4[pdsi4$Timestep > 13,]
 p4 = ggplot(pdsi4_end, aes(x=Timestep, y=pdsival))
 p4 + geom_line(aes(col=pdsi3_end$model),size=1.5) + 
-    geom_hline(aes(yintercept=1)) +
+    #geom_hline(aes(yintercept=1)) +
     scale_colour_manual(values=brewer.pal(7,'Dark2'), name="Climate Model") +
     theme_bw() +
-    theme(axis.title.y = element_text(size=24,vjust=1),
-          axis.title.x = element_text(size=24,vjust=-1),
-          axis.text.x  = element_text(size=16),
-          axis.text.y  = element_text(size=16)) +
-    theme(legend.title=element_text(size=16)) +
-    theme(legend.text = element_text(size = 16)) +
-    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(axis.title.y = element_text(size=32,vjust=1),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    #theme(legend.title=element_text(size=24)) +
+    #theme(legend.text = element_text(size = 24)) +
+    theme(legend.position = "none") +
+    theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-    ggtitle("Climate Parameter Trajectory") + 
+    ggtitle("Climate Parameter Trajectory \n Final Five Timesteps") + 
     xlab("Timestep") +
     ylab("Climate Parameter Value") 
 
@@ -120,22 +127,24 @@ p3 + geom_boxplot(fill=c("#339900","#339900","#339900","#339900","#339900","#339
 # boxplots of climate variable values using full hrv parameter range ####
 allscenarionames= c('HRV','CCSM-1','CCSM-2','CCSM-3','CCSM-4','CCSM-5','CCSM-6','ESM2M')
 
-pdsi4.2 = pdsi4.1
-pdsi4.2$model = factor(pdsi4.2$model, levels=c("hrv", "CCSM-1", "CCSM-4", "CCSM-5",
-                                  "CCSM-2", "CCSM-6", "CCSM-3", "ESM2M"),
+pdsi4.2 = pdsi2.1 # pdsi4.1
+pdsi4.2$model[pdsi4.2$model=='hrv'] = "HRV"
+pdsi4.2$model = factor(pdsi4.2$model, levels=c("HRV", "CCSM-1", "CCSM-5", "CCSM-4",
+                                  "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M"),
                                   ordered=T)
 p5 = ggplot(pdsi4.2, aes(x=model, y=pdsival))
 p5 + geom_boxplot(fill=c("#0099CC","#339900","#339900","#339900","#339900","#339900","#339900","#339900")) + 
+    geom_hline(aes(yintercept=gmean), lty='dotted',lwd=3, col="#333333") +
     theme_bw() +
-    theme(axis.title.y = element_text(size=24,vjust=1),
-          axis.title.x = element_text(size=24,vjust=-1),
-          axis.text.x  = element_text(size=16),
-          axis.text.y  = element_text(size=16)) +
+    theme(axis.title.y = element_text(size=32,vjust=1),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
     theme(legend.title=element_text(size=16)) +
     theme(legend.text = element_text(size = 16)) +
-    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-    ggtitle("Differences in Climate Parameter Value across Climate Scenarios and Models") + 
+    #ggtitle("Differences in Climate Parameter Value across Climate Scenarios and Models") + 
     xlab("Climate Scenario") +
     ylab("Climate Parameter Value") 
 
@@ -160,17 +169,17 @@ p7 + geom_boxplot(fill=c("#0099CC","#339900")) +
 
 # Trend line for PDSI ####
 p6 = ggplot(pdsi4, aes(x=Timestep, y=pdsival,col=model))
-p6 + geom_line(size=1, alpha=0.6) + 
+p6 + geom_line(size=1, alpha=0.8) + 
     geom_smooth(method= 'lm', se=F, size=1.5, linetype=2) +
     scale_colour_manual(values=mycols, name="Climate Model") +
     theme_bw() +
-    theme(axis.title.y = element_text(size=24,vjust=1),
-          axis.title.x = element_text(size=24,vjust=-1),
-          axis.text.x  = element_text(size=16),
-          axis.text.y  = element_text(size=16)) +
-    theme(legend.title=element_text(size=16)) +
-    theme(legend.text = element_text(size = 16)) +
-    theme(plot.title = element_text(size=24,vjust=1)) +
+    theme(axis.title.y = element_text(size=32,vjust=1),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    theme(legend.title=element_text(size=24)) +
+    theme(legend.text = element_text(size = 24)) +
+    theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
     ggtitle("Climate Parameter Trajectory") + 
     xlab("Timestep") +
