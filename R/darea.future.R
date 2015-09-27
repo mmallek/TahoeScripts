@@ -138,11 +138,13 @@ variable = 'median'
 #read darea data
 x0<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
 
+x = x0
+
 if (!is.null(covtype)){
-    x0<-x0[x0$cov.name==covtype,]
+    x<-x[x$cov.name==covtype,]
 }
 
-x = x0
+
 #rescale cell counts
 x$mort.high<-x$mort.high*((cell.size^2)/10000)
 x$mort.low<-x$mort.low*((cell.size^2)/10000)
@@ -369,7 +371,10 @@ pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
     #theme(panel.grid.minor.x = element_blank(),
     #      panel.grid.major.x = element_blank(),
     #      panel.grid.minor.y = element_blank()) +
-    ggtitle(paste("Area Burned by Wildfire")) + 
+    ylim(y=c(0,7)) + # for plotting with individual cover types
+    #ggtitle(paste("Area Burned by Wildfire \n Full Project Area")) + 
+    #ggtitle(paste("Area Burned by Wildfire \n Sierran Mixed Conifer - Mesic")) + 
+    ggtitle(paste("Area Burned by Wildfire \n Sierran Mixed Conifer - Xeric")) + 
     ylab("Percent of Landscape Burned") +
     xlab("Climate Model") 
 

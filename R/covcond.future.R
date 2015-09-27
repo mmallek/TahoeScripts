@@ -346,9 +346,9 @@ fstop.step=18
 hstart.step = 40
 hstop.step = 500
 cover.min.ha=1000
-imagepath = "/Users/mmallek/Tahoe/Plots/covcond-byscenario"
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/covcond-byscenario"
 covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
-
+scenario.levels = c("HRV", "CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")
 
 
 
@@ -364,9 +364,9 @@ covcond.scenario.boxplot <-
             r
         }
         # summary function for outliers
-        o <- function(x) {
-            subset(x, x < quantile(x, probs = c(0.05, 0.95))[1] | quantile(x, probs = c(0.05, 0.95))[2] < x)
-        }
+        #o <- function(x) {
+        #    subset(x, x < quantile(x, probs = c(0.05, 0.95))[1] | quantile(x, probs = c(0.05, 0.95))[2] < x)
+        #}
         
         #read covcond data
         y0<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
@@ -382,7 +382,7 @@ covcond.scenario.boxplot <-
             y0$scenario[y0$session.id==all_sessions[i]] = allscenarionames[i]
         }
         
-        y0$scenario[y0$scenario=='HRV'] = '.HRV'
+        #y0$scenario[y0$scenario=='HRV'] = '.HRV'
         
         y = y0
         
@@ -401,7 +401,7 @@ covcond.scenario.boxplot <-
         # calculate area in each cover type
         # compare cover type areas to min cover type area specified in arguments
         # only keep cover types above the minimum
-        t1<-y[y$session.id==sessions[1] & y$run.id==1 & y$timestep.id ==0,]
+        t1<-y[y$session.id==all_sessions[1] & y$run.id==1 & y$timestep.id ==0,]
         t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
         colnames(t2)<-c('cover.type','cov.count')
         t2$area.ha<-round(t2$cov.count*cell.size^2/10000,0)
@@ -455,6 +455,7 @@ covcond.scenario.boxplot <-
 
         # maybe it will work by using the covcond id, instead of 2 loops?
         covcond.code = sort(unique(current$cov.cond.id))
+        df$scenario = factor(df$scenario, levels=scenario.levels, ordered=T)
         
 
         for(j in 1:length(covcond.code)){
@@ -463,25 +464,32 @@ covcond.scenario.boxplot <-
             q2<-y[y$cov.cond.id==covcond.code[j],] # has 700 obs of 8 variables for 7 sessions with 100 obs each; 3500 obs when we include all the timesteps
             q2$proportion = 0
             q2[,9] = q2[,7] *.09/t2[t2$cover.type==q2$cov.name[1],3]
+            q2$scenario = factor(q2$scenario, levels=scenario.levels, ordered=T)
             
+            flump = y[y$cov.cond.id==covcond.code[j] & y$session.id %in% fsessions,]
+            flump$proportion = 0
+            flump[,9] = flump[,7] *.09/t2[t2$cover.type==flump$cov.name[1],3]
+            flump_med = as.data.frame(median(flump$proportion))
+            names(flump_med) = 'proportion'
+            
+            currentvalue = current[current$cov.cond.id==covcond.code[j],] #added 5 to grab proportion
             
             # make the plot            
             p = ggplot(q2, aes(x=scenario, y=proportion )) 
-            currentvalue = current[current$cov.cond.id==covcond.code[j],] #added 5 to grab proportion
             p1 = p +         
                 stat_summary(fun.data = f, geom="boxplot", ,fill=c('#0099CC', 
                         "#339900","#339900","#339900","#339900","#339900",
                         "#339900","#339900")) +
-                #stat_summary(fun.y = o, geom="point", col="#CC3300") +
-                geom_hline(data=currentvalue, aes(yintercept=proportion), lwd=3, col="#333333") +                        
+                geom_hline(data=currentvalue, aes(yintercept=proportion), lwd=3, lty='longdash', col="#333333") +   
+                geom_hline(data=flump_med, aes(yintercept=proportion), lwd=3, lty='dotted', col="#333333") +  
                 theme_bw() +
-                theme(axis.title.y = element_text(size=24,vjust=2),
-                      axis.title.x = element_text(size=24,vjust=-1),
-                      axis.text.x  = element_text(size=16),
-                      axis.text.y  = element_text(size=16)) +
-                theme(legend.title=element_text(size=16)) +
-                theme(legend.text = element_text(size = 16)) +
-                theme(plot.title = element_text(size=24,vjust=1)) +
+                theme(axis.title.y = element_text(size=32,vjust=2),
+                      axis.title.x = element_text(size=32,vjust=-1),
+                      axis.text.x  = element_text(size=20),
+                      axis.text.y  = element_text(size=24)) +
+                theme(legend.title=element_text(size=24)) +
+                theme(legend.text = element_text(size = 24)) +
+                theme(plot.title = element_text(size=40,vjust=1)) +
                 theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
                 ggtitle(paste(q2$cov.name[1], "\n", q2$cond.name[1])) + 
                 xlab("Climate Model") +
@@ -490,7 +498,7 @@ covcond.scenario.boxplot <-
             if(saveimage==TRUE){
                 ggsave(paste(covcond.code[j],"-boxplots",".png",sep=""), 
                        path=imagepath,
-                       width=10, height=5, units='in',limitsize=FALSE)                
+                       width=12, height=5, units='in',limitsize=FALSE)                
             }          
         }
     }
