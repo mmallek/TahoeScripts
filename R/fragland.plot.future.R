@@ -177,7 +177,7 @@ fstop.step=18
 hstart.step = 40
 hstop.step = 500
 cover.min.ha=1000
-imagepath = "/Users/mmallek/Tahoe/Plots/covcond-bycover"
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/covcond-bycover"
 covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 
 fragpath = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/'
@@ -298,12 +298,12 @@ fragland.boxplot <-
                 geom_hline(aes(yintercept=v[1,metrics[i]]), lty='longdash',lwd=3, col="#333333") +
                 theme_bw() +
                 theme(axis.title.y = element_text(size=32,vjust=2),
-                      axis.title.x = element_text(size=32,vjust=-1),
+                      axis.title.x = element_blank(),#element_text(size=32,vjust=-1),
                       axis.text.x  = element_text(size=24),
                       axis.text.y  = element_text(size=24)) +
-                theme(legend.title=element_text(size=24)) +
-                theme(legend.text = element_text(size = 24)) +
-                theme(plot.title = element_text(size=32,vjust=1)) +
+                #theme(legend.title=element_text(size=24)) +
+                #theme(legend.text = element_text(size = 24)) +
+                theme(plot.title = element_text(size=32,vjust=2)) +
                 theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
                 ggtitle(paste("Landscape Metric: ", metrics[i], sep='')) + 
                 #xlab("Climate Scenario") +
@@ -311,7 +311,7 @@ fragland.boxplot <-
             print(p1)
             ggsave(paste(metrics[i], "-frvhrv-boxplots",".png",sep=""), 
                    path=imagepath,
-                   width=7, height=5, units='in',limitsize=FALSE
+                   width=8, height=6, units='in',limitsize=FALSE
             )    
         }
         
