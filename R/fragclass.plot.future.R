@@ -17,7 +17,7 @@ require(ggplot2)
 require(grid)
 
 ### set up only to calcuate for the hrv
-### have to first manipulate the outputs .class and .land files so that kevin's weird parsing works
+### have to first manipulate the output .class and .land files so that kevin's weird parsing works
 
 path='/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/'
 inland='fragresults_hrv_20150831.land'
