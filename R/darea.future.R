@@ -533,3 +533,209 @@ pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
     ggtitle(paste("Area Burned by Wildfire")) + 
     ylab("Percent of Landscape Burned") +
     xlab("Climate Model") 
+
+
+
+## code that does NOT include HRV ####
+######## code to build a clustered bar chart
+
+path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
+imagepath = '/Users/mmallek/Documents/Thesis/Plots/darea/'
+fsessions=c(34,35,36,38,39,43,44)
+fstart.step = 14
+covtype = NULL
+covtype = 'Sierran Mixed Conifer - Xeric' # set limits are 
+covtype = 'Sierran Mixed Conifer - Mesic'
+scenario.levels = c("CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")
+variable = 'median'
+
+#read darea data
+x0<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
+
+x = x0
+
+if (!is.null(covtype)){
+    x<-x[x$cov.name==covtype,]
+}
+
+
+#rescale cell counts
+x$mort.high<-x$mort.high*((cell.size^2)/10000)
+x$mort.low<-x$mort.low*((cell.size^2)/10000)
+x$mort.any<-x$mort.any*((cell.size^2)/10000)
+
+# first build data frame and do calcs for the future sessions ####
+df = data.frame(summary_stat=factor(), mort_level = factor(), value = numeric(), session=integer())
+for(i in 1:length(fsessions)){
+    y<-x[x$session.id == fsessions[i],]
+    
+    # now we want to limit by timesteps
+    y = y[y$timestep.id >= fstart.step,]
+    
+    # aggregate: The first argument is the column of which the values are going to be grouped, 
+    # and then sent to the function (mean in this case). The second argument is a list of which 
+    # variables to group by. It can be named to make the output cleaner. 
+    
+    # count number of cells experience x type fire each timestep, each run
+    y.low<-aggregate(y$mort.low,list(timestep=y$timestep.id, run=y$run.id),sum)
+    colnames(y.low)[3] = 'mort.low' 
+    y.high<-aggregate(y$mort.high,list(timestep=y$timestep.id, run=y$run.id),sum)
+    colnames(y.high)[3] = 'mort.high' 
+    y.any<-aggregate(y$mort.any,list(timestep=y$timestep.id, run=y$run.id),sum)
+    colnames(y.any)[3] = 'mort.any' 
+    
+    # merge the data frames
+    y2 = full_join(y.low, y.high, by=c('timestep','run'))
+    y2 = full_join(y2, y.any, by=c('timestep','run'))
+    
+    # convert any NA values to 0 (not sure how this could happen)
+    y2[is.na.data.frame(y2)]<-0
+    
+    #optionally convert darea to percent of eligible
+    # percent of eligible always 1942557 in cells
+    # but after we rescale it becomes 174830.1
+    if(y.scale=='percent'){
+        y2[,3:5]<-round((y2[,3:5]/174830.1)*100,3)
+    }
+    
+    temp<-matrix(0,nrow=4,ncol=4)        
+    
+    temp[1,2:4]<-round(apply(y2[,3:5],2,min),3)
+    temp[2,2:4]<-round(apply(y2[,3:5],2,max),3)
+    temp[3,2:4]<-round(apply(y2[,3:5],2,median),3)
+    temp[4,2:4]<-round(apply(y2[,3:5],2,mean),3)
+    
+    temp = as.data.frame(temp)
+    colnames(temp)<-c('summary_stat','mort.low','mort.high','mort.any')
+    temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
+                'median darea/timestep','mean darea/timestep')
+    temp$summary_stat = as.factor(temp$summary_stat)
+    
+    #isolate row of info you want to plot
+    if(variable=='min') temp = temp[1,]
+    if(variable=='max') temp = temp[2,]
+    if(variable=='median') temp = temp[3,]
+    if(variable=='mean') temp = temp[4,]
+    
+    temp2 = gather(temp, mort_level, value, 2:4)
+    temp2$session = fsessions[i]
+    temp2$scenario = sessionnames[i+1]
+    
+    df = bind_rows(df, temp2)
+}
+### end building individual tables
+
+
+
+#############
+
+## calculate grand mean across future scenarios ####
+
+df2 = data.frame(summary_stat=factor(), mort_level = factor(), value = numeric(), session=factor())
+
+# separate future from hrv
+x2 = x[x$session.id %in% fsessions,]
+# limit to only final timesteps
+y = x2[x2$timestep.id >= fstart.step,]
+
+######
+y.low<-aggregate(y$mort.low,list(timestep=y$timestep.id, run=y$run.id, session=y$session.id),sum)
+colnames(y.low)[4] = 'mort.low' 
+y.high<-aggregate(y$mort.high,list(timestep=y$timestep.id, run=y$run.id, session=y$session.id),sum)
+colnames(y.high)[4] = 'mort.high' 
+y.any<-aggregate(y$mort.any,list(timestep=y$timestep.id, run=y$run.id, session=y$session.id),sum)
+colnames(y.any)[4] = 'mort.any' 
+
+# merge the data frames
+y2 = full_join(y.low, y.high, by=c('timestep','run','session'))
+y2 = full_join(y2, y.any, by=c('timestep','run','session'))
+
+# convert any NA values to 0 (not sure how this could happen)
+y2[is.na.data.frame(y2)]<-0
+
+#optionally convert darea to percent of eligible
+# percent of eligible always 1942557 in cells
+# but after we rescale it becomes 174830.1
+if(y.scale=='percent'){
+    y2[,4:6]<-round((y2[,4:6]/174830.1)*100,3)
+}
+
+temp<-matrix(0,nrow=4,ncol=4)        
+
+temp[1,2:4]<-round(apply(y2[,4:6],2,min),3)
+temp[2,2:4]<-round(apply(y2[,4:6],2,max),3)
+temp[3,2:4]<-round(apply(y2[,4:6],2,median),3)
+temp[4,2:4]<-round(apply(y2[,4:6],2,mean),3)
+
+temp = as.data.frame(temp)
+colnames(temp)<-c('summary_stat','mort.low','mort.high','mort.any')
+temp[,1]<-c('minimum darea/timestep','maximum darea/timestep',
+            'median darea/timestep','mean darea/timestep')
+temp$summary_stat = as.factor(temp$summary_stat)
+
+#isolate row of info you want to plot
+if(variable=='min') temp = temp[1,]
+if(variable=='max') temp = temp[2,]
+if(variable=='median') temp = temp[3,]
+if(variable=='mean') temp = temp[4,]
+
+# also gather option if that helps
+tempg = gather(temp, mort_level, value, 2:4)
+tempg$session = 'future'
+
+###############
+
+
+## fix factors
+df$scenario = factor(df$scenario, levels=scenario.levels, ordered=T)
+df$mort_level = factor(df$mort_level, levels=c('mort.high', 'mort.low', 'mort.any'), ordered=T)
+
+# now plot all scenarios together ####
+n <- 3 
+hcl(h=seq(15, 375-360/n, length=n)%%360, c=100, l=40) 
+
+pl = ggplot(df, aes(scenario, value)) 
+pl1 = pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
+    theme_bw() + scale_fill_hue(l=40, labels=c('High Mortality','Low Mortality','Any Mortality'),
+                                name='Mortality Level') +
+    #geom_crossbar(data=tempg[tempg$mort_level=='mort.any',], 
+    #              aes(x='CCSM-1',y=value, ymin=value, ymax=value), 
+    #              lty='dotted',lwd=1, color='#005CCC',show_guide=F) +
+    #geom_crossbar(data=tempg[tempg$mort_level=='mort.high',], 
+    #              aes(x='CCSM-1',y=value, ymin=value, ymax=value), 
+    #              lty='dotted',lwd=1, color='#AE3121',show_guide=F) +
+    #geom_crossbar(data=tempg[tempg$mort_level=='mort.low',], 
+    #              aes(x='CCSM-1',y=value, ymin=value, ymax=value), 
+    #              lty='dotted',lwd=1, color='#007700',show_guide=F) +
+    theme(axis.title.y = element_text(size=32,vjust=2),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    theme(axis.ticks.x = element_blank()) +
+    theme(legend.title = element_text(size=24)) +
+    theme(legend.text = element_text(size=24)) +
+    theme(legend.position = 'top') +
+    theme(plot.title = element_text(size=40,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    #theme(panel.grid.minor.x = element_blank(),
+    #      panel.grid.major.x = element_blank(),
+    #      panel.grid.minor.y = element_blank()) +
+    ylab("Percent of Landscape Burned") +
+    xlab("Climate Model") +
+    # for plotting with individual cover types
+    #ylim(y=c(0,7)) + 
+    ggtitle(paste("Full Project Area")) 
+    #ggtitle(paste("Sierran Mixed Conifer - Mesic"))  
+    #ggtitle(paste("Sierran Mixed Conifer - Xeric")) 
+    print(pl1)
+    ggsave(
+        'darea-allfmodels.png', 
+        #'darea-allfmodels-smcm.png',
+        #'darea-allfmodels-smcx.png',
+        path=imagepath,
+        width=16, height=8, units='in',limitsize=FALSE)    
+
+# saved as 1400x700
+
+##############################################
+#############################################
