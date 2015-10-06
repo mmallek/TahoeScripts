@@ -144,6 +144,7 @@ pdsi_wtd_esm2m = matrix(NA,length(unique(esm2m$timestep)),1)
 idw = function(x) sum(x*temp$dweight)
 ### what does the loop do?
 # we come out of the loop with a matrix consisting of the input values for RMLands?
+### no, we have a matrix of PDSI type values still
 for (i in 1:length(unique(ccsm4$timestep))) {
     temp = ccsm4[ccsm4$timestep==i,]
     pdsi_wtd_ccsm4[i,] = apply(temp[6:11], 2, FUN=idw)
@@ -183,7 +184,10 @@ hist_sd = apply(pdsi_wtd[,1:6], 2, sd)
 hist_mean = -0.009781612
 hist_sd = 0.664115798
 
+##############################################################
+#### early clim mod function (bad) ####
 ## this is what the excel sheet formulas looked like
+
 # =(F3-AVERAGE($F$2:$F$61))/2*STDEVP($F$2:$F$61)+1
 # =2*AVERAGE($G$2:$G$61)-G2
 #
@@ -203,7 +207,8 @@ make_clim_mod = function(x){
     return(2 * mean(mu) - mu) # the 2 * maintains that mean at whatever it is
 }
 
-# working out whether problem is the climate modifier function
+
+# working out whether problem is the climate modifier function 
 # in Excel:
 # I believe we started in Excel for the mean value for each of the five years
 # next equation is (ts - average(all ts))/2*sd(all ts) + 1
@@ -227,9 +232,12 @@ write.csv(fclimate, "future_climate_params.csv")
 # this won't be true when we use the historic mean and sd
 apply(clim_mods,2,mean)
 
-run a regression on the trend to extract the trend line
-capture all the residuals
-do the rescale and inversion on the residuals 
+#####################################################
+## Jack's idea at one point - but this does not work ####
+
+# run a regression on the trend to extract the trend line
+# capture all the residuals
+# do the rescale and inversion on the residuals 
 
 data = pdsi_wtd[,c(1,8)]
 test = lm(timestep~esm2m_pdsi1, data)
@@ -240,6 +248,8 @@ residuals = as.numeric(resid(test))
 clim_mods_test = matrix(NA,18,1)
 clim_mods_test = make_clim_mod(residuals)
 
+#####################################################################
+#### actual solution ####
 # so it seems that the problem is that adding one and multiplying by 2 
 # are tricks used to get the result desired, but are not necessary
 # and under HRV circumstances these tricks cancel one another
@@ -261,6 +271,8 @@ fclimate2 = as.data.frame(clim_mods2)
 names(fclimate2)[1:6] = names(ccsm4[6:11])
 names(fclimate2)[7] = names(esm2m[6])
 
+#############################################################
+#### another failed idea ####
 # one more test
 # this doesn't get it totally right (values below 0 become values below 1)
 make_clim_mod3 = function(x){

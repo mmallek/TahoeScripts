@@ -50,10 +50,7 @@ pdsi2.1 = bind_rows(pdsi2,hrvpdsi)
     order(med)
     reorder = c(names(med)[order(med)[1]], names(med)[order(med)[2]],names(med)[order(med)[3]],names(med)[order(med)[4]],names(med)[order(med)[5]],
                 names(med)[order(med)[6]],names(med)[order(med)[7]])
-    
-    # this DOES NOT WORK. can't figure out why
-    #psdi_ordered = pdsi[,-1]
-    #psdi_ordered = pdsi_ordered[,order(med)]
+
 
 
 # create the plot
@@ -106,7 +103,10 @@ p4 + geom_line(aes(col=pdsi3_end$model),size=1.5) +
     xlab("Timestep") +
     ylab("Climate Parameter Value") 
 
-
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/pdsi"
+ggsave("future_last5timesteps.png", 
+       path=imagepath,
+       width=9, height=7, units='in',limitsize=FALSE)    
 
 # boxplots of climate variable values ####
 p3 = ggplot(pdsi4, aes(x=model, y=pdsival))
@@ -181,9 +181,38 @@ p6 + geom_line(size=1, alpha=0.8) +
     theme(legend.text = element_text(size = 24)) +
     theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    theme(legend.key.height=unit(2,"line")) + 
     ggtitle("Climate Parameter Trajectory") + 
     xlab("Timestep") +
     ylab("Climate Parameter Value") 
+
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/pdsi"
+ggsave("futureclimate_wlm.png", 
+       path=imagepath,
+       width=12, height=7, units='in',limitsize=FALSE)    
+
+##############################################################
+##############################################################
+# boxplots of PDSI without HRV or any median lines ####
+pdsi2$model = factor(pdsi2$model, levels=fscenario.levels, ordered=T)
+
+p8 = ggplot(pdsi2, aes(x=model, y=pdsival))
+p8 + geom_boxplot(fill=c("#339900","#339900","#339900","#339900","#339900","#339900","#339900")) + #,"#E69F00")) + 
+    theme_bw() +
+    theme(axis.title.y = element_text(size=32,vjust=1),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    theme(plot.title = element_text(size=40,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    ggtitle("Climate Parameter Distribution") + 
+    xlab("Climate Scenario") +
+    ylab("Climate Parameter Value") 
+
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/pdsi"
+ggsave("pdsiboxplots_ordered_nohrv.png", 
+       path=imagepath,
+       width=12, height=6, units='in',limitsize=FALSE)    
 
 ##############################################################
 ##############################################################

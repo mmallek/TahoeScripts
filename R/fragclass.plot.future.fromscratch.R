@@ -3,35 +3,28 @@
 # First code creates boxplots by class metric ####
 # with separate boxplot for each seral stage
 
+require(tidyr)
+require(dplyr)
+require(ggplot2)
+require(grid)
 
-path='/Users/mmallek/Tahoe/Fragstats/fragstats20151002/'
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20151002/'
-#inland='fragresults_hrv_20150831.land'
-inclass='fragresults_ccsm1_20150831.class'
-inclasses = c('fragresults_ccsm1_20151003-redo.class','fragresults_ccsm2_20151003.class','fragresults_ccsm3_20151003.class',
-              'fragresults_ccsm4_20151003.class','fragresults_ccsm5_20151003.class',
-              'fragresults_ccsm6_20151003.class',
-              'fragresults_esm2m_20151003-redo.class')
-LID.path='Z:\\Working\\maritza\\'
-#scenarios='hrv'
-sessions=1
-sessions.name='covcond'
-runs=1
-runs.name='run'
-gridname='covcond'
+
+inclasses = c('fragresults_ccsm1_20151002.class','fragresults_ccsm2_20151002.class','fragresults_ccsm3_20151002.class',
+              'fragresults_ccsm4_20151002.class','fragresults_ccsm5_20151002.class',
+              'fragresults_ccsm6_20151002.class','fragresults_esm2m_20151004.class')
+
+# for these the HRV was rescaled :P
+inclasses_norescale = c('fragresults_ccsm1_20151003-redo.class','fragresults_ccsm2_20151003.class','fragresults_ccsm3_20151003.class',
+                        'fragresults_ccsm4_20151003.class','fragresults_ccsm5_20151003.class',
+                        'fragresults_ccsm6_20151003.class')
+
 classes=c('SMC_M_EARLY_ALL','SMC_M_MID_CL','SMC_M_MID_MOD','SMC_M_MID_OP','SMC_M_LATE_CL','SMC_M_LATE_MOD','SMC_M_LATE_OP')
 classes=c('SMC_X_EARLY_ALL','SMC_X_MID_CL','SMC_X_MID_MOD','SMC_X_MID_OP','SMC_X_LATE_CL','SMC_X_LATE_MOD','SMC_X_LATE_OP')
 classes = c('SMC_M_EARLY_ALL', 'SMC_X_EARLY_ALL','RFR_M_EARLY_ALL','RFR_X_EARLY_ALL','OCFW_EARLY_ALL')
 classes = c('SMC_M_EARLY_ALL', 'SMC_X_EARLY_ALL')
-#metrics=c('AREA_AM','SHAPE_AM','CORE_AM','CLUMPY','GYRATE_AM')
-var='srv50%'
-start.step=40
-stop.step=500
 
-covlabel = 'SMC_M'
-covlabel = 'SMC_X'
-
-imagepath = "/Users/mmallek/Documents/Thesis/Plots/smc-classmetrics/"
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/fragclass-smcmetrics"
 
 ## beginning of real code ####
 y.class<-read.csv(paste(path,inclasses[1],sep=''),strip.white=TRUE,header=TRUE)
@@ -43,7 +36,7 @@ for(i in 2:length(inclasses)){
 }
 
 y1 = y.class[y.class$TYPE %in% classes,]
-y1$scenario = gsub('.*?future\\\\(.*)\\\\covcond\\\\.*.tif', '\\1', y1$LID)
+y1$scenario = gsub('.*?future\\\\(.*)\\\\covcond.*.tif', '\\1', y1$LID)
 y1$scenario[1:2] = 'current'
 y1 = y1[y1$scenario!="Z:\\Working\\maritza\\hrv\\covcond\\covcond000res_clip.tif",] 
 
@@ -51,8 +44,8 @@ y2 = y1[,c(1,length(y1),3:length(y1)-1)]
 
 metrics = names(y2)[4:length(names(y2))]
 
-y2$CLUMPY = as.numeric(y2$CLUMPY)
-y2$AI = as.numeric(y2$AI)
+y2$CLUMPY = as.numeric(as.character(y2$CLUMPY))
+y2$AI = as.numeric(as.character(y2$AI))
 
 scenario.levels = c("current","ccsm-1", "ccsm-5", "ccsm-4", "ccsm-6", "ccsm-2", "ccsm-3", "esm2m")
 y2$scenario = factor(y2$scenario, levels=scenario.levels, ordered=T)
@@ -77,7 +70,7 @@ for(i in 1:length(classes)){
     p1 = p +
         stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
         geom_hline(aes(yintercept=data[1,metrics[j]]), lwd=3, lty='longdash', col="#333333") +
-        #scale_x_discrete(labels=c("CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")) +
+        scale_x_discrete(labels=c("CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")) +
         theme_bw() +
         theme(axis.title.y = element_text(size=32,vjust=1),
               axis.title.x = element_text(size=32,vjust=-1),
@@ -89,11 +82,14 @@ for(i in 1:length(classes)){
         xlab("Climate Scenario") +
         ylab("Metric Value") 
     print(p1)
-    ggsave(paste(classes[i],"-",metrics[j], "-boxplots",".png",sep=""), 
-           path=imagepath,
-           width=15, height=5, units='in',limitsize=FALSE)    
+    ggsave(paste(classes[i],"_",metrics[j], "_boxplots",".png",sep=""), 
+           path="/Users/mmallek/Documents/Thesis/Plots/fragclass-smcmetrics",
+           width=12, height=6, units='in',limitsize=FALSE)    
     } 
-}
+} 
 
+# to fix error: Error in dev.off() : 
+#QuartzBitmap_Output - unable to open file 
+#  you have a typo in your path
 
 

@@ -123,17 +123,17 @@ out<-preturn(path=path,
   outfile=F)
   
 # covcond ####
-covcondout<-covcond(path=path,
-  sessions=30,
+covcondout<-covcond(path='/Users/mmallek/Tahoe/RMLands/results/results20150904/',
+  sessions=44,
   var='srv50%',
-  #runs=c(1:100), #can pool runs
-  runs = 1,
-  start.step=40,
-  stop.step=NULL,
+  runs=c(1:100), #can pool runs
+  #runs = 1,
+  start.step=14,
+  stop.step=18,
   cell.size=30,
   #cover.names=c('Oak-Conifer Forest and Woodland'),
   cover.min.ha=1000,
-  outfile=T)
+  outfile=F)
 
 covcondtab = read.csv('/Users/mmallek/Tahoe/ClusterBackup/november2014/csvs_upto_s20/covcond.csv')
 covcondtab = subset(covcondtab, session.id==20)
@@ -151,7 +151,7 @@ newcovcondtab = aggregate(covcondtab, by=stage.name, FUN=sum)
 
 # covcond plot ####                       
 covcondout<-covcond.plot(path=path,
-  session=30,
+  session=44,
   var='srv50%',
   #runs=c(1:10),
   runs = 1,

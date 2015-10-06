@@ -329,6 +329,7 @@ covcond.cover.boxplot <-
 ### it is, it's the session id
 ### need to make another set of plots where it's across scenarios and for each seral stage
 
+## boxplots across scenarios, one figure per cover-seral stage combo ####
 
 require(tidyr)
 require(dplyr)
@@ -349,13 +350,6 @@ cover.min.ha=1000
 imagepath = "/Users/mmallek/Documents/Thesis/Plots/covcond-byscenario"
 covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
 scenario.levels = c("HRV", "CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")
-
-
-
-covcond.scenario.boxplot <-
-    function(path,sessions=NULL,scenario_name=NULL,runs=NULL,cell.size=30,
-             cover.names=NULL,cover.min.ha=0,saveimage=FALSE){
-
         
         # define the summary function
         f <- function(x) {
@@ -693,3 +687,159 @@ covcond.agg.scenario.boxplot <-
             }          
         }
     }
+
+## boxplots across scenarios, one figure per cover-seral stage combo ####
+# version with no hrv or grand mean ####
+require(tidyr)
+require(dplyr)
+require(ggplot2)
+require(grid)
+
+
+fsessions = c(34,35,36,38,39,43,44)
+fscenarionames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
+path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
+fstart.step=14
+fstop.step=18
+hstart.step = 40
+hstop.step = 500
+cover.min.ha=1000
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/covcond-byscenario"
+covlabel = c('MEGM','MEGX','OCFW','OCFWU','RFRM','RFRX','SMCM','SMCU','SMCX')
+scenario.levels = c( "CCSM-1", "CCSM-5", "CCSM-4", "CCSM-6", "CCSM-2", "CCSM-3", "ESM2M")
+
+# define the summary function
+f <- function(x) {
+    r <- quantile(x, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+    names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+    r
+}
+
+
+#read covcond data
+y0<-read.csv(paste(path,'covcond.csv',sep=''),header=TRUE)
+
+# limit y0 to sessions of interest
+y0 = y0[y0$session.id %in% fsessions,]
+
+# careful with this line - it is basically hard coded so sessions and scenario_name object
+# better be in the right order and of the same length
+for(i in 1:length(fsessions)){
+    y0$scenario[y0$session.id==fsessions[i]] = fscenarionames[i]
+}
+
+
+y  = y0
+
+#select subset of cover types
+if(!is.null(cover.names)){
+    cov.levels<-levels(y$cov.name)
+    if(any(!cover.names %in% cov.levels)) stop('Invalid cover names')
+    y<-y[y$cov.name %in% cover.names,] 
+}
+
+# get rid of non-seral types
+y = y[y$cond.name != 'Non-seral',]
+
+#get cover type area and select cover types with min area
+# calculate area in each cover type
+# compare cover type areas to min cover type area specified in arguments
+# only keep cover types above the minimum
+t1<-y[y$session.id==fsessions[1] & y$run.id==1 & y$timestep.id ==0,]
+t2<-aggregate(t1$cell.count,list(t1$cov.name),sum)
+colnames(t2)<-c('cover.type','cov.count')
+t2$area.ha<-round(t2$cov.count*cell.size^2/10000,0)
+t2<-t2[t2$area.ha>cover.min.ha,]
+t2.cover.type<-t2$cover.type
+
+y<-y[y$cov.name %in% t2.cover.type,]
+
+
+# this gets you the data frame with only the timesteps of interest [14-18]
+
+y = y[y$session.id %in% fsessions & y$timestep.id %in% c(fstart.step:fstop.step),]
+
+# delete columns not of interest
+y1 = y 
+y1$timestep.id = NULL
+y1$run.id = NULL
+y1$cell.count = NULL
+y1 = distinct(y1) # set of unique cov-cond-scenario combinations
+
+#new dataframe that's a set of unique covcond classes
+y2<-y[order(y$cov.cond.id),]
+y2<-y2[(y2$cov.cond.id != y2$cov.cond.id[c((1:dim(y2)[1])[-1],1)]),
+       c('cov.cond.id','cov.name','cond.name')]
+
+#get current cell.count for each covcond class
+s1<-merge(y2,t1,by='cov.cond.id',all.x=TRUE)
+s2<-s1[,c(1,2,9)]
+s2[is.na(s2)]<-0
+
+# calculate current proportions
+s2$proportion = s2$cell.count
+for(i in 1:length(unique(s2$cov.name))){
+    s2[s2$cov.name==unique(s2$cov.name)[i],4] = s2[s2$cov.name==unique(s2$cov.name)[i],3] *.09/zz2[i,2]
+}
+current = merge(zz1, s2)
+current$cov.name.x=NULL
+
+
+#create dataframe for cover departure results
+d1<-as.data.frame(unique(y1$cov.name)) 
+colnames(d1)<-c('cover.type')
+d2<-t2[,c(1,3)]
+# this is just the cover type and its total area
+zz2<-merge(d1,d2,by='cover.type',sort=FALSE)
+colnames(zz2)<-c('cover.type','area.ha')
+
+
+# maybe it will work by using the covcond id, instead of 2 loops?
+covcond.code = sort(unique(current$cov.cond.id))
+df$scenario = factor(df$scenario, levels=scenario.levels, ordered=T)
+
+imagepath = "/Users/mmallek/Documents/Thesis/Plots/covcond-byscenario"
+
+for(j in 1:length(covcond.code)){
+    # q2 is a subsetted matrix for one cover-condition combo
+    # and all the scenarios
+    q2<-y[y$cov.cond.id==covcond.code[j],] # has 700 obs of 8 variables for 7 sessions with 100 obs each; 3500 obs when we include all the timesteps
+    q2$proportion = 0
+    q2[,9] = q2[,7] *.09/t2[t2$cover.type==q2$cov.name[1],3]
+    q2$scenario = factor(q2$scenario, levels=scenario.levels, ordered=T)
+    currentvalue = current[current$cov.cond.id==covcond.code[j],] #added 5 to grab proportion
+    
+    # make the plot            
+    p = ggplot(q2, aes(x=scenario, y=proportion )) 
+    p1 = p +         
+        stat_summary(fun.data = f, geom="boxplot", ,fill="#339900") +
+        geom_hline(data=currentvalue, aes(yintercept=proportion), lwd=3, lty='longdash', col="#333333", show_guide=TRUE) +   
+        # with legend
+        #geom_hline(data=currentvalue, aes(yintercept=proportion, linetype="Current"), lwd=3, col="#005CCC", show_guide=TRUE) +   
+        theme_bw() +
+        theme(legend.position="top", legend.title = element_blank()) +
+        theme(axis.title.y = element_text(size=32,vjust=2),
+              axis.title.x = element_text(size=32,vjust=-1),
+              axis.text.x  = element_text(size=20),
+              axis.text.y  = element_text(size=24)) +
+        theme(legend.text = element_text(size = 24)) +
+        theme(plot.title = element_text(size=40,vjust=1.5)) +
+        theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+        ggtitle(paste(q2$cond.name[1])) + 
+        xlab("Climate Model") +
+        ylab("Proportion of Cover Type") 
+    print(p1)
+    if(saveimage==TRUE){
+        ggsave(paste(covcond.code[j],"-boxplots",".png",sep=""), 
+               path="/Users/mmallek/Documents/Thesis/Plots/covcond-byscenario",
+               width=12, height=6, units='in',limitsize=FALSE)                
+    }          
+}
+
+
+
+
+
+#####################################
+#######################################
+#################################
