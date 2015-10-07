@@ -11,7 +11,7 @@ sessions=c(34,35,36,38,39,43,44)
 sessionnames = c('CCSM-1','CCSM-2','CCSM-3','CCSM-5','CCSM-4','CCSM-6','ESM2M')
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 start.step = 14
-
+covtype = "Sierran Mixed Conifer - Xeric"
 
 #read darea data
 x<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
@@ -78,6 +78,10 @@ for(i in 1:length(sessions)){
     y3 = y2
     y3 = gather(y3, burn, percent, mort.high,mort.low)
     y3$step = do.call(paste, c(y3[c('run','timestep')],sep='-'))
+    quantile(y3$percent, c(0.05,0.25,0.5,0.75,0.95))
+    quantile(y3[y3$burn=='mort.low',4], c(0.05,0.25,0.5,0.75,0.95))
+    quantile(y3[y3$burn=='mort.high',4], c(0.05,0.25,0.5,0.75,0.95))
+             
     
     pl = ggplot(y3, aes(step, percent, fill=factor(burn, labels=c('High Mortality','Low Mortality'))))
     pl1 = pl + geom_bar(stat="identity") + theme_bw() +
