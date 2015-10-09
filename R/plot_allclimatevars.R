@@ -333,8 +333,9 @@ require(grid)
 
 pdsi = read.csv('/Users/mmallek/Tahoe/RMLands/parameters/climate_mean_5yr.csv')
 pdsi = pdsi[1:60,]
+pdsi$year = seq(1550,1845,5)
 
-ggplot(pdsi, aes(x=Time.Step, y=Climate.Modifier)) + geom_line(col='blue', size=1.2) +
+ggplot(pdsi, aes(x=year, y=Climate.Modifier)) + geom_line(col='blue', size=1.2) +
     theme_bw() +
     theme(axis.title.y = element_text(size=36,vjust=1),
           axis.title.x = element_text(size=36,vjust=-1),
@@ -345,5 +346,9 @@ ggplot(pdsi, aes(x=Time.Step, y=Climate.Modifier)) + geom_line(col='blue', size=
     theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
     ggtitle("Climate Parameter Trajectory") + 
-    xlab("Timestep") +
+    xlab("Year") +
     ylab("Climate Parameter Value") 
+
+ggsave('hrv-bigtext.png', 
+    path='/Users/mmallek/Documents/Thesis/Plots/pdsi',
+    width=10, height=7, units='in',limitsize=FALSE)  

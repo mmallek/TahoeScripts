@@ -743,3 +743,112 @@ pl1 = pl + geom_bar(aes(fill = mort_level), position="dodge",stat='identity') +
 
 ##############################################
 #############################################
+
+
+#######################################################
+# hrv darea plots ####
+require(tidyr)
+require(dplyr)
+require(ggplot2)
+require(grid)
+
+hsession = 30
+hstart.step = 40
+covtype = NULL
+covtype = 'Sierran Mixed Conifer - Xeric' # set limits are 
+covtype = 'Sierran Mixed Conifer - Mesic'
+
+#read darea data
+x0<-read.csv(paste(path,'darea.csv',sep=''),header=TRUE)
+
+x = x0
+
+if (!is.null(covtype)){
+    x<-x[x$cov.name==covtype,]
+}
+
+#rescale cell counts
+x$mort.high<-x$mort.high*((cell.size^2)/10000)
+x$mort.low<-x$mort.low*((cell.size^2)/10000)
+x$mort.any<-x$mort.any*((cell.size^2)/10000)
+
+
+# assumes 1 session is specified
+y<-x[x$session.id == hsession,]
+y = y[y$timestep.id >= hstart.step,]
+y.low<-aggregate(y$mort.low,list(timestep=y$timestep.id, run=y$run.id),sum)
+colnames(y.low)[3] = 'mort.low' 
+y.high<-aggregate(y$mort.high,list(timestep=y$timestep.id, run=y$run.id),sum)
+colnames(y.high)[3] = 'mort.high' 
+y.any<-aggregate(y$mort.any,list(timestep=y$timestep.id, run=y$run.id),sum)
+colnames(y.any)[3] = 'mort.any' 
+
+y2 = full_join(y.low, y.high, by=c('timestep','run'))
+if(y.scale=='percent'){
+    y2[,3:4]<-round((y2[,3:4]/174830.1)*100,3)
+}
+
+y3 = gather(y2, mort, percent, c(4,3))
+
+#y3$mort = factor(y3$mort, levels=c('mort.high','mort.low'), ordered=T)
+#y3$mort = factor(y3$mort, levels=c('mort.low','mort.high'), ordered=T)
+
+####  
+pl = ggplot(y3, aes(timestep, percent, fill=mort))
+pl + geom_bar(stat='identity')+#, position=position_dodge(0.1)) + 
+    theme_bw() +
+    scale_fill_manual(values=c('#AE3121', '#007700'), labels=c('High Mortality','Low Mortality'),name='Mortality Level') +
+    theme(axis.title.y = element_text(size=32,vjust=2),
+          axis.title.x = element_text(size=32,vjust=-1),
+          axis.text.x  = element_text(size=24),
+          axis.text.y  = element_text(size=24)) +
+    #theme(axis.ticks.x = element_blank()) +
+    theme(legend.title = element_text(size=24)) +
+    theme(legend.text = element_text(size = 24)) +
+    theme(legend.position = 'top') +
+    theme(plot.title = element_text(size=40,vjust=1)) +
+    theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+    ggtitle(paste("Area Burned by Wildfire")) + 
+    ylab("Percent of Landscape Burned") +
+    xlab("Year")
+
+imagepath = '/Users/mmallek/Documents/Thesis/Plots/darea'
+ggsave(
+    #'hrv_all.png', 
+    'hrv_smcm.png',
+    #'hrv_smcx.png',
+    path=imagepath,
+    width=10, height=7, units='in',limitsize=FALSE)   
+
+## histograms
+
+if(y.scale=='percent'){
+    y.any[,3]<-round((y.any[,3]/174830.1)*100,3)
+}
+
+ggplot(y.any, aes(mort.any)) + geom_bar(col="black", fill="grey31") +
+theme_bw() +
+theme(axis.title.y = element_text(size=32,vjust=2),
+      axis.title.x = element_text(size=32,vjust=-1),
+      axis.text.x  = element_text(size=24),
+      axis.text.y  = element_text(size=24)) +
+#theme(axis.ticks.x = element_blank()) +
+theme(legend.title = element_text(size=24)) +
+theme(legend.text = element_text(size = 24)) +
+theme(plot.title = element_text(size=40,vjust=1)) +
+theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+ggtitle(paste("Area Burned by Wildfire")) + 
+xlab("Percent of Landscape Burned") +
+ylab("Count of Timesteps")
+
+
+imagepath = '/Users/mmallek/Documents/Thesis/Plots/darea'
+ggsave(
+    'hrv_newhist_all.png', 
+    #'hrv_newhist_smcm.png',
+    #'hrv_newhist_smcx.png',
+    path=imagepath,
+    width=10, height=7, units='in',limitsize=FALSE)  
+
+####################################
+###################################

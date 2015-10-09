@@ -41,7 +41,7 @@ dareaout = darea(
   start.step=40,
   stop.step=NULL,
   step.length=5,
-  legendloc='topright',
+  legendloc='topleft',
   #covtype="Mixed Evergreen - Mesic",
   #covtype="Mixed Evergreen - Xeric",
   #covtype="Oak-Conifer Forest and Woodland",
@@ -52,11 +52,11 @@ dareaout = darea(
   #covtype="Sierran Mixed Conifer - Ultramafic",
   #covtype="Sierran Mixed Conifer - Xeric",
   cell.size=30,
-  y.scale='nope',
-  col.bar=c('dark green','dark blue','brown'),
-  col.sub='brown',
-  cex.main=1.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
-  outfile=T)
+  y.scale='percent',
+  col.bars=c('dark green','dark blue','brown'),
+  col.sub='brown', 
+  cex.main=2.5,cex.sub=1.25,cex.legend=1.5,cex.lab=1.25,
+  outfile=F)
 
 #sessions=c(34,35,36,38,39,43,44),
 # dsize ####

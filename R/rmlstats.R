@@ -1651,7 +1651,7 @@ return(z)
 darea <-
 function(path,sessions=NULL,var='mean',runs=NULL,start.step=1, legendloc=NULL,
 	stop.step=NULL,step.length=NULL, covtype=NULL, cell.size=30,y.scale='percent',
-	col.bars=c('blue','light blue','turquoise'),col.sub='brown',
+	col.bars=c('dark green','dark blue','brown'),col.sub='brown', save.figs=FALSE,
   cex.main=1.5,cex.sub=1.5,cex.legend=1.5,outfile=FALSE,...){
 
 ##things to do:
@@ -1919,19 +1919,21 @@ else{
 			print(format(z2[[i]][[j]],big.mark=','))
 	
 			#plot disturbance area trajectory
+            
             ############## ADDED BORDER=NA ####################
 			barplot(t(y[,c(3,2)]),space=0, border=NA,
 			    #    barplot(y2,beside=TRUE,border=NA,#'black',
 			                
-				xaxs='i',yaxs='i',col=c('dark blue', 'dark green'),#col.bars,
+				xaxs='i',yaxs='i',col=col.bars,
 				axis.lty=1,names=y$timestep,...)
             
             # to add a line at the equilibration period
             #abline(v=40,lty=2,lwd=2,col="black")
-	
-			#add plot title	- dist.type	
+
+            
+            #add plot title	- dist.type	
 			if(is.null(step.length)) xlab='Timestep'
-			else xlab=paste('Timestep (x',step.length,' yrs)')
+#			else xlab=paste('Timestep (x',step.length,' yrs)')
 			if(y.scale=='percent')
 				title(main=paste(dist.levels[i],'Disturbance Trajectory',sep=' '),
 					ylab='Percent of Eligible',xlab=xlab,cex.main=cex.main,...)
@@ -1940,14 +1942,16 @@ else{
 					ylab='Area (ha)',xlab=xlab,cex.main=cex.main,...)
 	
 			#add subtitle - run number
-			mtext(side=3,col=col.sub,cex=cex.sub,
-            text=paste('Run #',runs[j],sep=''),...)
+			#mtext(side=3,col=col.sub,cex=cex.sub,
+            #text=paste('Run #',runs[j],sep=''),...)
+
+
 	
 			#add legend		
             #####################################################
             ### I CHANGED A LINE HERE
             #######################################################
-			legend(x=legendloc,#inset=c(0.05,0.05),
+			legend(legendloc, #inset=c(0.05,0.05),
 				#legend=c('High mort','Low mort'),fill=col.bars,cex=cex.legend)
 			    legend=c('High mort','Low mort'),fill=c('dark blue','dark green'),cex=cex.legend)
 			if(!i==length(dist.levels) || !j==length(runs)) 
