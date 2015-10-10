@@ -827,7 +827,7 @@ if(y.scale=='percent'){
 }
 
 ggplot(y.any, aes(mort.any)) + geom_bar(col="black", fill="grey31") +
-theme_bw() +
+theme_bw() + coord_flip() +
 theme(axis.title.y = element_text(size=32,vjust=2),
       axis.title.x = element_text(size=32,vjust=-1),
       axis.text.x  = element_text(size=24),
@@ -844,8 +844,8 @@ ylab("Count of Timesteps")
 
 imagepath = '/Users/mmallek/Documents/Thesis/Plots/darea'
 ggsave(
-    'hrv_newhist_all.png', 
-    #'hrv_newhist_smcm.png',
+    #'hrv_newhist_all.png', 
+    'hrv_newhist_smcm.png',
     #'hrv_newhist_smcx.png',
     path=imagepath,
     width=10, height=7, units='in',limitsize=FALSE)  
