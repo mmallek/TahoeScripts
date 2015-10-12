@@ -50,7 +50,7 @@ pdsi2.1 = bind_rows(pdsi2,hrvpdsi)
     order(med)
     reorder = c(names(med)[order(med)[1]], names(med)[order(med)[2]],names(med)[order(med)[3]],names(med)[order(med)[4]],names(med)[order(med)[5]],
                 names(med)[order(med)[6]],names(med)[order(med)[7]])
-
+    f.scenario.levels = reorder
 
 
 # create the plot
@@ -66,6 +66,7 @@ pdsi4 = pdsi2
 pdsi4$model = factor(pdsi4$model, levels=fscenario.levels, ordered=T)
 
 # plot of full 18 timesteps ####
+# not used in FRV article
 p2 = ggplot(pdsi4, aes(x=Timestep, y=pdsival))
 p2 + geom_line(aes(col=pdsi4$model),size=1.5) + 
     scale_colour_manual(values=mycols, name="Climate Model") +
@@ -82,11 +83,12 @@ p2 + geom_line(aes(col=pdsi4$model),size=1.5) +
     xlab("Timestep") +
     ylab("Climate Parameter Value") 
 
+
 ### only look at final 5 timesteps ####
 # with line for hrv mean (~1)
 pdsi4_end = pdsi4[pdsi4$Timestep > 13,]
 p4 = ggplot(pdsi4_end, aes(x=Timestep, y=pdsival))
-p4 + geom_line(aes(col=pdsi3_end$model),size=1.5) + 
+p4 + geom_line(aes(col=pdsi4_end$model),size=1.5) + 
     #geom_hline(aes(yintercept=1)) +
     scale_colour_manual(values=brewer.pal(7,'Dark2'), name="Climate Model") +
     theme_bw() +
@@ -99,9 +101,10 @@ p4 + geom_line(aes(col=pdsi3_end$model),size=1.5) +
     theme(legend.position = "none") +
     theme(plot.title = element_text(size=40,vjust=1)) +
     theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
-    ggtitle("Climate Parameter Trajectory \n Final Five Timesteps") + 
+    ggtitle("Final Five Timesteps") + 
     xlab("Timestep") +
     ylab("Climate Parameter Value") 
+
 
 imagepath = "/Users/mmallek/Documents/Thesis/Plots/pdsi"
 ggsave("future_last5timesteps.png", 
@@ -168,6 +171,7 @@ p7 + geom_boxplot(fill=c("#0099CC","#339900")) +
 
 
 # Trend line for PDSI ####
+# this plot used in FRV article
 p6 = ggplot(pdsi4, aes(x=Timestep, y=pdsival,col=model))
 p6 + geom_line(size=1, alpha=0.8) + 
     geom_smooth(method= 'lm', se=F, size=1.5, linetype=2) +

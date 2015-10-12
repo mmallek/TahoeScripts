@@ -596,7 +596,7 @@ else{
   		#plot to file
   		if(save.figs==TRUE){
   		  bitmap(file=paste(cov.levels[i],runs[j],'.png',sep=''),
-  		         height=6,width=8,res=300,...) 
+  		         height=7,width=10,res=300,...) 
   		}      
       
   		#plot disturbance area trajectory as 100% stacked bar chart
@@ -612,7 +612,7 @@ else{
   			#add legend
   			cond.levels<-as.vector(cond.levels[,2])				
   			legend(x='topright',inset=c(0.02,0.02),
-  				legend=cond.levels,fill=col.bars,cex=cex.legend)
+  				legend=cond.levels,fill=col.bars,cex=cex.legend,bg='white')
   			}
   
   		#plot disturbance area trajectory as lines
@@ -638,8 +638,9 @@ else{
   	
   		#add subtitle: dist.type and cov.type
   		mtext(side=3,col=col.sub,cex=cex.sub,
-        text=paste(cov.levels[i],': Run #',runs[j],sep=''),line=1,...)
-      
+  		#text=paste(cov.levels[i],': Run #',runs[j],sep=''),line=1,...)
+        text=cov.levels[i],line=1,...)
+
   		if(save.figs==TRUE) dev.off()
   	
   		if(save.figs==FALSE & (!i==length(cov.levels) | !j==length(runs)))

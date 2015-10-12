@@ -151,7 +151,7 @@ newcovcondtab = aggregate(covcondtab, by=stage.name, FUN=sum)
 
 # covcond plot ####                       
 covcondout<-covcond.plot(path=path,
-  session=44,
+  session=30,
   var='srv50%',
   #runs=c(1:10),
   runs = 1,
@@ -167,7 +167,7 @@ covcondout<-covcond.plot(path=path,
   col.sub='brown',
   cex.main=2,cex.sub=1.25,cex.legend=0.75,cex.lab=3.5,
   outfile=F,
-  save.figs=F)
+  save.figs=T)
 
 hrvpath = '/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
 futurepath = '/Users/mmallek/Tahoe/RMLands/results201507/future/fragresults/'
