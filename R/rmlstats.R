@@ -451,7 +451,7 @@ if(length(session)>1){
     
 		#plot to file
 		if(save.figs==TRUE){
-		  bitmap(file=paste(cov.levels[i],'.png',sep=''),
+		  bitmap(file=paste(cov.levels[i],'.pdf',sep=''),
 		         height=6,width=8,res=300,...) 
 		}
 		
@@ -595,7 +595,7 @@ else{
       
   		#plot to file
   		if(save.figs==TRUE){
-  		  bitmap(file=paste(cov.levels[i],runs[j],'.png',sep=''),
+  		  bitmap(file=paste(cov.levels[i],runs[j],'.pdf',sep=''),
   		         height=7,width=10,res=300,...) 
   		}      
       

@@ -176,6 +176,7 @@ p6 = ggplot(pdsi4, aes(x=Timestep, y=pdsival,col=model))
 p6 + geom_line(size=1, alpha=0.8) + 
     geom_smooth(method= 'lm', se=F, size=1.5, linetype=2) +
     scale_colour_manual(values=mycols, name="Climate Model") +
+    expand_limits(y=0) +
     theme_bw() +
     theme(axis.title.y = element_text(size=32,vjust=1),
           axis.title.x = element_text(size=32,vjust=-1),
