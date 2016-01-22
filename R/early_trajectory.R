@@ -106,7 +106,6 @@ colnames(zz2)<-c('cover.type','area.ha')
 covcond.code = sort(unique(current$cov.cond.id))
 #df$scenario = factor(df$scenario, levels=scenario.levels, ordered=T)
 
-imagepath = "/Users/mmallek/Documents/Thesis/Plots/early-trajectory"
 
 q = y
 
@@ -118,6 +117,7 @@ q$scenario = factor(q$scenario, levels=scenario.levels, ordered=T)
 #eliminate unneeded columns
 q$session.id = NULL
 q$cell.count = NULL
+
 
 for(j in 1:length(covcond.code)){
     # q2 is a subsetted matrix for one cover-condition combo
@@ -145,8 +145,8 @@ for(j in 1:length(covcond.code)){
         print(p1)    
         
         if(saveimage==TRUE){
-            ggsave(paste(covcond.code[j], '-', scenario.levels[k],"-earlytraj",".png",sep=""), 
-                   path="/Users/mmallek/Documents/Thesis/Plots/early-trajectory/",
+            ggsave(paste(covcond.code[j], '-', scenario.levels[k],"-trajectory",".png",sep=""), 
+                   path="/Users/mmallek/Documents/Thesis/Plots/seralstage-trajectory/",
                    width=10, height=10, units='in',limitsize=FALSE)      
         }
     }
@@ -200,7 +200,47 @@ for(j in 1:length(covcond.code)){
     }
 }
     
+# plot medians of trajectory ####
+c = aggregate(q['proportion'], by=q[c('timestep.id','cov.cond.id','scenario')], FUN=median)
 
+# plot the result
+
+for(j in 1:length(covcond.code)){
+    # q2 is a subsetted matrix for one cover-condition combo
+    # and all the scenarios
+    c2<-c[c$cov.cond.id==covcond.code[j],]
+    
+    #for(k in 1:length(scenario.levels)){
+    #    q3 = q2[q2$scenario==scenario.levels[k],]
+    # make the plot
+    p = ggplot(c2, aes(x=timestep.id, y=proportion, group=scenario)) 
+    p1 = p +
+        geom_line(aes(col=scenario),size=1.5) +
+        scale_colour_manual(values=brewer.pal(7,'Dark2'), name="Climate Model", 
+                            guide = guide_legend(reverse=TRUE)) +
+        theme_bw() +
+        theme(legend.position="right",
+              legend.text = element_text(size = 20),
+              legend.title = element_text(size = 28)) +
+        guides(color = guide_legend(nrow=4, byrow=TRUE)) +
+        theme(axis.title.y = element_text(size=32,vjust=2),
+              axis.title.x = element_text(size=32,vjust=-1),
+              axis.text.x  = element_text(size=20),
+              axis.text.y  = element_text(size=24)) +
+        theme(plot.title = element_text(size=40,vjust=1.5)) +
+        theme(plot.margin = unit(c(1, 1, 1, 1), "cm")) +
+        #ggtitle(paste(cover.names[j],  '\n Early Successional Stage')) + 
+        theme(legend.position='none') +
+        xlab("Timestep") +
+        ylab("Proportion of Cover Type") 
+    print(p1)    
+    
+    if(saveimage==TRUE){
+        ggsave(paste(covcond.code[j], '-earlytraj-median.png',sep=""), 
+               path="/Users/mmallek/Documents/Thesis/Plots/seralstage-trajectory-medians/",
+               width=7, height=6, units='in',limitsize=FALSE)      
+    }
+}
 #####################################
 #######################################
 #################################
