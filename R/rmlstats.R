@@ -382,6 +382,9 @@ if(outfile==TRUE){
 
 return(z)
 }
+
+
+
 covcond.plot <-
 function(path,session=NULL,var='srv50%',runs=1,start.step=0,
 	stop.step=NULL,step.length=NULL,type='stack',cell.size=30,
@@ -467,18 +470,18 @@ if(length(session)>1){
 			legend=cond.levels,fill=col.bars,cex=cex.legend)
 
 		#add plot title				
-		if(var=='srv.cv'){
-      title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
-				ylab='Coefficient of Variation',xlab='Scenario/Session',
-        cex.main=cex.main,...)
-		}
-		else{title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
-		      ylab='Percentage of Cover Type',xlab='Scenario/Session',
-		      cex.main=cex.main,...)
-		}
+#		if(var=='srv.cv'){
+#      title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
+#				ylab='Coefficient of Variation',xlab='Scenario/Session',
+#        cex.main=cex.main,...)
+#		}
+#		else{title(main=paste('Cover-Condition Summary (',var,')',sep=''),line=2.5,
+#		      ylab='Percentage of Cover Type',xlab='Scenario/Session',
+#		      cex.main=cex.main,...)
+#		}
 	
 		#add subtitle: dist.type and cov.type
-		mtext(side=3,col=col.sub,cex=cex.sub,text=cov.levels[i],line=1,...)
+#		mtext(side=3,col=col.sub,cex=cex.sub,text=cov.levels[i],line=1,...)
     
 		if(save.figs==TRUE) dev.off()
 	
@@ -633,13 +636,13 @@ else{
   		#add plot title	
   		if(is.null(step.length)) xlab='Timestep'
   		else xlab=paste('Timestep (x',step.length,' yrs)')
-  		title(main='Cover-Condition Dynamics',line=2.5,
-  		  ylab='Proportion of Cover Type',xlab=xlab,cex.main=cex.main,...)
+      # title(main='Cover-Condition Dynamics',line=2.5,
+        title(ylab='Proportion of Cover Type',xlab=xlab,cex.main=cex.main,...)
   	
   		#add subtitle: dist.type and cov.type
-  		mtext(side=3,col=col.sub,cex=cex.sub,
+ # 		mtext(side=3,col=col.sub,cex=cex.sub,
   		#text=paste(cov.levels[i],': Run #',runs[j],sep=''),line=1,...)
-        text=cov.levels[i],line=1,...)
+ #       text=cov.levels[i],line=1,...)
 
   		if(save.figs==TRUE) dev.off()
   	
@@ -666,6 +669,8 @@ else{
 par(old.par)
 invisible(z)
 }
+
+
 edgedepth <-
 function(path='d:/landeco/exercises/rmlands/fragstats/', 
   w1='edgedepth.canopy.cover.csv', 

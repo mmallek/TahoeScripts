@@ -2,10 +2,10 @@
 ###R function calls for Tahoe project
 
 #set working directory
-setwd('/Users/mmallek/Tahoe/RMLands/results201507/hrv')
-setwd('/Users/mmallek/Tahoe/R/Rplots/November2014')
-hrvpath='/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
-futurepath='/Users/mmallek/Tahoe/RMLands/results201507/future/'
+#setwd('/Users/mmallek/Tahoe/RMLands/results201507/hrv')
+#setwd('/Users/mmallek/Tahoe/R/Rplots/November2014')
+#hrvpath='/Users/mmallek/Tahoe/RMLands/results201507/hrv/'
+#futurepath='/Users/mmallek/Tahoe/RMLands/results201507/future/'
 path = '/Users/mmallek/Tahoe/RMLands/results/results20150904/'
 fragpath = "/Users/mmallek/Tahoe/RMLands/results/results20150904/fragstats20150901/"
 # sessions = 30 for the hrv
@@ -92,10 +92,10 @@ dsize.new(path=path,
 #sessions=c(34,35,36,38,39,43,44),
 # rotation ####
 out<-rotation(path=path,
-  session=34,
-  runs=c(1:100),
-  #session=3,
-  #runs=1,
+  #session=34,
+  #runs=c(1:100),
+  session=30,
+  runs=1,
   pool.runs=TRUE,
   var='any.mort',
   start.step=14,
@@ -165,7 +165,7 @@ covcondout<-covcond.plot(path=path,
   col.bars=c('black','tan','green','orange','brown','lightsalmon',
     'darkgreen','lightgreen','yellow','yellow3','yellow4','wheat'),
   col.sub='brown',
-  cex.main=2,cex.sub=1.25,cex.legend=0.75,cex.lab=3.5,
+  cex.main=2,cex.sub=1.25,cex.legend=1,cex.lab=4,
   outfile=F,
   save.figs=T)
 
